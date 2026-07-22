@@ -12,10 +12,7 @@ The first source candidates are:
 
 - Greenhouse Job Board API — primary candidate
 - Lever Postings API — secondary candidate
-- Discovery careers page — experimental SuccessFactors source
-- Nedbank careers page — experimental SuccessFactors source
-- Electrum careers page — experimental custom HTML source
-- Prosple RSS — rejected for the MVP after a 403 response
+- Prosple RSS — deferred until later validation
 - Adzuna API — deferred unless additional market coverage is needed
 
 ## Run the source validation

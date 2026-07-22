@@ -1,0 +1,118 @@
+{
+  "south_africa_location_terms": [
+    "south africa",
+    "cape town",
+    "capetown",
+    "johannesburg",
+    "pretoria",
+    "durban",
+    "stellenbosch",
+    "cpt",
+    "jhb",
+    "pta",
+    "dbn",
+    ", za"
+  ],
+  "technology_title_terms": [
+    "software",
+    "developer",
+    "engineer",
+    "data",
+    "analytics",
+    "analyst",
+    "machine learning",
+    "artificial intelligence",
+    " ai ",
+    "automation",
+    "cyber",
+    "security",
+    "cloud",
+    "devops",
+    "business intelligence",
+    " bi ",
+    "product manager",
+    "technical"
+  ],
+  "sources": [
+    {
+      "name": "Takealot Group",
+      "provider": "greenhouse",
+      "token": "takealotgroup",
+      "enabled": true,
+      "priority": "primary"
+    },
+    {
+      "name": "Luno",
+      "provider": "greenhouse",
+      "token": "luno",
+      "enabled": true,
+      "priority": "primary"
+    },
+    {
+      "name": "Impact.com",
+      "provider": "greenhouse",
+      "token": "impact",
+      "enabled": true,
+      "priority": "primary"
+    },
+    {
+      "name": "Mama Money",
+      "provider": "lever",
+      "token": "mamamoney",
+      "enabled": true,
+      "priority": "secondary"
+    },
+    {
+      "name": "Yassir",
+      "provider": "lever",
+      "token": "Yassir",
+      "enabled": true,
+      "priority": "secondary"
+    },
+    {
+      "name": "Discovery",
+      "provider": "html_listing_page",
+      "token": "discovery",
+      "url": "https://careers.discovery.co.za/go/All-Jobs/4509301/",
+      "market_scope": "south_africa",
+      "job_link_pattern": "/job/",
+      "evidence_terms": [
+        "All Jobs",
+        "Results",
+        "Discovery"
+      ],
+      "enabled": true,
+      "priority": "experimental"
+    },
+    {
+      "name": "Nedbank",
+      "provider": "html_listing_page",
+      "token": "nedbank-young-professionals",
+      "url": "https://jobs.nedbank.co.za/go/Young-Professional-Jobs/715601/",
+      "market_scope": "south_africa",
+      "job_link_pattern": "/job/",
+      "evidence_terms": [
+        "Young Professional Jobs",
+        "Results",
+        "Nedbank"
+      ],
+      "enabled": true,
+      "priority": "experimental"
+    },
+    {
+      "name": "Electrum",
+      "provider": "html_listing_page",
+      "token": "electrum",
+      "url": "https://www.electrumsoftware.com/careers",
+      "market_scope": "south_africa",
+      "job_link_pattern": "(?:/careers/|/jobs/|job)",
+      "evidence_terms": [
+        "Available positions",
+        "Career Opportunities",
+        "Electrum"
+      ],
+      "enabled": true,
+      "priority": "experimental"
+    }
+  ]
+}

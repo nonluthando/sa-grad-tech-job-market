@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.DS_Store
+
+# Keep the directory but ignore generated validation runs.
+data/source-test-results/*.json
+!data/source-test-results/.gitkeep
