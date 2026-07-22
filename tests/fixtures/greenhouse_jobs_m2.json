@@ -1,0 +1,71 @@
+{
+  "jobs": [
+    {
+      "id": 1001,
+      "internal_job_id": 9001,
+      "title": "Junior Software Engineer",
+      "updated_at": "2026-07-22T12:00:00+02:00",
+      "location": {
+        "name": "Cape Town, South Africa"
+      },
+      "absolute_url": "https://job-boards.greenhouse.io/example/jobs/1001",
+      "content": "&lt;p&gt;Join our &lt;strong&gt;hybrid&lt;/strong&gt; engineering team.&lt;/p&gt;&lt;script&gt;ignore me&lt;/script&gt;",
+      "departments": [
+        {
+          "id": 1,
+          "name": "Engineering"
+        }
+      ],
+      "offices": [
+        {
+          "id": 2,
+          "name": "Cape Town"
+        }
+      ]
+    },
+    {
+      "id": 1002,
+      "internal_job_id": 9002,
+      "title": "Data Science Graduate Programme",
+      "updated_at": "2026-07-22T10:00:00Z",
+      "location": {
+        "name": "Remote"
+      },
+      "absolute_url": "https://job-boards.greenhouse.io/example/jobs/1002",
+      "content": "<p>This role is remote within South Africa and introduces graduates to data science.</p>",
+      "departments": [
+        {
+          "id": 3,
+          "name": "Data & Analytics"
+        }
+      ],
+      "offices": []
+    },
+    {
+      "id": 1003,
+      "internal_job_id": 9003,
+      "title": "Senior Account Manager",
+      "updated_at": "2026-07-22T09:00:00Z",
+      "location": {
+        "name": "London, United Kingdom"
+      },
+      "absolute_url": "https://job-boards.greenhouse.io/example/jobs/1003",
+      "content": "<p>Manage strategic customer accounts from our office.</p>",
+      "departments": [
+        {
+          "id": 4,
+          "name": "Commercial"
+        }
+      ],
+      "offices": [
+        {
+          "id": 5,
+          "name": "London"
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "total": 3
+  }
+}

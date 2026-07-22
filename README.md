@@ -6,24 +6,27 @@ publishes insights about South African graduate and junior technology hiring.
 
 ## Current status
 
-**Milestone 1: Greenhouse raw ingestion**
+**Milestone 2 complete: cleaning and standardisation**
 
-Milestone 0 validated the current source candidates:
+The project can now:
 
-- Greenhouse Job Board API — primary source
-- Lever Postings API — secondary source
-- Discovery careers page — experimental SuccessFactors source
-- Nedbank careers page — experimental SuccessFactors source
-- Electrum careers page — experimental custom HTML source
-- Prosple RSS — rejected for the MVP after a `403` response
-- Adzuna API — deferred unless more coverage is required
+- collect exact raw Greenhouse snapshots from Takealot Group, Luno and Impact.com;
+- verify raw-file integrity from metadata and SHA-256 hashes;
+- clean HTML job descriptions into analysis-ready text;
+- normalise South African locations and selected international countries;
+- classify workplace type, role level and technology relevance;
+- retain the evidence behind classifications;
+- identify the target South African early-career technology market;
+- deduplicate stable postings across collection snapshots;
+- preserve first-seen, last-seen and observation history;
+- write a schema-controlled Parquet dataset; and
+- produce a data-quality report.
 
-The current production ingestion scope is deliberately narrower: Takealot Group,
-Luno and Impact.com through Greenhouse's public Job Board API.
+The latest verified Milestone 1 collection contained 100 raw jobs across the
+three Greenhouse sources. Live counts change as employers publish and remove
+vacancies.
 
 ## Setup
-
-Create and activate a virtual environment, then install dependencies:
 
 ```bash
 python -m venv .venv
@@ -31,14 +34,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Codespaces uses Bash, even when opened from an iPhone or Windows computer. In
-Windows PowerShell outside Codespaces, activate with:
+Codespaces uses Bash. In Windows PowerShell outside Codespaces, activate with:
 
 ```powershell
 .venv\Scripts\Activate.ps1
 ```
 
-## Collect raw Greenhouse snapshots
+## Run the pipeline
+
+### 1. Collect raw Greenhouse snapshots
 
 ```bash
 python -m src.ingestion.collect
@@ -50,29 +54,121 @@ Collect one configured board:
 python -m src.ingestion.collect --source-token takealotgroup
 ```
 
-Generated snapshots are written beneath:
-
-```text
-data/raw/greenhouse/{board_token}/
-```
-
-Raw data is intentionally ignored by Git. Each snapshot includes an adjacent
-metadata file with its UTC collection time, endpoint, job count and SHA-256 hash.
-Identical responses are not written twice.
-
-## Validate source coverage
+### 2. Build the canonical dataset
 
 ```bash
-python scripts/validate_sources.py
+python -m src.transformation.build
 ```
 
-## Run tests
+Outputs:
+
+```text
+data/processed/
+├── jobs.parquet
+└── quality-report.json
+```
+
+`jobs.parquet` retains every standardised job and provides flags for South
+African, technology and target-market roles. Jobs are not silently discarded
+because a classification is uncertain.
+
+### 3. Run tests
 
 ```bash
 pytest
 ```
 
-See:
+### 4. Validate source candidates
 
-- [`docs/data-source-assessment.md`](docs/data-source-assessment.md)
-- [`docs/milestone-1-raw-ingestion.md`](docs/milestone-1-raw-ingestion.md)
+```bash
+python scripts/validate_sources.py
+```
+
+## Pipeline architecture
+
+```text
+config/sources.json
+        |
+        v
+Greenhouse collector
+        |
+        +--> exact raw JSON + metadata + SHA-256
+                         |
+                         v
+             snapshot integrity checks
+                         |
+                         v
+            cleaning and classifications
+                         |
+                         v
+              stable-key deduplication
+                         |
+                         +--> data/processed/jobs.parquet
+                         +--> data/processed/quality-report.json
+```
+
+## Repository structure
+
+```text
+.
+├── config/
+│   └── sources.json
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── source-test-results/
+├── docs/
+│   ├── data-source-assessment.md
+│   ├── milestone-1-raw-ingestion.md
+│   └── milestone-2-cleaning.md
+├── scripts/
+│   └── validate_sources.py
+├── src/
+│   ├── ingestion/
+│   └── transformation/
+│       ├── build.py
+│       ├── classification.py
+│       ├── cleaning.py
+│       ├── dataset.py
+│       ├── greenhouse.py
+│       ├── schema.py
+│       └── snapshots.py
+└── tests/
+```
+
+## Important design decisions
+
+- **Raw data remains immutable.** Transformations never edit source snapshots.
+- **No early destructive filtering.** The canonical dataset keeps all jobs and
+  exposes classification flags.
+- **Classifications are explainable.** Evidence is stored with each label.
+- **Unknown is preferable to guessing.** Missing or ambiguous values remain
+  unspecified and are visible in the quality report.
+- **Deduplication is conservative.** Repeated Greenhouse IDs are merged across
+  snapshots; fuzzy cross-company matching is deferred.
+- **Parquet is the analytical contract.** Milestone 3 and later work will read
+  the canonical file rather than reimplement raw parsing.
+
+## MVP roadmap
+
+| Milestone | Outcome | Status |
+|---|---|---|
+| 0. Source validation | Select viable public sources | Complete |
+| 1. Raw ingestion | Preserve reproducible Greenhouse snapshots | Complete |
+| 2. Cleaning and standardisation | Produce one canonical jobs dataset | Complete |
+| 3. Skills extraction | Derive technologies and requirements | Next |
+| 4. Analytics engine | Build market metrics and analysis tables | Planned |
+| 5. Dashboard | Publish the interactive MVP | Planned |
+
+## Documentation
+
+- [Data-source assessment](docs/data-source-assessment.md)
+- [Milestone 1: raw ingestion](docs/milestone-1-raw-ingestion.md)
+- [Milestone 2: cleaning and standardisation](docs/milestone-2-cleaning.md)
+
+## Responsible-use scope
+
+The project collects only publicly advertised job information. It does not
+submit applications, collect applicant data, bypass authentication, infer
+protected personal attributes, or scrape platforms whose terms or access
+controls make the intended collection inappropriate.

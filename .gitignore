@@ -13,3 +13,7 @@ data/raw/*
 # Local source-probing output should never be committed.
 prosple_headers.txt
 prosple_jobs.xml
+
+# Generated canonical datasets and quality reports.
+data/processed/*
+!data/processed/.gitkeep
