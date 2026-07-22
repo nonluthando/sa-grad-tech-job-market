@@ -1,0 +1,30 @@
+{
+  "jobs": [
+    {
+      "id": 123456,
+      "internal_job_id": 654321,
+      "title": "Junior Data Analyst",
+      "updated_at": "2026-07-22T12:00:00+02:00",
+      "location": {
+        "name": "Cape Town, South Africa"
+      },
+      "absolute_url": "https://job-boards.greenhouse.io/example/jobs/123456",
+      "content": "&lt;p&gt;Analyse product and customer data.&lt;/p&gt;",
+      "departments": [
+        {
+          "id": 1,
+          "name": "Data"
+        }
+      ],
+      "offices": [
+        {
+          "id": 2,
+          "name": "Cape Town"
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "total": 1
+  }
+}

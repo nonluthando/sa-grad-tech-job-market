@@ -1,24 +1,27 @@
 # South African Graduate Tech Job Market Intelligence
 
 An end-to-end analytics engineering project that collects public job postings,
-builds a historical job-market dataset, extracts role and skill requirements,
-and publishes insights about South African graduate and junior technology hiring.
+builds a reliable job-market dataset, extracts role and skill requirements, and
+publishes insights about South African graduate and junior technology hiring.
 
 ## Current status
 
-**Milestone 0: Source validation**
+**Milestone 1: Greenhouse raw ingestion**
 
-The first source candidates are:
+Milestone 0 validated the current source candidates:
 
-- Greenhouse Job Board API — primary candidate
-- Lever Postings API — secondary candidate
+- Greenhouse Job Board API — primary source
+- Lever Postings API — secondary source
 - Discovery careers page — experimental SuccessFactors source
 - Nedbank careers page — experimental SuccessFactors source
 - Electrum careers page — experimental custom HTML source
-- Prosple RSS — rejected for the MVP after a 403 response
-- Adzuna API — deferred unless additional market coverage is needed
+- Prosple RSS — rejected for the MVP after a `403` response
+- Adzuna API — deferred unless more coverage is required
 
-## Run the source validation
+The current production ingestion scope is deliberately narrower: Takealot Group,
+Luno and Impact.com through Greenhouse's public Job Board API.
+
+## Setup
 
 Create and activate a virtual environment, then install dependencies:
 
@@ -28,41 +31,48 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-On Windows PowerShell:
+Codespaces uses Bash, even when opened from an iPhone or Windows computer. In
+Windows PowerShell outside Codespaces, activate with:
 
 ```powershell
-python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
 ```
 
-Run:
+## Collect raw Greenhouse snapshots
+
+```bash
+python -m src.ingestion.collect
+```
+
+Collect one configured board:
+
+```bash
+python -m src.ingestion.collect --source-token takealotgroup
+```
+
+Generated snapshots are written beneath:
+
+```text
+data/raw/greenhouse/{board_token}/
+```
+
+Raw data is intentionally ignored by Git. Each snapshot includes an adjacent
+metadata file with its UTC collection time, endpoint, job count and SHA-256 hash.
+Identical responses are not written twice.
+
+## Validate source coverage
 
 ```bash
 python scripts/validate_sources.py
 ```
 
-The script writes a timestamped result to:
-
-```text
-data/source-test-results/
-```
-
-Run the tests:
+## Run tests
 
 ```bash
 pytest
 ```
 
-## Milestone 0 exit criteria
+See:
 
-Milestone 0 passes when at least one source:
-
-1. returns a successful structured response;
-2. contains at least one South African vacancy;
-3. exposes a stable source job ID;
-4. includes a title, location, description and application URL;
-5. can be queried repeatedly without authentication; and
-6. has a documented public access method suitable for a portfolio project.
-
-See [`docs/data-source-assessment.md`](docs/data-source-assessment.md).
+- [`docs/data-source-assessment.md`](docs/data-source-assessment.md)
+- [`docs/milestone-1-raw-ingestion.md`](docs/milestone-1-raw-ingestion.md)

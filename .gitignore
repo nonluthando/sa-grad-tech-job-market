@@ -4,6 +4,12 @@ __pycache__/
 *.py[cod]
 .DS_Store
 
-# Keep the directory but ignore generated validation runs.
+# Keep directory placeholders but ignore generated data runs.
 data/source-test-results/*.json
 !data/source-test-results/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+
+# Local source-probing output should never be committed.
+prosple_headers.txt
+prosple_jobs.xml
