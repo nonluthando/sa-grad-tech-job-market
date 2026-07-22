@@ -1,0 +1,962 @@
+diff --git a/.gitignore b/.gitignore
+index 8fce20c..54090b4 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,6 +4,12 @@ __pycache__/
+ *.py[cod]
+ .DS_Store
+ 
+-# Keep the directory but ignore generated validation runs.
++# Keep directory placeholders but ignore generated data runs.
+ data/source-test-results/*.json
+ !data/source-test-results/.gitkeep
++data/raw/*
++!data/raw/.gitkeep
++
++# Local source-probing output should never be committed.
++prosple_headers.txt
++prosple_jobs.xml
+diff --git a/README.md b/README.md
+index fa5b015..a7eab0c 100644
+--- a/README.md
++++ b/README.md
+@@ -1,24 +1,27 @@
+ # South African Graduate Tech Job Market Intelligence
+ 
+ An end-to-end analytics engineering project that collects public job postings,
+-builds a historical job-market dataset, extracts role and skill requirements,
+-and publishes insights about South African graduate and junior technology hiring.
++builds a reliable job-market dataset, extracts role and skill requirements, and
++publishes insights about South African graduate and junior technology hiring.
+ 
+ ## Current status
+ 
+-**Milestone 0: Source validation**
++**Milestone 1: Greenhouse raw ingestion**
+ 
+-The first source candidates are:
++Milestone 0 validated the current source candidates:
+ 
+-- Greenhouse Job Board API — primary candidate
+-- Lever Postings API — secondary candidate
++- Greenhouse Job Board API — primary source
++- Lever Postings API — secondary source
+ - Discovery careers page — experimental SuccessFactors source
+ - Nedbank careers page — experimental SuccessFactors source
+ - Electrum careers page — experimental custom HTML source
+-- Prosple RSS — rejected for the MVP after a 403 response
+-- Adzuna API — deferred unless additional market coverage is needed
++- Prosple RSS — rejected for the MVP after a `403` response
++- Adzuna API — deferred unless more coverage is required
+ 
+-## Run the source validation
++The current production ingestion scope is deliberately narrower: Takealot Group,
++Luno and Impact.com through Greenhouse's public Job Board API.
++
++## Setup
+ 
+ Create and activate a virtual environment, then install dependencies:
+ 
+@@ -28,41 +31,48 @@ source .venv/bin/activate
+ pip install -r requirements.txt
+ ```
+ 
+-On Windows PowerShell:
++Codespaces uses Bash, even when opened from an iPhone or Windows computer. In
++Windows PowerShell outside Codespaces, activate with:
+ 
+ ```powershell
+-python -m venv .venv
+ .venv\Scripts\Activate.ps1
+-pip install -r requirements.txt
+ ```
+ 
+-Run:
++## Collect raw Greenhouse snapshots
+ 
+ ```bash
+-python scripts/validate_sources.py
++python -m src.ingestion.collect
++```
++
++Collect one configured board:
++
++```bash
++python -m src.ingestion.collect --source-token takealotgroup
+ ```
+ 
+-The script writes a timestamped result to:
++Generated snapshots are written beneath:
+ 
+ ```text
+-data/source-test-results/
++data/raw/greenhouse/{board_token}/
+ ```
+ 
+-Run the tests:
++Raw data is intentionally ignored by Git. Each snapshot includes an adjacent
++metadata file with its UTC collection time, endpoint, job count and SHA-256 hash.
++Identical responses are not written twice.
++
++## Validate source coverage
+ 
+ ```bash
+-pytest
++python scripts/validate_sources.py
+ ```
+ 
+-## Milestone 0 exit criteria
++## Run tests
+ 
+-Milestone 0 passes when at least one source:
++```bash
++pytest
++```
+ 
+-1. returns a successful structured response;
+-2. contains at least one South African vacancy;
+-3. exposes a stable source job ID;
+-4. includes a title, location, description and application URL;
+-5. can be queried repeatedly without authentication; and
+-6. has a documented public access method suitable for a portfolio project.
++See:
+ 
+-See [`docs/data-source-assessment.md`](docs/data-source-assessment.md).
++- [`docs/data-source-assessment.md`](docs/data-source-assessment.md)
++- [`docs/milestone-1-raw-ingestion.md`](docs/milestone-1-raw-ingestion.md)
+diff --git a/data/raw/.gitkeep b/data/raw/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+diff --git a/docs/milestone-1-raw-ingestion.md b/docs/milestone-1-raw-ingestion.md
+new file mode 100644
+index 0000000..2225e53
+--- /dev/null
++++ b/docs/milestone-1-raw-ingestion.md
+@@ -0,0 +1,90 @@
++# Milestone 1 — Greenhouse Raw Ingestion
++
++## Goal
++
++Collect current public Greenhouse job-board responses and preserve the original
++response bytes before cleaning, filtering or modelling them.
++
++## Scope
++
++The first adapter collects all enabled `greenhouse` entries in
++`config/sources.json`:
++
++- Takealot Group
++- Luno
++- Impact.com
++
++Lever and HTML sources remain validation-only until their own ingestion adapters
++are implemented.
++
++## Raw-data contract
++
++Each successful source request produces:
++
++```text
++data/raw/greenhouse/{board_token}/{timestamp}.json
++data/raw/greenhouse/{board_token}/{timestamp}.metadata.json
++```
++
++The JSON snapshot contains the exact HTTP response bytes. The metadata sidecar
++contains:
++
++- provider and source name;
++- board token and endpoint;
++- UTC collection timestamp;
++- HTTP status and content type;
++- SHA-256 content hash;
++- byte count;
++- source-reported job count; and
++- raw snapshot filename.
++
++Each command run also writes a summary under `data/raw/_runs/`.
++
++## Duplicate policy
++
++Before writing, the snapshot store compares the response SHA-256 hash with prior
++metadata for that board. Identical content is reported as `duplicate` and is not
++written again.
++
++This prevents repeated local runs from creating fake historical observations.
++
++## Failure policy
++
++Sources are attempted independently. Successful raw responses are preserved even
++when another source fails, but the command exits with status `1` when any source
++fails. This makes failures visible to later automation instead of silently
++publishing incomplete data.
++
++Configuration errors exit with status `2`.
++
++## Commands
++
++Collect all enabled Greenhouse sources:
++
++```bash
++python -m src.ingestion.collect
++```
++
++Collect one board:
++
++```bash
++python -m src.ingestion.collect --source-token takealotgroup
++```
++
++Use a temporary output directory while testing manually:
++
++```bash
++python -m src.ingestion.collect --raw-root /tmp/job-market-raw
++```
++
++Run automated tests:
++
++```bash
++pytest
++```
++
++## Exit condition
++
++Milestone 1 passes when one command retrieves all configured Greenhouse boards,
++preserves exact raw payloads and metadata, skips duplicate content, and returns a
++non-zero status for failed requests.
+diff --git a/prosple_headers.txt b/prosple_headers.txt
+deleted file mode 100644
+index febe475..0000000
+--- a/prosple_headers.txt
++++ /dev/null
+@@ -1,9 +0,0 @@
+-HTTP/2 403 
+-date: Wed, 22 Jul 2026 19:07:15 GMT
+-content-type: text/html
+-server: cloudflare
+-cf-cache-status: DYNAMIC
+-nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+-report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=DB96XVOqkXy2WIVaU4%2Bem8n8Zlflqg4SNb%2FVefRYFvuDqzk6NnJpymJc%2FE3eaW%2FuNpfww9zjg3ESg5I%2FYQSnV66rjIYxmEwV4H4qFuUROX0RzIm9CLYEieQPdQfVOOdx"}]}
+-cf-ray: a1f4ba287cb53ac9-BOM
+-
+diff --git a/prosple_jobs.xml b/prosple_jobs.xml
+deleted file mode 100644
+index 7afc6da..0000000
+--- a/prosple_jobs.xml
++++ /dev/null
+@@ -1,6 +0,0 @@
+-<html>
+-<head><title>403 Forbidden</title></head>
+-<body>
+-<center><h1>403 Forbidden</h1></center>
+-</body>
+-</html>
+diff --git a/src/__init__.py b/src/__init__.py
+new file mode 100644
+index 0000000..8a19673
+--- /dev/null
++++ b/src/__init__.py
+@@ -0,0 +1 @@
++"""Application package for the job-market intelligence pipeline."""
+diff --git a/src/ingestion/__init__.py b/src/ingestion/__init__.py
+new file mode 100644
+index 0000000..36ce69e
+--- /dev/null
++++ b/src/ingestion/__init__.py
+@@ -0,0 +1 @@
++"""Raw source-ingestion adapters and snapshot persistence."""
+diff --git a/src/ingestion/collect.py b/src/ingestion/collect.py
+new file mode 100644
+index 0000000..4d93027
+--- /dev/null
++++ b/src/ingestion/collect.py
+@@ -0,0 +1,144 @@
++"""Command-line entry point for raw Greenhouse ingestion."""
++
++from __future__ import annotations
++
++import argparse
++import json
++import sys
++from dataclasses import asdict, dataclass
++from datetime import datetime, timezone
++from pathlib import Path
++
++import requests
++
++from src.ingestion.config import GreenhouseSource, load_greenhouse_sources
++from src.ingestion.greenhouse import GreenhouseClient
++from src.ingestion.snapshot import RawSnapshotStore, filename_timestamp
++
++
++PROJECT_ROOT = Path(__file__).resolve().parents[2]
++DEFAULT_CONFIG = PROJECT_ROOT / "config" / "sources.json"
++DEFAULT_RAW_ROOT = PROJECT_ROOT / "data" / "raw"
++
++
++@dataclass(frozen=True)
++class CollectionResult:
++    source_name: str
++    source_token: str
++    status: str
++    job_count: int
++    raw_path: str | None
++    metadata_path: str | None
++    error: str | None
++
++
++def collect_source(
++    source: GreenhouseSource,
++    client: GreenhouseClient,
++    store: RawSnapshotStore,
++    collected_at: datetime,
++) -> CollectionResult:
++    try:
++        response = client.fetch_board(source.token)
++        snapshot = store.write_greenhouse_snapshot(
++            source_name=source.name,
++            response=response,
++            collected_at=collected_at,
++        )
++        return CollectionResult(
++            source_name=source.name,
++            source_token=source.token,
++            status=snapshot.status,
++            job_count=response.job_count,
++            raw_path=str(snapshot.raw_path),
++            metadata_path=str(snapshot.metadata_path),
++            error=None,
++        )
++    except (requests.RequestException, ValueError, OSError) as error:
++        return CollectionResult(
++            source_name=source.name,
++            source_token=source.token,
++            status="failed",
++            job_count=0,
++            raw_path=None,
++            metadata_path=None,
++            error=str(error),
++        )
++
++
++def write_run_report(
++    raw_root: Path,
++    collected_at: datetime,
++    results: list[CollectionResult],
++) -> Path:
++    run_directory = raw_root / "_runs"
++    run_directory.mkdir(parents=True, exist_ok=True)
++    report_path = run_directory / f"{filename_timestamp(collected_at)}.json"
++    payload = {
++        "collected_at": collected_at.astimezone(timezone.utc).isoformat(),
++        "successful_sources": sum(result.status != "failed" for result in results),
++        "failed_sources": sum(result.status == "failed" for result in results),
++        "total_source_jobs": sum(result.job_count for result in results),
++        "results": [asdict(result) for result in results],
++    }
++    report_path.write_text(
++        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
++        encoding="utf-8",
++    )
++    return report_path
++
++
++def print_summary(results: list[CollectionResult], report_path: Path) -> None:
++    print("\nGreenhouse raw-ingestion summary")
++    print("=" * 80)
++    for result in results:
++        print(
++            f"{result.status.upper():9} | {result.source_name:18} | "
++            f"jobs={result.job_count:3} | token={result.source_token}"
++        )
++        if result.error:
++            print(f"           - {result.error}")
++    print(f"\nRun report: {report_path}")
++
++
++def parse_args() -> argparse.Namespace:
++    parser = argparse.ArgumentParser(
++        description="Collect exact raw Greenhouse job-board snapshots."
++    )
++    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
++    parser.add_argument("--raw-root", type=Path, default=DEFAULT_RAW_ROOT)
++    parser.add_argument(
++        "--source-token",
++        action="append",
++        dest="source_tokens",
++        help="Collect only this Greenhouse token. May be supplied more than once.",
++    )
++    parser.add_argument("--timeout", type=int, default=30)
++    return parser.parse_args()
++
++
++def main() -> int:
++    args = parse_args()
++    requested_tokens = set(args.source_tokens) if args.source_tokens else None
++
++    try:
++        sources = load_greenhouse_sources(args.config, requested_tokens)
++        client = GreenhouseClient(timeout_seconds=args.timeout)
++    except (OSError, json.JSONDecodeError, ValueError) as error:
++        print(f"Configuration error: {error}", file=sys.stderr)
++        return 2
++
++    collected_at = datetime.now(timezone.utc)
++    store = RawSnapshotStore(args.raw_root)
++    results = [
++        collect_source(source, client, store, collected_at)
++        for source in sources
++    ]
++    report_path = write_run_report(args.raw_root, collected_at, results)
++    print_summary(results, report_path)
++
++    return 1 if any(result.status == "failed" for result in results) else 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/src/ingestion/config.py b/src/ingestion/config.py
+new file mode 100644
+index 0000000..3c5f591
+--- /dev/null
++++ b/src/ingestion/config.py
+@@ -0,0 +1,62 @@
++"""Load and validate configured job sources."""
++
++from __future__ import annotations
++
++import json
++from dataclasses import dataclass
++from pathlib import Path
++from typing import Any
++
++
++@dataclass(frozen=True)
++class GreenhouseSource:
++    """A configured public Greenhouse job board."""
++
++    name: str
++    token: str
++
++
++def load_greenhouse_sources(
++    config_path: Path,
++    requested_tokens: set[str] | None = None,
++) -> list[GreenhouseSource]:
++    """Return enabled Greenhouse sources, optionally filtered by board token."""
++
++    payload: Any = json.loads(config_path.read_text(encoding="utf-8"))
++    raw_sources = payload.get("sources")
++    if not isinstance(raw_sources, list):
++        raise ValueError("Source configuration must contain a sources list.")
++
++    sources: list[GreenhouseSource] = []
++    seen_tokens: set[str] = set()
++
++    for raw_source in raw_sources:
++        if not isinstance(raw_source, dict):
++            raise ValueError("Every configured source must be an object.")
++        if raw_source.get("provider") != "greenhouse":
++            continue
++        if not raw_source.get("enabled", True):
++            continue
++
++        name = str(raw_source.get("name") or "").strip()
++        token = str(raw_source.get("token") or "").strip()
++        if not name or not token:
++            raise ValueError("Enabled Greenhouse sources require name and token.")
++        if token in seen_tokens:
++            raise ValueError(f"Duplicate Greenhouse board token: {token}")
++
++        seen_tokens.add(token)
++        if requested_tokens is None or token in requested_tokens:
++            sources.append(GreenhouseSource(name=name, token=token))
++
++    if requested_tokens:
++        configured_tokens = {source.token for source in sources}
++        missing_tokens = requested_tokens - configured_tokens
++        if missing_tokens:
++            missing = ", ".join(sorted(missing_tokens))
++            raise ValueError(f"Unknown or disabled Greenhouse source token(s): {missing}")
++
++    if not sources:
++        raise ValueError("No enabled Greenhouse sources matched the request.")
++
++    return sources
+diff --git a/src/ingestion/greenhouse.py b/src/ingestion/greenhouse.py
+new file mode 100644
+index 0000000..ec6fdd9
+--- /dev/null
++++ b/src/ingestion/greenhouse.py
+@@ -0,0 +1,87 @@
++"""Client for the public Greenhouse Job Board API."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any
++
++import requests
++
++
++DEFAULT_TIMEOUT_SECONDS = 30
++USER_AGENT = (
++    "sa-grad-tech-job-market/0.1 "
++    "(public portfolio research project; contact via repository)"
++)
++
++
++@dataclass(frozen=True)
++class GreenhouseResponse:
++    """One successfully retrieved Greenhouse board response."""
++
++    board_token: str
++    endpoint: str
++    status_code: int
++    content_type: str
++    raw_bytes: bytes
++    payload: dict[str, Any]
++
++    @property
++    def job_count(self) -> int:
++        jobs = self.payload.get("jobs", [])
++        return len(jobs) if isinstance(jobs, list) else 0
++
++
++class GreenhouseClient:
++    """Fetch public job-board payloads without authentication."""
++
++    base_url = "https://boards-api.greenhouse.io/v1/boards"
++
++    def __init__(
++        self,
++        session: requests.Session | None = None,
++        timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
++    ) -> None:
++        if timeout_seconds <= 0:
++            raise ValueError("timeout_seconds must be greater than zero.")
++        self.session = session or requests.Session()
++        self.timeout_seconds = timeout_seconds
++
++    def fetch_board(self, board_token: str) -> GreenhouseResponse:
++        token = board_token.strip()
++        if not token:
++            raise ValueError("board_token cannot be empty.")
++
++        endpoint = f"{self.base_url}/{token}/jobs"
++        response = self.session.get(
++            endpoint,
++            params={"content": "true"},
++            headers={
++                "Accept": "application/json",
++                "User-Agent": USER_AGENT,
++            },
++            timeout=self.timeout_seconds,
++        )
++        response.raise_for_status()
++
++        content_type = response.headers.get("Content-Type", "")
++        try:
++            payload = response.json()
++        except requests.JSONDecodeError as error:
++            raise ValueError(
++                f"Greenhouse returned invalid JSON for board {token}."
++            ) from error
++
++        if not isinstance(payload, dict) or not isinstance(payload.get("jobs"), list):
++            raise ValueError(
++                f"Greenhouse response for board {token} must contain a jobs list."
++            )
++
++        return GreenhouseResponse(
++            board_token=token,
++            endpoint=response.url,
++            status_code=response.status_code,
++            content_type=content_type,
++            raw_bytes=response.content,
++            payload=payload,
++        )
+diff --git a/src/ingestion/snapshot.py b/src/ingestion/snapshot.py
+new file mode 100644
+index 0000000..abc4e23
+--- /dev/null
++++ b/src/ingestion/snapshot.py
+@@ -0,0 +1,116 @@
++"""Persist immutable raw source snapshots and collection metadata."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++from dataclasses import dataclass
++from datetime import datetime, timezone
++from pathlib import Path
++from tempfile import NamedTemporaryFile
++
++from src.ingestion.greenhouse import GreenhouseResponse
++
++
++@dataclass(frozen=True)
++class SnapshotWriteResult:
++    """Outcome of attempting to persist one source response."""
++
++    status: str
++    raw_path: Path
++    metadata_path: Path
++    content_sha256: str
++
++    @property
++    def was_written(self) -> bool:
++        return self.status == "written"
++
++
++def utc_now() -> datetime:
++    return datetime.now(timezone.utc)
++
++
++def filename_timestamp(value: datetime) -> str:
++    normalized = value.astimezone(timezone.utc)
++    return normalized.strftime("%Y%m%dT%H%M%S%fZ")
++
++
++class RawSnapshotStore:
++    """Write exact response bytes once and skip duplicate content."""
++
++    def __init__(self, root: Path) -> None:
++        self.root = root
++
++    def write_greenhouse_snapshot(
++        self,
++        source_name: str,
++        response: GreenhouseResponse,
++        collected_at: datetime | None = None,
++    ) -> SnapshotWriteResult:
++        collection_time = collected_at or utc_now()
++        digest = hashlib.sha256(response.raw_bytes).hexdigest()
++        source_directory = self.root / "greenhouse" / response.board_token
++        source_directory.mkdir(parents=True, exist_ok=True)
++
++        existing_metadata = self._find_existing_digest(source_directory, digest)
++        if existing_metadata is not None:
++            existing_payload = json.loads(existing_metadata.read_text(encoding="utf-8"))
++            raw_path = source_directory / existing_payload["raw_file"]
++            return SnapshotWriteResult(
++                status="duplicate",
++                raw_path=raw_path,
++                metadata_path=existing_metadata,
++                content_sha256=digest,
++            )
++
++        timestamp = filename_timestamp(collection_time)
++        raw_path = source_directory / f"{timestamp}.json"
++        metadata_path = source_directory / f"{timestamp}.metadata.json"
++
++        self._atomic_write_bytes(raw_path, response.raw_bytes)
++        metadata = {
++            "source": "greenhouse",
++            "source_name": source_name,
++            "source_token": response.board_token,
++            "endpoint": response.endpoint,
++            "collected_at": collection_time.astimezone(timezone.utc).isoformat(),
++            "http_status": response.status_code,
++            "content_type": response.content_type,
++            "content_sha256": digest,
++            "byte_count": len(response.raw_bytes),
++            "source_job_count": response.job_count,
++            "raw_file": raw_path.name,
++        }
++        self._atomic_write_text(
++            metadata_path,
++            json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
++        )
++
++        return SnapshotWriteResult(
++            status="written",
++            raw_path=raw_path,
++            metadata_path=metadata_path,
++            content_sha256=digest,
++        )
++
++    @staticmethod
++    def _find_existing_digest(source_directory: Path, digest: str) -> Path | None:
++        for metadata_path in sorted(source_directory.glob("*.metadata.json")):
++            try:
++                metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
++            except (OSError, json.JSONDecodeError):
++                continue
++            if metadata.get("content_sha256") == digest:
++                return metadata_path
++        return None
++
++    @staticmethod
++    def _atomic_write_bytes(path: Path, content: bytes) -> None:
++        with NamedTemporaryFile(dir=path.parent, delete=False) as temporary_file:
++            temporary_path = Path(temporary_file.name)
++            temporary_file.write(content)
++        temporary_path.replace(path)
++
++    @staticmethod
++    def _atomic_write_text(path: Path, content: str) -> None:
++        RawSnapshotStore._atomic_write_bytes(path, content.encode("utf-8"))
+diff --git a/tests/fixtures/greenhouse_jobs.json b/tests/fixtures/greenhouse_jobs.json
+new file mode 100644
+index 0000000..a0ea871
+--- /dev/null
++++ b/tests/fixtures/greenhouse_jobs.json
+@@ -0,0 +1,30 @@
++{
++  "jobs": [
++    {
++      "id": 123456,
++      "internal_job_id": 654321,
++      "title": "Junior Data Analyst",
++      "updated_at": "2026-07-22T12:00:00+02:00",
++      "location": {
++        "name": "Cape Town, South Africa"
++      },
++      "absolute_url": "https://job-boards.greenhouse.io/example/jobs/123456",
++      "content": "&lt;p&gt;Analyse product and customer data.&lt;/p&gt;",
++      "departments": [
++        {
++          "id": 1,
++          "name": "Data"
++        }
++      ],
++      "offices": [
++        {
++          "id": 2,
++          "name": "Cape Town"
++        }
++      ]
++    }
++  ],
++  "meta": {
++    "total": 1
++  }
++}
+diff --git a/tests/test_collect.py b/tests/test_collect.py
+new file mode 100644
+index 0000000..8d0d6e6
+--- /dev/null
++++ b/tests/test_collect.py
+@@ -0,0 +1,33 @@
++from datetime import datetime, timezone
++
++from src.ingestion.collect import collect_source
++from src.ingestion.config import GreenhouseSource
++from src.ingestion.greenhouse import GreenhouseResponse
++from src.ingestion.snapshot import RawSnapshotStore
++
++
++class StubClient:
++    def fetch_board(self, board_token):
++        return GreenhouseResponse(
++            board_token=board_token,
++            endpoint=f"https://example.test/{board_token}",
++            status_code=200,
++            content_type="application/json",
++            raw_bytes=b'{"jobs": []}',
++            payload={"jobs": []},
++        )
++
++
++def test_collect_source_returns_written_result(tmp_path):
++    source = GreenhouseSource(name="Example", token="example")
++    result = collect_source(
++        source=source,
++        client=StubClient(),
++        store=RawSnapshotStore(tmp_path),
++        collected_at=datetime(2026, 7, 22, tzinfo=timezone.utc),
++    )
++
++    assert result.status == "written"
++    assert result.source_token == "example"
++    assert result.job_count == 0
++    assert result.error is None
+diff --git a/tests/test_greenhouse_client.py b/tests/test_greenhouse_client.py
+new file mode 100644
+index 0000000..d537aae
+--- /dev/null
++++ b/tests/test_greenhouse_client.py
+@@ -0,0 +1,60 @@
++import json
++from pathlib import Path
++
++import pytest
++import requests
++
++from src.ingestion.greenhouse import GreenhouseClient
++
++
++FIXTURE_PATH = Path(__file__).parent / "fixtures" / "greenhouse_jobs.json"
++
++
++class FakeResponse:
++    def __init__(self, raw_bytes: bytes, status_code: int = 200):
++        self.content = raw_bytes
++        self.status_code = status_code
++        self.url = (
++            "https://boards-api.greenhouse.io/v1/boards/"
++            "example/jobs?content=true"
++        )
++        self.headers = {"Content-Type": "application/json; charset=utf-8"}
++
++    def raise_for_status(self):
++        if self.status_code >= 400:
++            raise requests.HTTPError(f"HTTP {self.status_code}")
++
++    def json(self):
++        return json.loads(self.content.decode("utf-8"))
++
++
++class FakeSession:
++    def __init__(self, response):
++        self.response = response
++        self.calls = []
++
++    def get(self, url, **kwargs):
++        self.calls.append((url, kwargs))
++        return self.response
++
++
++def test_fetch_board_preserves_exact_response_bytes():
++    raw_bytes = FIXTURE_PATH.read_bytes()
++    session = FakeSession(FakeResponse(raw_bytes))
++    client = GreenhouseClient(session=session, timeout_seconds=12)
++
++    result = client.fetch_board("example")
++
++    assert result.raw_bytes == raw_bytes
++    assert result.job_count == 1
++    assert session.calls[0][0].endswith("/example/jobs")
++    assert session.calls[0][1]["params"] == {"content": "true"}
++    assert session.calls[0][1]["timeout"] == 12
++
++
++def test_fetch_board_rejects_payload_without_jobs_list():
++    response = FakeResponse(b'{"meta": {"total": 0}}')
++    client = GreenhouseClient(session=FakeSession(response))
++
++    with pytest.raises(ValueError, match="jobs list"):
++        client.fetch_board("example")
+diff --git a/tests/test_ingestion_config.py b/tests/test_ingestion_config.py
+new file mode 100644
+index 0000000..45e41a8
+--- /dev/null
++++ b/tests/test_ingestion_config.py
+@@ -0,0 +1,55 @@
++import json
++
++import pytest
++
++from src.ingestion.config import load_greenhouse_sources
++
++
++def test_load_greenhouse_sources_filters_other_providers(tmp_path):
++    config_path = tmp_path / "sources.json"
++    config_path.write_text(
++        json.dumps(
++            {
++                "sources": [
++                    {
++                        "name": "Example",
++                        "provider": "greenhouse",
++                        "token": "example",
++                        "enabled": True,
++                    },
++                    {
++                        "name": "Other",
++                        "provider": "lever",
++                        "token": "other",
++                        "enabled": True,
++                    },
++                ]
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    sources = load_greenhouse_sources(config_path)
++
++    assert [source.token for source in sources] == ["example"]
++
++
++def test_load_greenhouse_sources_rejects_unknown_requested_token(tmp_path):
++    config_path = tmp_path / "sources.json"
++    config_path.write_text(
++        json.dumps(
++            {
++                "sources": [
++                    {
++                        "name": "Example",
++                        "provider": "greenhouse",
++                        "token": "example",
++                    }
++                ]
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    with pytest.raises(ValueError, match="Unknown or disabled"):
++        load_greenhouse_sources(config_path, {"missing"})
+diff --git a/tests/test_snapshot_store.py b/tests/test_snapshot_store.py
+new file mode 100644
+index 0000000..2dd1d0b
+--- /dev/null
++++ b/tests/test_snapshot_store.py
+@@ -0,0 +1,55 @@
++import json
++from datetime import datetime, timezone
++from pathlib import Path
++
++from src.ingestion.greenhouse import GreenhouseResponse
++from src.ingestion.snapshot import RawSnapshotStore
++
++
++FIXTURE_PATH = Path(__file__).parent / "fixtures" / "greenhouse_jobs.json"
++
++
++def build_response() -> GreenhouseResponse:
++    raw_bytes = FIXTURE_PATH.read_bytes()
++    return GreenhouseResponse(
++        board_token="example",
++        endpoint=(
++            "https://boards-api.greenhouse.io/v1/boards/"
++            "example/jobs?content=true"
++        ),
++        status_code=200,
++        content_type="application/json",
++        raw_bytes=raw_bytes,
++        payload=json.loads(raw_bytes.decode("utf-8")),
++    )
++
++
++def test_snapshot_store_writes_raw_bytes_and_metadata(tmp_path):
++    store = RawSnapshotStore(tmp_path)
++    collected_at = datetime(2026, 7, 22, 19, 0, tzinfo=timezone.utc)
++
++    result = store.write_greenhouse_snapshot(
++        source_name="Example Company",
++        response=build_response(),
++        collected_at=collected_at,
++    )
++
++    assert result.was_written
++    assert result.raw_path.read_bytes() == FIXTURE_PATH.read_bytes()
++    metadata = json.loads(result.metadata_path.read_text(encoding="utf-8"))
++    assert metadata["source_name"] == "Example Company"
++    assert metadata["source_job_count"] == 1
++    assert metadata["raw_file"] == result.raw_path.name
++
++
++def test_snapshot_store_skips_identical_payload(tmp_path):
++    store = RawSnapshotStore(tmp_path)
++    response = build_response()
++
++    first = store.write_greenhouse_snapshot("Example Company", response)
++    second = store.write_greenhouse_snapshot("Example Company", response)
++
++    assert first.status == "written"
++    assert second.status == "duplicate"
++    assert second.raw_path == first.raw_path
++    assert len(list((tmp_path / "greenhouse" / "example").glob("*.json"))) == 2
