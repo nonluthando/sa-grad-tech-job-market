@@ -1,0 +1,343 @@
+diff --git a/README.md b/README.md
+index 5ff48e8..fa5b015 100644
+--- a/README.md
++++ b/README.md
+@@ -12,7 +12,10 @@ The first source candidates are:
+ 
+ - Greenhouse Job Board API — primary candidate
+ - Lever Postings API — secondary candidate
+-- Prosple RSS — deferred until later validation
++- Discovery careers page — experimental SuccessFactors source
++- Nedbank careers page — experimental SuccessFactors source
++- Electrum careers page — experimental custom HTML source
++- Prosple RSS — rejected for the MVP after a 403 response
+ - Adzuna API — deferred unless additional market coverage is needed
+ 
+ ## Run the source validation
+diff --git a/config/sources.json b/config/sources.json
+index 0b27735..97dd5e3 100644
+--- a/config/sources.json
++++ b/config/sources.json
+@@ -68,6 +68,51 @@
+       "token": "Yassir",
+       "enabled": true,
+       "priority": "secondary"
++    },
++    {
++      "name": "Discovery",
++      "provider": "html_listing_page",
++      "token": "discovery",
++      "url": "https://careers.discovery.co.za/go/All-Jobs/4509301/",
++      "market_scope": "south_africa",
++      "job_link_pattern": "/job/",
++      "evidence_terms": [
++        "All Jobs",
++        "Results",
++        "Discovery"
++      ],
++      "enabled": true,
++      "priority": "experimental"
++    },
++    {
++      "name": "Nedbank",
++      "provider": "html_listing_page",
++      "token": "nedbank-young-professionals",
++      "url": "https://jobs.nedbank.co.za/go/Young-Professional-Jobs/715601/",
++      "market_scope": "south_africa",
++      "job_link_pattern": "/job/",
++      "evidence_terms": [
++        "Young Professional Jobs",
++        "Results",
++        "Nedbank"
++      ],
++      "enabled": true,
++      "priority": "experimental"
++    },
++    {
++      "name": "Electrum",
++      "provider": "html_listing_page",
++      "token": "electrum",
++      "url": "https://www.electrumsoftware.com/careers",
++      "market_scope": "south_africa",
++      "job_link_pattern": "(?:/careers/|/jobs/|job)",
++      "evidence_terms": [
++        "Available positions",
++        "Career Opportunities",
++        "Electrum"
++      ],
++      "enabled": true,
++      "priority": "experimental"
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/docs/data-source-assessment.md b/docs/data-source-assessment.md
+index 7116c3e..3c7161b 100644
+--- a/docs/data-source-assessment.md
++++ b/docs/data-source-assessment.md
+@@ -31,6 +31,9 @@ Each source is evaluated on:
+ | Greenhouse | Public Job Board API | No for GET | JSON | Takealot, Luno and Impact.com expose South African boards/roles | Employer-by-employer collection; no universal discovery endpoint | **Primary** |
+ | Lever | Public Postings API | No | JSON | Mama Money and Yassir expose Cape Town/Johannesburg/South Africa roles | Employer-by-employer collection; fields vary by employer | **Secondary** |
+ | Prosple | RSS when enabled; partner GraphQL access | Unknown for ZA RSS | RSS/GraphQL | South African directory exists | ZA RSS availability not yet confirmed | Deferred |
++| Discovery | SAP SuccessFactors careers page | No | HTML | South Africa-specific careers portal | Requires page parsing and pagination adapter | **Experimental** |
++| Nedbank | SAP SuccessFactors careers page | No | HTML | South Africa-specific portal and Young Professionals category | Category can be empty; requires page parsing | **Experimental** |
++| Electrum | Public careers page | No | HTML | Cape Town roles | Custom markup; no confirmed public API | **Experimental** |
+ | Adzuna | Registered API | API key | JSON | Coverage still needs measurement | Quotas, attribution and publication/licensing considerations | Deferred |
+ 
+ ## Greenhouse assessment
+@@ -137,3 +140,26 @@ The included validation script records whether each source returns:
+ 
+ Milestone 0 is complete when the saved validation result shows at least one passing source
+ and the chosen source is recorded here with the observed counts and test timestamp.
++
++
++## Expansion-source validation
++
++Discovery, Nedbank and Electrum are now present in `config/sources.json` as
++`html_listing_page` sources.
++
++This validation is intentionally weaker than API validation:
++
++- it confirms that the public page is reachable;
++- checks expected page text to detect redirects or block pages;
++- counts unique links matching the configured job-link pattern;
++- records results without claiming that every detected link is a complete,
++  unique or technology vacancy.
++
++They must not enter production ingestion until we inspect the returned markup,
++define a stable field mapping and add source-specific fixtures and tests.
++
++Discovery's public portal currently exposes paginated South African vacancies,
++including data and developer roles. Nedbank exposes a Young Professionals
++category plus broader searchable vacancies. Electrum exposes structured-looking
++position details on its Cape Town careers page. These are promising coverage
++sources, but they are not equivalent to public JSON APIs.
+diff --git a/scripts/validate_sources.py b/scripts/validate_sources.py
+index f2e5be1..c42b786 100644
+--- a/scripts/validate_sources.py
++++ b/scripts/validate_sources.py
+@@ -10,6 +10,8 @@ from dataclasses import dataclass, asdict
+ from datetime import datetime, timezone
+ from pathlib import Path
+ from typing import Any
++import re
++from html import unescape
+ from urllib.error import HTTPError, URLError
+ from urllib.request import Request, urlopen
+ 
+@@ -79,19 +81,33 @@ def lever_endpoint(token: str) -> str:
+     return f"https://api.lever.co/v0/postings/{token}?mode=json"
+ 
+ 
+-def request_json(url: str, timeout_seconds: int) -> tuple[int, Any]:
++def request_text(
++    url: str,
++    timeout_seconds: int,
++    accept: str = "*/*",
++) -> tuple[int, str, str]:
+     request = Request(
+         url,
+         headers={
+-            "Accept": "application/json",
++            "Accept": accept,
+             "User-Agent": USER_AGENT,
+         },
+     )
+     with urlopen(request, timeout=timeout_seconds) as response:
+         status = getattr(response, "status", 200)
+         charset = response.headers.get_content_charset() or "utf-8"
+-        payload = response.read().decode(charset)
+-        return status, json.loads(payload)
++        content_type = response.headers.get_content_type()
++        payload = response.read().decode(charset, errors="replace")
++        return status, content_type, payload
++
++
++def request_json(url: str, timeout_seconds: int) -> tuple[int, Any]:
++    status, _, payload = request_text(
++        url,
++        timeout_seconds,
++        accept="application/json",
++    )
++    return status, json.loads(payload)
+ 
+ 
+ def normalize_greenhouse(payload: Any) -> list[NormalizedJob]:
+@@ -144,11 +160,13 @@ def normalize_lever(payload: Any) -> list[NormalizedJob]:
+     return jobs
+ 
+ 
+-def build_endpoint(provider: str, token: str) -> str:
++def build_endpoint(provider: str, token: str, source: dict[str, Any] | None = None) -> str:
+     if provider == "greenhouse":
+         return greenhouse_endpoint(token)
+     if provider == "lever":
+         return lever_endpoint(token)
++    if provider == "html_listing_page" and source:
++        return str(source["url"])
+     raise ValueError(f"Unsupported provider: {provider}")
+ 
+ 
+@@ -168,10 +186,18 @@ def assess_source(
+ ) -> SourceResult:
+     provider = str(source["provider"])
+     token = str(source["token"])
+-    endpoint = build_endpoint(provider, token)
++    endpoint = build_endpoint(provider, token, source)
+     checked_at = datetime.now(timezone.utc).isoformat()
+ 
+     try:
++        if provider == "html_listing_page":
++            return assess_html_listing_page(
++                source=source,
++                endpoint=endpoint,
++                checked_at=checked_at,
++                timeout_seconds=timeout_seconds,
++            )
++
+         status, payload = request_json(endpoint, timeout_seconds)
+         jobs = normalize_jobs(provider, payload)
+ 
+@@ -247,6 +273,100 @@ def assess_source(
+         return failure_result(source, endpoint, checked_at, None, str(error))
+ 
+ 
++
++def strip_html_tags(value: str) -> str:
++    without_scripts = re.sub(
++        r"<(?:script|style)\b[^>]*>.*?</(?:script|style)>",
++        " ",
++        value,
++        flags=re.IGNORECASE | re.DOTALL,
++    )
++    without_tags = re.sub(r"<[^>]+>", " ", without_scripts)
++    return re.sub(r"\s+", " ", unescape(without_tags)).strip()
++
++
++def count_matching_links(html: str, pattern: str) -> int:
++    hrefs = re.findall(
++        r"""href\s*=\s*["']([^"']+)["']""",
++        html,
++        flags=re.IGNORECASE,
++    )
++    matching = {
++        href
++        for href in hrefs
++        if re.search(pattern, href, flags=re.IGNORECASE)
++    }
++    return len(matching)
++
++
++def assess_html_listing_page(
++    source: dict[str, Any],
++    endpoint: str,
++    checked_at: str,
++    timeout_seconds: int,
++) -> SourceResult:
++    status, content_type, html = request_text(
++        endpoint,
++        timeout_seconds,
++        accept="text/html,application/xhtml+xml",
++    )
++    plain_text = strip_html_tags(html)
++    evidence_terms = [str(term) for term in source.get("evidence_terms", [])]
++    missing_evidence = [
++        term for term in evidence_terms
++        if term.casefold() not in plain_text.casefold()
++    ]
++    job_link_count = count_matching_links(
++        html,
++        str(source.get("job_link_pattern", r"/job/")),
++    )
++
++    errors: list[str] = []
++    if status != 200:
++        errors.append(f"Unexpected HTTP status: {status}")
++    if "html" not in content_type:
++        errors.append(f"Unexpected content type: {content_type}")
++    if missing_evidence:
++        errors.append(
++            "Missing expected page evidence: " + ", ".join(missing_evidence)
++        )
++    if job_link_count == 0:
++        errors.append(
++            "No job links detected. The page may be empty, client-rendered, "
++            "or its markup may have changed."
++        )
++
++    passed = (
++        status == 200
++        and "html" in content_type
++        and not missing_evidence
++        and job_link_count > 0
++    )
++
++    # These sources are market-scoped pages rather than normalized APIs.
++    # Counts represent detected listing links, not validated unique vacancies.
++    return SourceResult(
++        name=str(source["name"]),
++        provider=str(source["provider"]),
++        token=str(source["token"]),
++        endpoint=endpoint,
++        checked_at=checked_at,
++        http_status=status,
++        response_format="html",
++        total_jobs=job_link_count,
++        south_africa_jobs=(
++            job_link_count
++            if source.get("market_scope") == "south_africa"
++            else 0
++        ),
++        technology_jobs=0,
++        unique_id_ratio=0.0,
++        required_field_completion_ratio=0.0,
++        passed=passed,
++        errors=errors,
++        sample_jobs=[],
++    )
++
+ def failure_result(
+     source: dict[str, Any],
+     endpoint: str,
+@@ -300,7 +420,8 @@ def print_summary(results: list[SourceResult]) -> None:
+             f"{outcome:4} | {result.name:18} | "
+             f"all={result.total_jobs:3} | "
+             f"SA={result.south_africa_jobs:3} | "
+-            f"tech={result.technology_jobs:3}"
++            f"tech={result.technology_jobs:3} | "
++            f"format={result.response_format}"
+         )
+         for error in result.errors:
+             print(f"     - {error}")
+diff --git a/tests/test_validation_helpers.py b/tests/test_validation_helpers.py
+index 2f274d2..eda5e20 100644
+--- a/tests/test_validation_helpers.py
++++ b/tests/test_validation_helpers.py
+@@ -4,6 +4,8 @@ from scripts.validate_sources import (
+     normalize_greenhouse,
+     normalize_lever,
+     required_fields_complete,
++    count_matching_links,
++    strip_html_tags,
+ )
+ 
+ 
+@@ -56,3 +58,18 @@ def test_normalize_lever_prefers_all_locations():
+     jobs = normalize_lever(payload)
+     assert "Cape Town, ZA" in jobs[0].location
+     assert "Johannesburg, ZA" in jobs[0].location
++
++
++
++def test_count_matching_links_deduplicates_urls():
++    html = """
++    <a href="/job/Cape-Town-Data-Analyst/123/">Data Analyst</a>
++    <a href="/job/Cape-Town-Data-Analyst/123/">Duplicate</a>
++    <a href="/content/about/">About</a>
++    """
++    assert count_matching_links(html, r"/job/") == 1
++
++
++def test_strip_html_tags_removes_markup():
++    html = "<h1>Available positions</h1><script>ignore()</script>"
++    assert strip_html_tags(html) == "Available positions"
