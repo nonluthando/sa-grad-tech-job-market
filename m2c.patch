@@ -1,0 +1,2026 @@
+diff --git a/README.md b/README.md
+index 3c9cac3763116296592bb70f506b16485c34b50e..dcfeaaac6eabcf8ebf2f5753703c1804d65253f1 100644
+--- a/README.md
++++ b/README.md
+@@ -7,12 +7,13 @@ early-career lens within the broader market.
+ 
+ ## Current status
+ 
+-**Scope migration complete: broad technology market with an early-career lens**
++**Milestone 2C complete: direct-employer source expansion**
+ 
+ The project can now:
+ 
+ - collect exact raw Greenhouse snapshots from Takealot Group, Luno and Impact.com;
+ - collect exact raw Lever snapshots from Mama Money and Yassir;
++- collect paginated SAP SuccessFactors listings and job-detail pages from Discovery and Nedbank;
+ - verify raw-file integrity from metadata and SHA-256 hashes;
+ - clean HTML job descriptions into analysis-ready text;
+ - normalise South African locations and selected international countries;
+@@ -27,8 +28,8 @@ The project can now:
+ - produce a data-quality report.
+ 
+ The latest verified Milestone 2B build contained 267 canonical jobs across five
+-employers, including 45 South African technology roles and 2 explicitly
+-early-career roles. Live counts change as employers publish and remove vacancies.
++employers. Milestone 2C adds Discovery and Nedbank as direct-employer sources;
++live counts will be recorded after the first complete SuccessFactors collection.
+ 
+ ## Setup
+ 
+@@ -56,8 +57,12 @@ Collect one configured source:
+ 
+ ```bash
+ python -m src.ingestion.collect --source-token takealotgroup
++python -m src.ingestion.collect --source-token discovery
+ ```
+ 
++SuccessFactors collection follows every result page and then downloads each job
++detail page. It is intentionally slower than the JSON API collectors.
++
+ ### 2. Build the canonical dataset
+ 
+ ```bash
+@@ -95,9 +100,9 @@ python scripts/validate_sources.py
+ config/sources.json
+         |
+         v
+-Greenhouse + Lever collectors
++Greenhouse + Lever + SuccessFactors collectors
+         |
+-        +--> exact raw JSON + metadata + SHA-256
++        +--> exact raw JSON or HTML bundle + metadata + SHA-256
+                          |
+                          v
+              snapshot integrity checks
+@@ -127,6 +132,7 @@ Greenhouse + Lever collectors
+ │   ├── milestone-1-raw-ingestion.md
+ │   ├── milestone-2-cleaning.md
+ │   ├── milestone-2b-quality-and-coverage.md
++│   ├── milestone-2c-successfactors-sources.md
+ │   └── project-scope.md
+ ├── scripts/
+ │   └── validate_sources.py
+@@ -139,6 +145,7 @@ Greenhouse + Lever collectors
+ │       ├── dataset.py
+ │       ├── greenhouse.py
+ │       ├── lever.py
++│       ├── successfactors.py
+ │       ├── schema.py
+ │       └── snapshots.py
+ └── tests/
+@@ -168,6 +175,7 @@ Greenhouse + Lever collectors
+ | 1. Raw ingestion | Preserve reproducible Greenhouse snapshots | Complete |
+ | 2. Cleaning and standardisation | Produce one canonical jobs dataset | Complete |
+ | 2B. Quality and source coverage | Add Lever and strengthen level evidence | Complete |
++| 2C. Direct-employer expansion | Add Discovery and Nedbank SuccessFactors sites | Complete |
+ | 3. Baseline market analysis | Answer core market questions | Next |
+ | 4. Skills extraction | Derive technologies and requirements | Planned |
+ | 5. Dashboard | Publish the interactive MVP | Planned |
+@@ -178,6 +186,7 @@ Greenhouse + Lever collectors
+ - [Milestone 1: raw ingestion](docs/milestone-1-raw-ingestion.md)
+ - [Milestone 2: cleaning and standardisation](docs/milestone-2-cleaning.md)
+ - [Milestone 2B: quality and source coverage](docs/milestone-2b-quality-and-coverage.md)
++- [Milestone 2C: SuccessFactors source expansion](docs/milestone-2c-successfactors-sources.md)
+ - [Project scope decision](docs/project-scope.md)
+ 
+ ## Responsible-use scope
+diff --git a/config/sources.json b/config/sources.json
+index 97dd5e3f3d26c55f48c10bdf6a6946ccb19717b1..c6f0cefb82eb5b337e05d0468cba8398a2e8e1d1 100644
+--- a/config/sources.json
++++ b/config/sources.json
+@@ -71,48 +71,40 @@
+     },
+     {
+       "name": "Discovery",
+-      "provider": "html_listing_page",
++      "provider": "successfactors",
+       "token": "discovery",
+       "url": "https://careers.discovery.co.za/go/All-Jobs/4509301/",
+-      "market_scope": "south_africa",
+-      "job_link_pattern": "/job/",
+-      "evidence_terms": [
+-        "All Jobs",
+-        "Results",
+-        "Discovery"
+-      ],
++      "page_size": 25,
++      "max_pages": 10,
++      "request_delay_seconds": 0.2,
+       "enabled": true,
+-      "priority": "experimental"
++      "priority": "secondary"
+     },
+     {
+       "name": "Nedbank",
+-      "provider": "html_listing_page",
+-      "token": "nedbank-young-professionals",
+-      "url": "https://jobs.nedbank.co.za/go/Young-Professional-Jobs/715601/",
+-      "market_scope": "south_africa",
+-      "job_link_pattern": "/job/",
+-      "evidence_terms": [
+-        "Young Professional Jobs",
+-        "Results",
+-        "Nedbank"
+-      ],
++      "provider": "successfactors",
++      "token": "nedbank",
++      "url": "https://jobs.nedbank.co.za/go/All/2886801/",
++      "page_size": 25,
++      "max_pages": 10,
++      "request_delay_seconds": 0.2,
+       "enabled": true,
+-      "priority": "experimental"
++      "priority": "secondary"
+     },
+     {
+       "name": "Electrum",
+       "provider": "html_listing_page",
+       "token": "electrum",
+-      "url": "https://www.electrumsoftware.com/careers",
++      "url": "https://www.electrum.co.za/careers",
+       "market_scope": "south_africa",
+       "job_link_pattern": "(?:/careers/|/jobs/|job)",
+       "evidence_terms": [
+-        "Available positions",
+-        "Career Opportunities",
+-        "Electrum"
++        "Electrum Careers",
++        "Graduate Programme",
++        "Job listings"
+       ],
+       "enabled": true,
+       "priority": "experimental"
+     }
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/docs/data-source-assessment.md b/docs/data-source-assessment.md
+index 3c7161b734b2c7c4e5cf538292163f9d1d2a88a0..2eb53cb4f3f5cb5dbcdc2963bbcad55fe8d8c3e1 100644
+--- a/docs/data-source-assessment.md
++++ b/docs/data-source-assessment.md
+@@ -31,8 +31,8 @@ Each source is evaluated on:
+ | Greenhouse | Public Job Board API | No for GET | JSON | Takealot, Luno and Impact.com expose South African boards/roles | Employer-by-employer collection; no universal discovery endpoint | **Primary** |
+ | Lever | Public Postings API | No | JSON | Mama Money and Yassir expose Cape Town/Johannesburg/South Africa roles | Employer-by-employer collection; fields vary by employer | **Secondary** |
+ | Prosple | RSS when enabled; partner GraphQL access | Unknown for ZA RSS | RSS/GraphQL | South African directory exists | ZA RSS availability not yet confirmed | Deferred |
+-| Discovery | SAP SuccessFactors careers page | No | HTML | South Africa-specific careers portal | Requires page parsing and pagination adapter | **Experimental** |
+-| Nedbank | SAP SuccessFactors careers page | No | HTML | South Africa-specific portal and Young Professionals category | Category can be empty; requires page parsing | **Experimental** |
++| Discovery | SAP SuccessFactors careers page | No | HTML | South Africa-specific careers portal | Slower than JSON APIs; template-sensitive | **Production secondary** |
++| Nedbank | SAP SuccessFactors careers page | No | HTML | Broad South African careers portal | Slower than JSON APIs; template-sensitive | **Production secondary** |
+ | Electrum | Public careers page | No | HTML | Cape Town roles | Custom markup; no confirmed public API | **Experimental** |
+ | Adzuna | Registered API | API key | JSON | Coverage still needs measurement | Quotas, attribution and publication/licensing considerations | Deferred |
+ 
+@@ -144,8 +144,9 @@ and the chosen source is recorded here with the observed counts and test timesta
+ 
+ ## Expansion-source validation
+ 
+-Discovery, Nedbank and Electrum are now present in `config/sources.json` as
+-`html_listing_page` sources.
++Discovery and Nedbank have moved from experimental link validation into the
++production collector as `successfactors` sources. Electrum remains an
++`html_listing_page` validation source.
+ 
+ This validation is intentionally weaker than API validation:
+ 
+@@ -155,8 +156,9 @@ This validation is intentionally weaker than API validation:
+ - records results without claiming that every detected link is a complete,
+   unique or technology vacancy.
+ 
+-They must not enter production ingestion until we inspect the returned markup,
+-define a stable field mapping and add source-specific fixtures and tests.
++The production SuccessFactors adapter now provides pagination completeness
++checks, exact embedded page preservation, source-specific parsing and fixtures.
++Electrum must still meet those conditions before entering production ingestion.
+ 
+ Discovery's public portal currently exposes paginated South African vacancies,
+ including data and developer roles. Nedbank exposes a Young Professionals
+diff --git a/docs/milestone-2c-successfactors-sources.md b/docs/milestone-2c-successfactors-sources.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7461f47240d9eceac020548fed8e062e3f981f18
+--- /dev/null
++++ b/docs/milestone-2c-successfactors-sources.md
+@@ -0,0 +1,126 @@
++# Milestone 2C — Direct-employer SuccessFactors expansion
++
++## Purpose
++
++The broader South African technology-market scope needs more employer coverage
++before baseline analysis. The project therefore adds two large direct-employer
++career sites that use SAP SuccessFactors:
++
++- Discovery
++- Nedbank
++
++The sources remain first-party employer pages. No aggregator is introduced into
++the production dataset.
++
++## Why these sources
++
++The source-validation phase had already confirmed that both sites expose
++server-rendered, paginated vacancy lists with stable `/job/.../{id}/` detail
++links. They add substantial South African coverage and include software, data,
++quality engineering, platform and related technology roles.
++
++Electrum remains experimental. Its current careers site contains valuable
++programme information, but it does not expose the same stable, general vacancy
++listing contract as the two SuccessFactors portals.
++
++## Collection contract
++
++SuccessFactors does not provide the same simple public JSON endpoint used by
++Greenhouse or Lever. The collector therefore:
++
++1. downloads the first listing page;
++2. reads the advertised `Results x-y of z` total;
++3. follows deterministic offset pages until every unique job link is found;
++4. fails if pagination stops early or the reported total changes mid-run;
++5. downloads every discovered job-detail page;
++6. stores the exact response bytes for every listing and detail page inside one
++   base64-encoded JSON bundle; and
++7. writes normal snapshot metadata and SHA-256 integrity information.
++
++The bundle is intentionally verbose. It preserves source evidence so parsing can
++be improved later without re-requesting pages that may have changed or closed.
++
++## Transformation contract
++
++The snapshot reader verifies:
++
++- the outer raw-file SHA-256 hash;
++- every embedded listing-page hash;
++- every embedded job-detail-page hash;
++- the reported job total;
++- the number of saved detail pages; and
++- the metadata `source_job_count`.
++
++Only after those checks does it parse each job into the canonical schema.
++
++The detail parser uses SuccessFactors-specific selectors with conservative
++fallbacks for:
++
++- job title;
++- location;
++- posting date;
++- description; and
++- numeric source job ID.
++
++The normal location, workplace, role-level and technology classifiers then run
++unchanged. `is_target_market` continues to mean a South African technology role,
++while `is_early_career` remains the separate graduate/junior/internship lens.
++
++## Responsible collection controls
++
++- Requests identify the project through a clear user agent.
++- A configurable delay is applied before each detail-page request.
++- Pagination has a configured maximum-page guard.
++- Partial collections fail instead of being published as complete.
++- The collector accesses only public vacancy pages and does not submit forms,
++  authenticate, or bypass access controls.
++
++## Trade-offs
++
++### Benefits
++
++- first-party provenance;
++- wider South African employer coverage;
++- full descriptions for later skills extraction;
++- stable numeric job identifiers;
++- auditable raw evidence; and
++- no paid API dependency.
++
++### Costs
++
++- many more HTTP requests than JSON APIs;
++- slower collection;
++- greater sensitivity to HTML-template changes; and
++- larger raw snapshots because page bytes are preserved.
++
++The trade-off is acceptable because the two sites materially improve coverage
++while preserving direct employer lineage.
++
++## Verification
++
++Run one source independently first:
++
++```bash
++python -m src.ingestion.collect --source-token discovery
++python -m src.ingestion.collect --source-token nedbank
++```
++
++Then rebuild the combined dataset:
++
++```bash
++python -m src.transformation.build
++cat data/processed/quality-report.json
++```
++
++The quality report should include `successfactors` in
++`provider_job_counts`, and Discovery and Nedbank in the company breakdown.
++
++## Exit condition
++
++Milestone 2C is complete when:
++
++- both complete public listings are collected;
++- no completeness or integrity checks fail;
++- canonical jobs are produced from both sources;
++- the provider and company counts reconcile; and
++- the full automated test suite passes.
+diff --git a/requirements.txt b/requirements.txt
+index 8c95904b83c3f4d40e42f0664bcc90b2aff1d060..22e6ace4e38535dd36016f30a9eaeeae06ff675b 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,3 +1,4 @@
+ requests==2.32.4
++beautifulsoup4==4.13.4
+ pyarrow==25.0.0
+ pytest==8.4.1
+diff --git a/scripts/validate_sources.py b/scripts/validate_sources.py
+index c42b786c64e854d933c4c1e03801478c3bc08aae..f14a16bf504072cddd879b861698c4176745f75d 100644
+--- a/scripts/validate_sources.py
++++ b/scripts/validate_sources.py
+@@ -165,7 +165,7 @@ def build_endpoint(provider: str, token: str, source: dict[str, Any] | None = No
+         return greenhouse_endpoint(token)
+     if provider == "lever":
+         return lever_endpoint(token)
+-    if provider == "html_listing_page" and source:
++    if provider in {"html_listing_page", "successfactors"} and source:
+         return str(source["url"])
+     raise ValueError(f"Unsupported provider: {provider}")
+ 
+@@ -190,7 +190,7 @@ def assess_source(
+     checked_at = datetime.now(timezone.utc).isoformat()
+ 
+     try:
+-        if provider == "html_listing_page":
++        if provider in {"html_listing_page", "successfactors"}:
+             return assess_html_listing_page(
+                 source=source,
+                 endpoint=endpoint,
+diff --git a/src/ingestion/collect.py b/src/ingestion/collect.py
+index f8c9e30bafd4445011735f734b96bdd61e7568e5..168aed800208780cd747c77558be0afb489bd11e 100644
+--- a/src/ingestion/collect.py
++++ b/src/ingestion/collect.py
+@@ -1,4 +1,4 @@
+-"""Command-line entry point for raw Greenhouse and Lever ingestion."""
++"""Command-line entry point for raw public job-source ingestion."""
+ 
+ from __future__ import annotations
+ 
+@@ -16,11 +16,13 @@ from src.ingestion.config import (
+     ConfiguredSource,
+     GreenhouseSource,
+     LeverSource,
++    SuccessFactorsSource,
+     load_collection_sources,
+ )
+ from src.ingestion.greenhouse import GreenhouseClient
+ from src.ingestion.lever import LeverClient
+ from src.ingestion.snapshot import RawSnapshotStore, filename_timestamp
++from src.ingestion.successfactors import SuccessFactorsClient
+ 
+ 
+ PROJECT_ROOT = Path(__file__).resolve().parents[2]
+@@ -48,6 +50,23 @@ class LeverFetcher(Protocol):
+     def fetch_site(self, site_token: str): ...
+ 
+ 
++class SuccessFactorsFetcher(Protocol):
++    def fetch_source(self, source: SuccessFactorsSource): ...
++
++
++def _failed_result(source_name: str, provider: str, token: str, error: Exception) -> CollectionResult:
++    return CollectionResult(
++        source_name=source_name,
++        source_provider=provider,
++        source_token=token,
++        status="failed",
++        job_count=0,
++        raw_path=None,
++        metadata_path=None,
++        error=str(error),
++    )
++
++
+ def collect_source(
+     source: GreenhouseSource,
+     client: GreenhouseFetcher,
+@@ -77,16 +96,7 @@ def collect_source(
+             error=None,
+         )
+     except (requests.RequestException, ValueError, OSError) as error:
+-        return CollectionResult(
+-            source_name=source.name,
+-            source_provider="greenhouse",
+-            source_token=source.token,
+-            status="failed",
+-            job_count=0,
+-            raw_path=None,
+-            metadata_path=None,
+-            error=str(error),
+-        )
++        return _failed_result(source.name, "greenhouse", source.token, error)
+ 
+ 
+ def collect_lever_source(
+@@ -115,22 +125,43 @@ def collect_lever_source(
+             error=None,
+         )
+     except (requests.RequestException, ValueError, OSError) as error:
++        return _failed_result(source.name, "lever", source.token, error)
++
++
++def collect_successfactors_source(
++    source: SuccessFactorsSource,
++    client: SuccessFactorsFetcher,
++    store: RawSnapshotStore,
++    collected_at: datetime,
++) -> CollectionResult:
++    """Collect one complete SuccessFactors listing-and-detail bundle."""
++
++    try:
++        response = client.fetch_source(source)
++        snapshot = store.write_successfactors_snapshot(
++            source_name=source.name,
++            response=response,
++            collected_at=collected_at,
++        )
+         return CollectionResult(
+             source_name=source.name,
+-            source_provider="lever",
++            source_provider="successfactors",
+             source_token=source.token,
+-            status="failed",
+-            job_count=0,
+-            raw_path=None,
+-            metadata_path=None,
+-            error=str(error),
++            status=snapshot.status,
++            job_count=response.job_count,
++            raw_path=str(snapshot.raw_path),
++            metadata_path=str(snapshot.metadata_path),
++            error=None,
+         )
++    except (requests.RequestException, ValueError, OSError) as error:
++        return _failed_result(source.name, "successfactors", source.token, error)
+ 
+ 
+ def collect_configured_source(
+     source: ConfiguredSource,
+     greenhouse_client: GreenhouseFetcher,
+     lever_client: LeverFetcher,
++    successfactors_client: SuccessFactorsFetcher,
+     store: RawSnapshotStore,
+     collected_at: datetime,
+ ) -> CollectionResult:
+@@ -148,6 +179,24 @@ def collect_configured_source(
+             store,
+             collected_at,
+         )
++    if source.provider == "successfactors":
++        if source.listing_url is None:
++            raise ValueError(
++                f"SuccessFactors source {source.token} has no listing URL."
++            )
++        return collect_successfactors_source(
++            SuccessFactorsSource(
++                name=source.name,
++                token=source.token,
++                listing_url=source.listing_url,
++                page_size=source.page_size,
++                max_pages=source.max_pages,
++                request_delay_seconds=source.request_delay_seconds,
++            ),
++            successfactors_client,
++            store,
++            collected_at,
++        )
+     raise ValueError(f"Unsupported collection provider: {source.provider}")
+ 
+ 
+@@ -183,10 +232,10 @@ def write_run_report(
+ 
+ def print_summary(results: list[CollectionResult], report_path: Path) -> None:
+     print("\nRaw-ingestion summary")
+-    print("=" * 88)
++    print("=" * 96)
+     for result in results:
+         print(
+-            f"{result.status.upper():9} | {result.source_provider:10} | "
++            f"{result.status.upper():9} | {result.source_provider:14} | "
+             f"{result.source_name:18} | jobs={result.job_count:3} | "
+             f"token={result.source_token}"
+         )
+@@ -197,7 +246,9 @@ def print_summary(results: list[CollectionResult], report_path: Path) -> None:
+ 
+ def parse_args() -> argparse.Namespace:
+     parser = argparse.ArgumentParser(
+-        description="Collect exact raw Greenhouse and Lever job-board snapshots."
++        description=(
++            "Collect exact raw Greenhouse, Lever and SuccessFactors snapshots."
++        )
+     )
+     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+     parser.add_argument("--raw-root", type=Path, default=DEFAULT_RAW_ROOT)
+@@ -223,6 +274,9 @@ def main() -> int:
+             timeout_seconds=args.timeout,
+             page_limit=args.lever_page_limit,
+         )
++        successfactors_client = SuccessFactorsClient(
++            timeout_seconds=args.timeout,
++        )
+     except (OSError, json.JSONDecodeError, ValueError) as error:
+         print(f"Configuration error: {error}", file=sys.stderr)
+         return 2
+@@ -234,6 +288,7 @@ def main() -> int:
+             source,
+             greenhouse_client,
+             lever_client,
++            successfactors_client,
+             store,
+             collected_at,
+         )
+diff --git a/src/ingestion/config.py b/src/ingestion/config.py
+index ed62cc7a997a2277561a1be2d2c380dc93b0defd..e25265c99ac183faca50672f7a749801c45d329d 100644
+--- a/src/ingestion/config.py
++++ b/src/ingestion/config.py
+@@ -6,9 +6,10 @@ import json
+ from dataclasses import dataclass
+ from pathlib import Path
+ from typing import Any, Iterable
++from urllib.parse import urlparse
+ 
+ 
+-SUPPORTED_COLLECTION_PROVIDERS = ("greenhouse", "lever")
++SUPPORTED_COLLECTION_PROVIDERS = ("greenhouse", "lever", "successfactors")
+ 
+ 
+ @dataclass(frozen=True)
+@@ -18,6 +19,10 @@ class ConfiguredSource:
+     name: str
+     provider: str
+     token: str
++    listing_url: str | None = None
++    page_size: int = 25
++    max_pages: int = 10
++    request_delay_seconds: float = 0.2
+ 
+ 
+ @dataclass(frozen=True)
+@@ -36,6 +41,18 @@ class LeverSource:
+     token: str
+ 
+ 
++@dataclass(frozen=True)
++class SuccessFactorsSource:
++    """A configured public SAP SuccessFactors career site."""
++
++    name: str
++    token: str
++    listing_url: str
++    page_size: int = 25
++    max_pages: int = 10
++    request_delay_seconds: float = 0.2
++
++
+ def _read_raw_sources(config_path: Path) -> list[dict[str, Any]]:
+     payload: Any = json.loads(config_path.read_text(encoding="utf-8"))
+     raw_sources = payload.get("sources")
+@@ -50,6 +67,39 @@ def _read_raw_sources(config_path: Path) -> list[dict[str, Any]]:
+     return validated
+ 
+ 
++def _positive_int(value: Any, field_name: str, default: int) -> int:
++    if value is None:
++        return default
++    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
++        raise ValueError(f"{field_name} must be a positive integer.")
++    return value
++
++
++def _nonnegative_float(value: Any, field_name: str, default: float) -> float:
++    if value is None:
++        return default
++    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
++        raise ValueError(f"{field_name} must be a non-negative number.")
++    return float(value)
++
++
++def _successfactors_settings(raw_source: dict[str, Any]) -> tuple[str, int, int, float]:
++    listing_url = str(raw_source.get("url") or "").strip()
++    parsed = urlparse(listing_url)
++    if parsed.scheme != "https" or not parsed.netloc:
++        raise ValueError(
++            "Enabled successfactors sources require an absolute HTTPS url."
++        )
++    page_size = _positive_int(raw_source.get("page_size"), "page_size", 25)
++    max_pages = _positive_int(raw_source.get("max_pages"), "max_pages", 10)
++    request_delay_seconds = _nonnegative_float(
++        raw_source.get("request_delay_seconds"),
++        "request_delay_seconds",
++        0.2,
++    )
++    return listing_url, page_size, max_pages, request_delay_seconds
++
++
+ def _load_provider_sources(
+     config_path: Path,
+     *,
+@@ -68,9 +118,7 @@ def _load_provider_sources(
+         name = str(raw_source.get("name") or "").strip()
+         token = str(raw_source.get("token") or "").strip()
+         if not name or not token:
+-            raise ValueError(
+-                f"Enabled {provider} sources require name and token."
+-            )
++            raise ValueError(f"Enabled {provider} sources require name and token.")
+         if token in seen_tokens:
+             raise ValueError(f"Duplicate {provider} source token: {token}")
+ 
+@@ -125,16 +173,57 @@ def load_lever_sources(
+     ]
+ 
+ 
++def load_successfactors_sources(
++    config_path: Path,
++    requested_tokens: set[str] | None = None,
++) -> list[SuccessFactorsSource]:
++    """Return enabled SuccessFactors sources with validated pagination settings."""
++
++    sources: list[SuccessFactorsSource] = []
++    for raw_source in _read_raw_sources(config_path):
++        if raw_source.get("provider") != "successfactors":
++            continue
++        if not raw_source.get("enabled", True):
++            continue
++        name = str(raw_source.get("name") or "").strip()
++        token = str(raw_source.get("token") or "").strip()
++        if not name or not token:
++            raise ValueError(
++                "Enabled successfactors sources require name and token."
++            )
++        if requested_tokens is not None and token not in requested_tokens:
++            continue
++        listing_url, page_size, max_pages, delay = _successfactors_settings(raw_source)
++        sources.append(
++            SuccessFactorsSource(
++                name=name,
++                token=token,
++                listing_url=listing_url,
++                page_size=page_size,
++                max_pages=max_pages,
++                request_delay_seconds=delay,
++            )
++        )
++
++    if requested_tokens:
++        matched_tokens = {source.token for source in sources}
++        missing_tokens = requested_tokens - matched_tokens
++        if missing_tokens:
++            missing = ", ".join(sorted(missing_tokens))
++            raise ValueError(
++                f"Unknown or disabled successfactors source token(s): {missing}"
++            )
++    if not sources:
++        raise ValueError("No enabled successfactors sources matched the request.")
++    return sources
++
++
+ def load_collection_sources(
+     config_path: Path,
+     requested_tokens: set[str] | None = None,
+     providers: Iterable[str] = SUPPORTED_COLLECTION_PROVIDERS,
+ ) -> list[ConfiguredSource]:
+-    """Return all enabled sources supported by the production collector.
+-
+-    Token filtering is resolved across providers so requesting a Lever token does
+-    not incorrectly fail Greenhouse validation, and vice versa.
+-    """
++    """Return enabled sources supported by the production collector."""
+ 
+     requested_providers = tuple(providers)
+     unsupported = set(requested_providers) - set(SUPPORTED_COLLECTION_PROVIDERS)
+@@ -155,18 +244,31 @@ def load_collection_sources(
+         name = str(raw_source.get("name") or "").strip()
+         token = str(raw_source.get("token") or "").strip()
+         if not name or not token:
+-            raise ValueError(
+-                f"Enabled {provider} sources require name and token."
+-            )
++            raise ValueError(f"Enabled {provider} sources require name and token.")
+ 
+         source_key = (provider, token)
+         if source_key in seen_source_keys:
+-            raise ValueError(
+-                f"Duplicate configured source: {provider}:{token}"
+-            )
++            raise ValueError(f"Duplicate configured source: {provider}:{token}")
+         seen_source_keys.add(source_key)
++        if requested_tokens is not None and token not in requested_tokens:
++            continue
+ 
+-        if requested_tokens is None or token in requested_tokens:
++        if provider == "successfactors":
++            listing_url, page_size, max_pages, delay = _successfactors_settings(
++                raw_source
++            )
++            sources.append(
++                ConfiguredSource(
++                    name=name,
++                    provider=provider,
++                    token=token,
++                    listing_url=listing_url,
++                    page_size=page_size,
++                    max_pages=max_pages,
++                    request_delay_seconds=delay,
++                )
++            )
++        else:
+             sources.append(
+                 ConfiguredSource(name=name, provider=provider, token=token)
+             )
+diff --git a/src/ingestion/snapshot.py b/src/ingestion/snapshot.py
+index 60db7b414e032f1a9e080d1cf08d0bd77ea6a040..db06a19bd7a053a92cf82cc92345a54f6322d296 100644
+--- a/src/ingestion/snapshot.py
++++ b/src/ingestion/snapshot.py
+@@ -11,6 +11,7 @@ from tempfile import NamedTemporaryFile
+ 
+ from src.ingestion.greenhouse import GreenhouseResponse
+ from src.ingestion.lever import LeverResponse
++from src.ingestion.successfactors import SuccessFactorsResponse
+ 
+ 
+ @dataclass(frozen=True)
+@@ -78,6 +79,28 @@ class RawSnapshotStore:
+             collected_at=collected_at,
+         )
+ 
++    def write_successfactors_snapshot(
++        self,
++        source_name: str,
++        response: SuccessFactorsResponse,
++        collected_at: datetime | None = None,
++    ) -> SnapshotWriteResult:
++        return self._write_snapshot(
++            provider="successfactors",
++            source_name=source_name,
++            source_token=response.source_token,
++            endpoint=response.endpoint,
++            status_code=response.status_code,
++            content_type=response.content_type,
++            raw_bytes=response.raw_bytes,
++            job_count=response.job_count,
++            collected_at=collected_at,
++            extra_metadata={
++                "listing_page_count": response.listing_page_count,
++                "detail_page_count": response.detail_page_count,
++            },
++        )
++
+     def _write_snapshot(
+         self,
+         *,
+@@ -90,6 +113,7 @@ class RawSnapshotStore:
+         raw_bytes: bytes,
+         job_count: int,
+         collected_at: datetime | None,
++        extra_metadata: dict[str, object] | None = None,
+     ) -> SnapshotWriteResult:
+         collection_time = collected_at or utc_now()
+         digest = hashlib.sha256(raw_bytes).hexdigest()
+@@ -125,6 +149,8 @@ class RawSnapshotStore:
+             "source_job_count": job_count,
+             "raw_file": raw_path.name,
+         }
++        if extra_metadata:
++            metadata.update(extra_metadata)
+         self._atomic_write_text(
+             metadata_path,
+             json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+diff --git a/src/ingestion/successfactors.py b/src/ingestion/successfactors.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..7639bb3126bca6878e4642a8293a2597cf3466b9
+--- /dev/null
++++ b/src/ingestion/successfactors.py
+@@ -0,0 +1,265 @@
++"""Collect complete SAP SuccessFactors career-site snapshots."""
++
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++import re
++import time
++from dataclasses import dataclass
++from typing import Any, Callable, Mapping
++from urllib.parse import urljoin, urlparse
++
++import requests
++from bs4 import BeautifulSoup
++
++from src.ingestion.config import SuccessFactorsSource
++
++
++USER_AGENT = (
++    "sa-tech-job-market/0.3 "
++    "(public portfolio research project; contact via repository)"
++)
++_RESULTS_PATTERN = re.compile(
++    r"Results\s+\d+\s*[–—-]\s*\d+\s+of\s+(\d+)",
++    re.IGNORECASE,
++)
++_JOB_ID_PATTERN = re.compile(r"/job/[^?#]+/(\d+)/?(?:[?#]|$)", re.IGNORECASE)
++
++
++@dataclass(frozen=True)
++class SuccessFactorsResponse:
++    """One complete listing-and-detail bundle from a SuccessFactors career site."""
++
++    source_token: str
++    endpoint: str
++    status_code: int
++    content_type: str
++    raw_bytes: bytes
++    job_count: int
++    listing_page_count: int
++    detail_page_count: int
++
++
++@dataclass(frozen=True)
++class ParsedListingPage:
++    reported_total: int
++    jobs: tuple[dict[str, str], ...]
++
++
++def _clean_text(value: Any) -> str:
++    return re.sub(r"\s+", " ", str(value or "")).strip()
++
++
++def _job_id_from_url(url: str) -> str:
++    match = _JOB_ID_PATTERN.search(url)
++    return match.group(1) if match else ""
++
++
++def _normalise_job_url(base_url: str, href: str) -> str:
++    absolute = urljoin(base_url, href)
++    parsed = urlparse(absolute)
++    return parsed._replace(query="", fragment="").geturl()
++
++
++def _listing_page_url(base_url: str, offset: int) -> str:
++    if offset == 0:
++        return base_url
++    parsed = urlparse(base_url)
++    base_path = parsed.path.rstrip("/")
++    path = f"{base_path}/{offset}/"
++    return parsed._replace(path=path).geturl()
++
++
++def parse_listing_page(raw_bytes: bytes, page_url: str) -> ParsedListingPage:
++    """Extract stable job links and listing evidence from one server-rendered page."""
++
++    soup = BeautifulSoup(raw_bytes, "html.parser")
++    page_text = soup.get_text(" ", strip=True)
++    total_match = _RESULTS_PATTERN.search(page_text)
++    if total_match is None:
++        raise ValueError(
++            "SuccessFactors listing page did not expose a Results x-y of z count."
++        )
++    reported_total = int(total_match.group(1))
++
++    jobs: list[dict[str, str]] = []
++    seen_urls: set[str] = set()
++    for anchor in soup.find_all("a", href=True):
++        href = str(anchor.get("href") or "")
++        if "/job/" not in href.lower():
++            continue
++        job_url = _normalise_job_url(page_url, href)
++        job_id = _job_id_from_url(job_url)
++        if not job_id or job_url in seen_urls:
++            continue
++        title = _clean_text(anchor.get_text(" ", strip=True))
++        if not title:
++            continue
++
++        location = ""
++        published_text = ""
++        row = anchor.find_parent("tr")
++        if row is not None:
++            cells = [_clean_text(cell.get_text(" ", strip=True)) for cell in row.find_all("td")]
++            nonempty_cells = [cell for cell in cells if cell]
++            title_index = next(
++                (index for index, cell in enumerate(nonempty_cells) if title in cell),
++                0,
++            )
++            trailing = nonempty_cells[title_index + 1 :]
++            if trailing:
++                location = trailing[0]
++            if len(trailing) > 1:
++                published_text = trailing[-1]
++
++        jobs.append(
++            {
++                "source_job_id": job_id,
++                "title": title,
++                "location_raw": location,
++                "published_text": published_text,
++                "application_url": job_url,
++            }
++        )
++        seen_urls.add(job_url)
++
++    return ParsedListingPage(reported_total=reported_total, jobs=tuple(jobs))
++
++
++def _page_record(
++    *,
++    requested_url: str,
++    final_url: str,
++    status_code: int,
++    content_type: str,
++    raw_bytes: bytes,
++) -> dict[str, Any]:
++    return {
++        "requested_url": requested_url,
++        "final_url": final_url,
++        "status_code": status_code,
++        "content_type": content_type,
++        "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
++        "body_base64": base64.b64encode(raw_bytes).decode("ascii"),
++    }
++
++
++class SuccessFactorsClient:
++    """Fetch every listing page and job-detail page without browser automation."""
++
++    def __init__(
++        self,
++        timeout_seconds: int = 30,
++        session: requests.Session | None = None,
++        sleep: Callable[[float], None] = time.sleep,
++    ) -> None:
++        self.timeout_seconds = timeout_seconds
++        self.session = session or requests.Session()
++        self.session.headers.update(
++            {
++                "Accept": "text/html,application/xhtml+xml",
++                "User-Agent": USER_AGENT,
++            }
++        )
++        self.sleep = sleep
++
++    def _get(self, url: str) -> requests.Response:
++        response = self.session.get(url, timeout=self.timeout_seconds)
++        response.raise_for_status()
++        return response
++
++    def fetch_source(self, source: SuccessFactorsSource) -> SuccessFactorsResponse:
++        """Fetch a complete source and fail rather than silently keep partial pages."""
++
++        listing_pages: list[dict[str, Any]] = []
++        indexed_jobs: dict[str, dict[str, str]] = {}
++        reported_total: int | None = None
++
++        for page_number in range(source.max_pages):
++            offset = page_number * source.page_size
++            page_url = _listing_page_url(source.listing_url, offset)
++            response = self._get(page_url)
++            raw_bytes = response.content
++            parsed = parse_listing_page(raw_bytes, response.url)
++            if reported_total is None:
++                reported_total = parsed.reported_total
++            elif parsed.reported_total != reported_total:
++                raise ValueError(
++                    "SuccessFactors reported job count changed during pagination."
++                )
++
++            listing_pages.append(
++                _page_record(
++                    requested_url=page_url,
++                    final_url=response.url,
++                    status_code=response.status_code,
++                    content_type=response.headers.get("Content-Type", ""),
++                    raw_bytes=raw_bytes,
++                )
++            )
++            before = len(indexed_jobs)
++            for job in parsed.jobs:
++                indexed_jobs.setdefault(job["application_url"], job)
++
++            if reported_total == 0 or len(indexed_jobs) >= reported_total:
++                break
++            if len(indexed_jobs) == before:
++                raise ValueError(
++                    "SuccessFactors pagination returned no new jobs before completion."
++                )
++        else:
++            raise ValueError(
++                f"SuccessFactors source exceeded max_pages={source.max_pages}."
++            )
++
++        if reported_total is None:
++            raise ValueError("SuccessFactors listing did not return a reported total.")
++        if len(indexed_jobs) != reported_total:
++            raise ValueError(
++                "SuccessFactors completeness check failed: "
++                f"reported {reported_total}, discovered {len(indexed_jobs)}."
++            )
++
++        job_pages: list[dict[str, Any]] = []
++        job_index: list[dict[str, str]] = []
++        for job_url, index_record in indexed_jobs.items():
++            if source.request_delay_seconds:
++                self.sleep(source.request_delay_seconds)
++            response = self._get(job_url)
++            raw_bytes = response.content
++            page = _page_record(
++                requested_url=job_url,
++                final_url=response.url,
++                status_code=response.status_code,
++                content_type=response.headers.get("Content-Type", ""),
++                raw_bytes=raw_bytes,
++            )
++            page["source_job_id"] = index_record["source_job_id"]
++            job_pages.append(page)
++            job_index.append(index_record)
++
++        envelope: Mapping[str, Any] = {
++            "provider": "successfactors",
++            "source_token": source.token,
++            "listing_url": source.listing_url,
++            "reported_job_count": reported_total,
++            "listing_pages": listing_pages,
++            "job_index": job_index,
++            "job_pages": job_pages,
++        }
++        raw_bundle = (
++            json.dumps(envelope, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
++            + "\n"
++        ).encode("utf-8")
++        return SuccessFactorsResponse(
++            source_token=source.token,
++            endpoint=source.listing_url,
++            status_code=200,
++            content_type="application/vnd.sa-tech-job-market.successfactors+json",
++            raw_bytes=raw_bundle,
++            job_count=reported_total,
++            listing_page_count=len(listing_pages),
++            detail_page_count=len(job_pages),
++        )
+diff --git a/src/transformation/dataset.py b/src/transformation/dataset.py
+index 206d76b1cc1f54fdc23eb45a24e34662f0f8d960..f996e9fc0f68872e62916e2a3e761e65bbddac8e 100644
+--- a/src/transformation/dataset.py
++++ b/src/transformation/dataset.py
+@@ -14,6 +14,7 @@ from src.transformation.cleaning import unique_strings
+ from src.transformation.greenhouse import parse_datetime, transform_greenhouse_job
+ from src.transformation.lever import transform_lever_job
+ from src.transformation.schema import CanonicalJob
++from src.transformation.successfactors import transform_successfactors_job
+ from src.transformation.snapshots import SourceSnapshot, load_snapshots
+ 
+ 
+@@ -157,6 +158,8 @@ def _transform_snapshot_job(
+         return transform_greenhouse_job(job, snapshot.metadata, raw_path)
+     if snapshot.provider == "lever":
+         return transform_lever_job(job, snapshot.metadata, raw_path)
++    if snapshot.provider == "successfactors":
++        return transform_successfactors_job(job, snapshot.metadata, raw_path)
+     raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
+ 
+ 
+diff --git a/src/transformation/snapshots.py b/src/transformation/snapshots.py
+index 79b6c0c97bd4c41b931e3388d02f0f456556283c..6dd845d682410d92b1635aa00e18999e490145de 100644
+--- a/src/transformation/snapshots.py
++++ b/src/transformation/snapshots.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import base64
+ import hashlib
+ import json
+ import re
+@@ -10,9 +11,10 @@ from pathlib import Path
+ from typing import Any, Mapping
+ 
+ from src.transformation.greenhouse import parse_datetime
++from src.transformation.successfactors import parse_successfactors_detail
+ 
+ 
+-SUPPORTED_SNAPSHOT_PROVIDERS = ("greenhouse", "lever")
++SUPPORTED_SNAPSHOT_PROVIDERS = ("greenhouse", "lever", "successfactors")
+ 
+ 
+ class SnapshotReadError(ValueError):
+@@ -31,9 +33,9 @@ class SourceSnapshot:
+         return str(self.metadata.get("source") or "")
+ 
+ 
+-# Backwards-compatible names used by Milestone 2 imports and tests.
+ GreenhouseSnapshot = SourceSnapshot
+ LeverSnapshot = SourceSnapshot
++SuccessFactorsSnapshot = SourceSnapshot
+ 
+ 
+ def discover_metadata_paths(raw_root: Path, provider: str) -> list[Path]:
+@@ -136,7 +138,6 @@ def _read_verified_payload(
+ 
+ def _validate_jobs(
+     payload_jobs: Any,
+-    metadata_path: Path,
+     raw_path: Path,
+     expected_count: Any,
+ ) -> tuple[Mapping[str, Any], ...]:
+@@ -164,43 +165,98 @@ def _validate_jobs(
+ 
+ 
+ def read_greenhouse_snapshot(metadata_path: Path) -> GreenhouseSnapshot:
+-    """Validate Greenhouse metadata, integrity and raw JSON structure."""
+-
+     metadata = _read_metadata(metadata_path, "greenhouse")
+     raw_path, payload = _read_verified_payload(metadata_path, metadata)
+     if not isinstance(payload, dict):
+         raise SnapshotReadError(f"Greenhouse snapshot must be an object: {raw_path}")
+-    jobs = _validate_jobs(
+-        payload.get("jobs"),
+-        metadata_path,
+-        raw_path,
+-        metadata.get("source_job_count"),
+-    )
+-    return SourceSnapshot(
+-        metadata_path=metadata_path,
+-        raw_path=raw_path,
+-        metadata=metadata,
+-        jobs=jobs,
+-    )
++    jobs = _validate_jobs(payload.get("jobs"), raw_path, metadata.get("source_job_count"))
++    return SourceSnapshot(metadata_path, raw_path, metadata, jobs)
+ 
+ 
+ def read_lever_snapshot(metadata_path: Path) -> LeverSnapshot:
+-    """Validate Lever metadata, integrity and raw JSON structure."""
+-
+     metadata = _read_metadata(metadata_path, "lever")
+     raw_path, payload = _read_verified_payload(metadata_path, metadata)
+-    jobs = _validate_jobs(
+-        payload,
+-        metadata_path,
+-        raw_path,
+-        metadata.get("source_job_count"),
+-    )
+-    return SourceSnapshot(
+-        metadata_path=metadata_path,
+-        raw_path=raw_path,
+-        metadata=metadata,
+-        jobs=jobs,
+-    )
++    jobs = _validate_jobs(payload, raw_path, metadata.get("source_job_count"))
++    return SourceSnapshot(metadata_path, raw_path, metadata, jobs)
++
++
++def _decode_page(page: Any, raw_path: Path) -> bytes:
++    if not isinstance(page, dict):
++        raise SnapshotReadError(f"SuccessFactors page must be an object: {raw_path}")
++    body_base64 = page.get("body_base64")
++    expected_digest = page.get("content_sha256")
++    if not isinstance(body_base64, str) or not isinstance(expected_digest, str):
++        raise SnapshotReadError(
++            f"SuccessFactors page is missing body or digest: {raw_path}"
++        )
++    try:
++        body = base64.b64decode(body_base64, validate=True)
++    except (ValueError, TypeError) as error:
++        raise SnapshotReadError(
++            f"Invalid SuccessFactors base64 page body: {raw_path}"
++        ) from error
++    if hashlib.sha256(body).hexdigest() != expected_digest:
++        raise SnapshotReadError(
++            f"SuccessFactors embedded page SHA-256 mismatch: {raw_path}"
++        )
++    return body
++
++
++def read_successfactors_snapshot(metadata_path: Path) -> SuccessFactorsSnapshot:
++    """Verify the bundle and parse every saved detail page into a source record."""
++
++    metadata = _read_metadata(metadata_path, "successfactors")
++    raw_path, payload = _read_verified_payload(metadata_path, metadata)
++    if not isinstance(payload, dict) or payload.get("provider") != "successfactors":
++        raise SnapshotReadError(
++            f"SuccessFactors snapshot must be a provider envelope: {raw_path}"
++        )
++
++    listing_pages = payload.get("listing_pages")
++    job_pages = payload.get("job_pages")
++    job_index = payload.get("job_index")
++    if not isinstance(listing_pages, list) or not listing_pages:
++        raise SnapshotReadError(
++            f"SuccessFactors snapshot has no listing pages: {raw_path}"
++        )
++    if not isinstance(job_pages, list) or not isinstance(job_index, list):
++        raise SnapshotReadError(
++            f"SuccessFactors snapshot has invalid job pages/index: {raw_path}"
++        )
++
++    for page in listing_pages:
++        _decode_page(page, raw_path)
++
++    index_by_id: dict[str, Mapping[str, Any]] = {}
++    for record in job_index:
++        if not isinstance(record, dict):
++            raise SnapshotReadError(
++                f"SuccessFactors job index contains a non-object: {raw_path}"
++            )
++        source_job_id = str(record.get("source_job_id") or "")
++        if source_job_id:
++            index_by_id[source_job_id] = record
++
++    jobs: list[Mapping[str, Any]] = []
++    for page in job_pages:
++        body = _decode_page(page, raw_path)
++        source_job_id = str(page.get("source_job_id") or "")
++        job_url = str(page.get("final_url") or page.get("requested_url") or "")
++        jobs.append(
++            parse_successfactors_detail(
++                body,
++                job_url,
++                index_by_id.get(source_job_id),
++            )
++        )
++
++    expected_count = metadata.get("source_job_count")
++    reported_count = payload.get("reported_job_count")
++    if reported_count != expected_count or len(jobs) != expected_count:
++        raise SnapshotReadError(
++            f"SuccessFactors source_job_count does not match bundle pages: {raw_path}"
++        )
++    return SourceSnapshot(metadata_path, raw_path, metadata, tuple(jobs))
+ 
+ 
+ def _sort_snapshots(snapshots: list[SourceSnapshot]) -> list[SourceSnapshot]:
+@@ -215,8 +271,6 @@ def _sort_snapshots(snapshots: list[SourceSnapshot]) -> list[SourceSnapshot]:
+ 
+ 
+ def load_greenhouse_snapshots(raw_root: Path) -> list[GreenhouseSnapshot]:
+-    """Load every valid Greenhouse snapshot under the raw root."""
+-
+     metadata_paths = discover_metadata_paths(raw_root, "greenhouse")
+     if not metadata_paths:
+         raise SnapshotReadError(
+@@ -226,18 +280,25 @@ def load_greenhouse_snapshots(raw_root: Path) -> list[GreenhouseSnapshot]:
+ 
+ 
+ def load_lever_snapshots(raw_root: Path) -> list[LeverSnapshot]:
+-    """Load every valid Lever snapshot under the raw root."""
+-
+     metadata_paths = discover_metadata_paths(raw_root, "lever")
++    if not metadata_paths:
++        raise SnapshotReadError(f"No Lever metadata snapshots found beneath: {raw_root}")
++    return _sort_snapshots([read_lever_snapshot(path) for path in metadata_paths])
++
++
++def load_successfactors_snapshots(raw_root: Path) -> list[SuccessFactorsSnapshot]:
++    metadata_paths = discover_metadata_paths(raw_root, "successfactors")
+     if not metadata_paths:
+         raise SnapshotReadError(
+-            f"No Lever metadata snapshots found beneath: {raw_root}"
++            f"No SuccessFactors metadata snapshots found beneath: {raw_root}"
+         )
+-    return _sort_snapshots([read_lever_snapshot(path) for path in metadata_paths])
++    return _sort_snapshots(
++        [read_successfactors_snapshot(path) for path in metadata_paths]
++    )
+ 
+ 
+ def load_snapshots(raw_root: Path) -> list[SourceSnapshot]:
+-    """Load every supported snapshot, allowing either provider to be absent."""
++    """Load every supported snapshot, allowing any provider to be absent."""
+ 
+     metadata_paths = discover_all_metadata_paths(raw_root)
+     if not metadata_paths:
+@@ -245,15 +306,18 @@ def load_snapshots(raw_root: Path) -> list[SourceSnapshot]:
+             f"No supported metadata snapshots found beneath: {raw_root}"
+         )
+ 
++    readers = {
++        "greenhouse": read_greenhouse_snapshot,
++        "lever": read_lever_snapshot,
++        "successfactors": read_successfactors_snapshot,
++    }
+     snapshots: list[SourceSnapshot] = []
+     for metadata_path in metadata_paths:
+         provider = metadata_path.parent.parent.name
+-        if provider == "greenhouse":
+-            snapshots.append(read_greenhouse_snapshot(metadata_path))
+-        elif provider == "lever":
+-            snapshots.append(read_lever_snapshot(metadata_path))
+-        else:
++        reader = readers.get(provider)
++        if reader is None:
+             raise SnapshotReadError(
+                 f"Unsupported snapshot provider directory: {metadata_path}"
+             )
++        snapshots.append(reader(metadata_path))
+     return _sort_snapshots(snapshots)
+diff --git a/src/transformation/successfactors.py b/src/transformation/successfactors.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..92030433161397bc76a5606326cde6713f626461
+--- /dev/null
++++ b/src/transformation/successfactors.py
+@@ -0,0 +1,243 @@
++"""Parse SuccessFactors job-detail HTML and create canonical jobs."""
++
++from __future__ import annotations
++
++import hashlib
++import re
++from datetime import datetime, timezone
++from pathlib import Path
++from typing import Any, Mapping
++
++from bs4 import BeautifulSoup
++
++from src.transformation.classification import (
++    classify_location,
++    classify_role_level,
++    classify_technology_role,
++    classify_workplace,
++)
++from src.transformation.cleaning import (
++    clean_display_text,
++    normalize_whitespace,
++    normalized_key,
++    unique_strings,
++)
++from src.transformation.greenhouse import parse_datetime
++from src.transformation.schema import CanonicalJob
++
++
++_EARLY_CAREER_LEVELS = {"internship", "graduate", "junior"}
++_JOB_ID_PATTERN = re.compile(r"/job/[^?#]+/(\d+)/?(?:[?#]|$)", re.IGNORECASE)
++_DATE_PATTERN = re.compile(
++    r"\bDate:\s*(\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4})\b",
++    re.IGNORECASE,
++)
++_LOCATION_PATTERN = re.compile(
++    r"\bLocation:\s*(.+?)(?=\s+Date:|\s+Title:|$)",
++    re.IGNORECASE,
++)
++
++
++def _first_text(soup: BeautifulSoup, selectors: tuple[str, ...]) -> str:
++    for selector in selectors:
++        element = soup.select_one(selector)
++        if element is not None:
++            value = clean_display_text(element.get_text(" ", strip=True))
++            if value:
++                return value
++    return ""
++
++
++def _remove_page_noise(container: Any) -> str:
++    for selector in (
++        "script",
++        "style",
++        "nav",
++        "form",
++        ".apply",
++        ".jobApplyBtn",
++        ".socialshare",
++        ".similar-jobs",
++    ):
++        for element in container.select(selector):
++            element.decompose()
++    return normalize_whitespace(container.get_text(" ", strip=True))
++
++
++def parse_successfactors_detail(
++    raw_bytes: bytes,
++    job_url: str,
++    index_record: Mapping[str, Any] | None = None,
++) -> dict[str, Any]:
++    """Extract stable fields with listing evidence as a conservative fallback."""
++
++    index = index_record or {}
++    soup = BeautifulSoup(raw_bytes, "html.parser")
++    title = _first_text(
++        soup,
++        ("h1", ".jobTitle h1", ".jobTitle", "[itemprop='title']"),
++    ) or clean_display_text(index.get("title"))
++
++    visible_text = normalize_whitespace(soup.get_text(" ", strip=True))
++    location = _first_text(
++        soup,
++        (".jobGeoLocation", "[itemprop='jobLocation']", ".job-location"),
++    )
++    location = re.sub(r"^Location:\s*", "", location, flags=re.IGNORECASE)
++    if not location:
++        match = _LOCATION_PATTERN.search(visible_text)
++        if match:
++            location = clean_display_text(match.group(1))
++    if not location:
++        location = clean_display_text(index.get("location_raw"))
++
++    published_text = clean_display_text(index.get("published_text"))
++    date_match = _DATE_PATTERN.search(visible_text)
++    if date_match:
++        published_text = date_match.group(1)
++
++    description_container = None
++    for selector in (
++        ".jobdescription",
++        ".jobDescription",
++        "[itemprop='description']",
++        ".job-detail-content",
++        ".job",
++    ):
++        description_container = soup.select_one(selector)
++        if description_container is not None:
++            break
++    description_text = (
++        _remove_page_noise(description_container)
++        if description_container is not None
++        else ""
++    )
++
++    source_job_id = clean_display_text(index.get("source_job_id"))
++    if not source_job_id:
++        match = _JOB_ID_PATTERN.search(job_url)
++        source_job_id = match.group(1) if match else ""
++
++    return {
++        "source_job_id": source_job_id,
++        "title": title,
++        "location_raw": location,
++        "published_text": published_text,
++        "description_text": description_text,
++        "application_url": job_url,
++    }
++
++
++def _parse_source_date(value: str) -> datetime | None:
++    text = clean_display_text(value)
++    if not text:
++        return None
++    for date_format in ("%d %b %Y", "%d %B %Y"):
++        try:
++            return datetime.strptime(text, date_format).replace(tzinfo=timezone.utc)
++        except ValueError:
++            continue
++    return parse_datetime(text)
++
++
++def _stable_job_key(
++    source_token: str,
++    source_job_id: str,
++    application_url: str,
++    fallback_content: str,
++) -> str:
++    if source_job_id:
++        identity = source_job_id
++    elif application_url:
++        identity = "url-" + hashlib.sha256(application_url.encode("utf-8")).hexdigest()[:24]
++    else:
++        identity = "content-" + hashlib.sha256(fallback_content.encode("utf-8")).hexdigest()[:24]
++    return f"successfactors:{source_token}:{identity}"
++
++
++def transform_successfactors_job(
++    job: Mapping[str, Any],
++    metadata: Mapping[str, Any],
++    raw_path: Path,
++) -> CanonicalJob:
++    """Create one canonical observation from a parsed SuccessFactors detail page."""
++
++    source_name = clean_display_text(metadata.get("source_name"))
++    source_token = clean_display_text(metadata.get("source_token"))
++    snapshot_sha256 = clean_display_text(metadata.get("content_sha256"))
++    collected_at = parse_datetime(metadata.get("collected_at"))
++    if collected_at is None:
++        raise ValueError("Snapshot metadata contains an invalid collected_at value.")
++
++    source_job_id = clean_display_text(job.get("source_job_id"))
++    title = clean_display_text(job.get("title"))
++    title_normalized = normalized_key(title)
++    location_raw = clean_display_text(job.get("location_raw"))
++    description_text = clean_display_text(job.get("description_text"))
++    application_url = clean_display_text(job.get("application_url"))
++
++    location = classify_location(location_raw, description_text)
++    workplace = classify_workplace(title, location_raw, description_text)
++    role_level = classify_role_level(title, description_text)
++    technology = classify_technology_role(title, None, description_text)
++    is_early_career = role_level.label in _EARLY_CAREER_LEVELS
++    is_target_market = location.is_south_africa and technology.is_technology_role
++
++    issues: list[str] = []
++    if not source_job_id:
++        issues.append("missing_source_job_id")
++    if not title:
++        issues.append("missing_title")
++    if not application_url:
++        issues.append("missing_application_url")
++    if not location_raw:
++        issues.append("missing_location")
++    if not description_text:
++        issues.append("missing_description")
++
++    source_updated_at = _parse_source_date(clean_display_text(job.get("published_text")))
++    if source_updated_at is None:
++        issues.append("missing_or_invalid_source_updated_at")
++
++    fallback_content = "|".join(
++        (source_name, title_normalized, normalized_key(location_raw), description_text[:500])
++    )
++    return CanonicalJob(
++        job_key=_stable_job_key(
++            source_token,
++            source_job_id,
++            application_url,
++            fallback_content,
++        ),
++        source_provider="successfactors",
++        source_name=source_name,
++        source_token=source_token,
++        source_job_id=source_job_id,
++        source_snapshot_sha256=snapshot_sha256,
++        source_snapshot_path=str(raw_path),
++        first_seen_at=collected_at,
++        last_seen_at=collected_at,
++        source_updated_at=source_updated_at,
++        observation_count=1,
++        title=title,
++        title_normalized=title_normalized,
++        company=source_name,
++        department=None,
++        office=None,
++        location_raw=location_raw,
++        city=location.city,
++        province=location.province,
++        country=location.country,
++        location_evidence=location.evidence,
++        is_south_africa=location.is_south_africa,
++        workplace_type=workplace.label,
++        role_level=role_level.label,
++        role_level_evidence=role_level.evidence,
++        is_technology_role=technology.is_technology_role,
++        technology_evidence=technology.evidence,
++        is_early_career=is_early_career,
++        is_target_market=is_target_market,
++        description_text=description_text,
++        application_url=application_url,
++        data_quality_issues=unique_strings(issues),
++    )
+diff --git a/tests/test_collect.py b/tests/test_collect.py
+index 679378354edc3788a18112c8abea0f851929df06..f94b0b1d84e22543b5bd6bb3692f5614012ac38d 100644
+--- a/tests/test_collect.py
++++ b/tests/test_collect.py
+@@ -62,3 +62,40 @@ def test_collect_lever_source_returns_written_result(tmp_path):
+     assert result.source_token == "lever-example"
+     assert result.job_count == 0
+     assert result.error is None
++
++
++def test_collect_successfactors_source_returns_written_result(tmp_path):
++    from src.ingestion.collect import collect_successfactors_source
++    from src.ingestion.config import SuccessFactorsSource
++    from src.ingestion.successfactors import SuccessFactorsResponse
++
++    class StubSuccessFactorsClient:
++        def fetch_source(self, source):
++            return SuccessFactorsResponse(
++                source_token=source.token,
++                endpoint=source.listing_url,
++                status_code=200,
++                content_type="application/vnd.test+json",
++                raw_bytes=b'{"provider":"successfactors"}',
++                job_count=2,
++                listing_page_count=1,
++                detail_page_count=2,
++            )
++
++    source = SuccessFactorsSource(
++        name="Example Bank",
++        token="example-bank",
++        listing_url="https://jobs.example.test/go/All/123/",
++        request_delay_seconds=0,
++    )
++    result = collect_successfactors_source(
++        source=source,
++        client=StubSuccessFactorsClient(),
++        store=RawSnapshotStore(tmp_path),
++        collected_at=datetime(2026, 7, 23, tzinfo=timezone.utc),
++    )
++
++    assert result.status == "written"
++    assert result.source_provider == "successfactors"
++    assert result.job_count == 2
++    assert result.error is None
+diff --git a/tests/test_ingestion_config.py b/tests/test_ingestion_config.py
+index 5f45939f67e4bf1e5ff92f7d92c195995bf1b253..c9e6d54a2005973e08f21d6924aaffdcf6783ca5 100644
+--- a/tests/test_ingestion_config.py
++++ b/tests/test_ingestion_config.py
+@@ -123,3 +123,59 @@ def test_collection_token_filter_is_resolved_across_providers(tmp_path):
+ 
+     assert len(sources) == 1
+     assert sources[0].provider == "lever"
++
++
++def test_load_collection_sources_includes_successfactors_settings(tmp_path):
++    from src.ingestion.config import load_collection_sources
++
++    config_path = tmp_path / "sources.json"
++    config_path.write_text(
++        json.dumps(
++            {
++                "sources": [
++                    {
++                        "name": "Example Bank",
++                        "provider": "successfactors",
++                        "token": "example-bank",
++                        "url": "https://jobs.example.test/go/All/123/",
++                        "page_size": 20,
++                        "max_pages": 7,
++                        "request_delay_seconds": 0.1,
++                    }
++                ]
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    source = load_collection_sources(config_path)[0]
++
++    assert source.provider == "successfactors"
++    assert source.listing_url == "https://jobs.example.test/go/All/123/"
++    assert source.page_size == 20
++    assert source.max_pages == 7
++    assert source.request_delay_seconds == 0.1
++
++
++def test_successfactors_source_requires_https_url(tmp_path):
++    from src.ingestion.config import load_collection_sources
++
++    config_path = tmp_path / "sources.json"
++    config_path.write_text(
++        json.dumps(
++            {
++                "sources": [
++                    {
++                        "name": "Example Bank",
++                        "provider": "successfactors",
++                        "token": "example-bank",
++                        "url": "http://jobs.example.test/go/All/123/",
++                    }
++                ]
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    with pytest.raises(ValueError, match="absolute HTTPS"):
++        load_collection_sources(config_path)
+diff --git a/tests/test_snapshot_store.py b/tests/test_snapshot_store.py
+index eb0db7b9c29b2d4dfa31cd1a3f7436f45a725083..321460e0c82453d7e19885df15f3fd1467b6456e 100644
+--- a/tests/test_snapshot_store.py
++++ b/tests/test_snapshot_store.py
+@@ -83,3 +83,29 @@ def test_snapshot_store_writes_lever_raw_bytes_and_metadata(tmp_path):
+     assert metadata["source"] == "lever"
+     assert metadata["source_name"] == "Lever Example"
+     assert metadata["source_job_count"] == 3
++
++
++def test_store_writes_successfactors_snapshot_metadata(tmp_path):
++    from src.ingestion.successfactors import SuccessFactorsResponse
++
++    response = SuccessFactorsResponse(
++        source_token="example-bank",
++        endpoint="https://jobs.example.test/go/All/123/",
++        status_code=200,
++        content_type="application/vnd.test+json",
++        raw_bytes=b'{"provider":"successfactors"}',
++        job_count=2,
++        listing_page_count=1,
++        detail_page_count=2,
++    )
++
++    result = RawSnapshotStore(tmp_path).write_successfactors_snapshot(
++        source_name="Example Bank",
++        response=response,
++        collected_at=datetime(2026, 7, 23, tzinfo=timezone.utc),
++    )
++
++    metadata = json.loads(result.metadata_path.read_text(encoding="utf-8"))
++    assert metadata["source"] == "successfactors"
++    assert metadata["listing_page_count"] == 1
++    assert metadata["detail_page_count"] == 2
+diff --git a/tests/test_successfactors_client.py b/tests/test_successfactors_client.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..7ab1de391b8d0a8ee376fabf3abc0899f9783056
+--- /dev/null
++++ b/tests/test_successfactors_client.py
+@@ -0,0 +1,136 @@
++import json
++
++import pytest
++import requests
++
++from src.ingestion.config import SuccessFactorsSource
++from src.ingestion.successfactors import (
++    SuccessFactorsClient,
++    parse_listing_page,
++)
++
++
++LISTING_PAGE_1 = b"""
++<html><body>
++<div>Results 1 - 2 of 3 Page 1 of 2</div>
++<table>
++<tr><td><a href="/job/Johannesburg-Junior-Data-Analyst/1001/">Junior Data Analyst</a></td><td>Johannesburg, ZA</td><td>20 Jul 2026</td></tr>
++<tr><td><a href="/job/Cape-Town-Senior-Developer/1002/">Senior Developer</a></td><td>Cape Town, ZA</td><td>21 Jul 2026</td></tr>
++</table>
++</body></html>
++"""
++
++LISTING_PAGE_2 = b"""
++<html><body>
++<div>Results 3 - 3 of 3 Page 2 of 2</div>
++<table>
++<tr><td><a href="/job/Sandton-QA-Engineer/1003/">QA Engineer</a></td><td>Sandton, GP, ZA</td><td>22 Jul 2026</td></tr>
++</table>
++</body></html>
++"""
++
++DETAIL = b"""
++<html><body><div class="job">
++<div class="jobTitle"><h1>Junior Data Analyst</h1></div>
++<div class="jobGeoLocation">Location: Johannesburg, ZA</div>
++<div>Date: 20 Jul 2026</div>
++<div class="jobdescription"><h2>Job Purpose</h2><p>Use SQL and Python to analyse data.</p></div>
++</div></body></html>
++"""
++
++
++class FakeResponse:
++    def __init__(self, url, content, status_code=200):
++        self.url = url
++        self.content = content
++        self.status_code = status_code
++        self.headers = {"Content-Type": "text/html; charset=utf-8"}
++
++    def raise_for_status(self):
++        if self.status_code >= 400:
++            raise requests.HTTPError(f"status={self.status_code}")
++
++
++class FakeSession:
++    def __init__(self, responses):
++        self.responses = responses
++        self.headers = {}
++        self.requested = []
++
++    def get(self, url, timeout):
++        self.requested.append((url, timeout))
++        return self.responses[url]
++
++
++def test_parse_listing_page_extracts_unique_jobs_and_total():
++    parsed = parse_listing_page(
++        LISTING_PAGE_1,
++        "https://example.test/go/All/123/",
++    )
++
++    assert parsed.reported_total == 3
++    assert [job["source_job_id"] for job in parsed.jobs] == ["1001", "1002"]
++    assert parsed.jobs[0]["location_raw"] == "Johannesburg, ZA"
++    assert parsed.jobs[0]["published_text"] == "20 Jul 2026"
++
++
++def test_successfactors_client_fetches_all_pages_and_details():
++    base = "https://example.test/go/All/123/"
++    page_2 = "https://example.test/go/All/123/2/"
++    detail_urls = [
++        "https://example.test/job/Johannesburg-Junior-Data-Analyst/1001/",
++        "https://example.test/job/Cape-Town-Senior-Developer/1002/",
++        "https://example.test/job/Sandton-QA-Engineer/1003/",
++    ]
++    responses = {
++        base: FakeResponse(base, LISTING_PAGE_1),
++        page_2: FakeResponse(page_2, LISTING_PAGE_2),
++        **{url: FakeResponse(url, DETAIL) for url in detail_urls},
++    }
++    session = FakeSession(responses)
++    source = SuccessFactorsSource(
++        name="Example Bank",
++        token="example-bank",
++        listing_url=base,
++        page_size=2,
++        max_pages=3,
++        request_delay_seconds=0,
++    )
++
++    response = SuccessFactorsClient(
++        timeout_seconds=12,
++        session=session,
++        sleep=lambda _: None,
++    ).fetch_source(source)
++
++    assert response.job_count == 3
++    assert response.listing_page_count == 2
++    assert response.detail_page_count == 3
++    payload = json.loads(response.raw_bytes)
++    assert payload["reported_job_count"] == 3
++    assert len(payload["listing_pages"]) == 2
++    assert len(payload["job_pages"]) == 3
++    assert session.requested[0] == (base, 12)
++
++
++def test_successfactors_client_rejects_incomplete_pagination():
++    base = "https://example.test/go/All/123/"
++    page_2 = "https://example.test/go/All/123/2/"
++    responses = {
++        base: FakeResponse(base, LISTING_PAGE_1),
++        page_2: FakeResponse(page_2, LISTING_PAGE_1),
++    }
++    source = SuccessFactorsSource(
++        name="Example Bank",
++        token="example-bank",
++        listing_url=base,
++        page_size=2,
++        max_pages=3,
++        request_delay_seconds=0,
++    )
++
++    with pytest.raises(ValueError, match="no new jobs"):
++        SuccessFactorsClient(
++            session=FakeSession(responses),
++            sleep=lambda _: None,
++        ).fetch_source(source)
+diff --git a/tests/test_successfactors_snapshots.py b/tests/test_successfactors_snapshots.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e8b9dd7f641cf733f0a4c28d7232a38fb8653c1c
+--- /dev/null
++++ b/tests/test_successfactors_snapshots.py
+@@ -0,0 +1,97 @@
++import base64
++import hashlib
++import json
++from pathlib import Path
++
++import pytest
++
++from src.transformation.snapshots import (
++    SnapshotReadError,
++    read_successfactors_snapshot,
++)
++
++
++DETAIL = b"""
++<html><body><div class="job">
++<h1>Software Developer</h1>
++<div class="jobGeoLocation">Location: Johannesburg, ZA</div>
++<div>Date: 20 Jul 2026</div>
++<div class="jobdescription"><p>Build software using Java.</p></div>
++</div></body></html>
++"""
++LISTING = b"<html><body>Results 1 - 1 of 1</body></html>"
++
++
++def page(url: str, body: bytes, **extra):
++    return {
++        "requested_url": url,
++        "final_url": url,
++        "status_code": 200,
++        "content_type": "text/html",
++        "content_sha256": hashlib.sha256(body).hexdigest(),
++        "body_base64": base64.b64encode(body).decode("ascii"),
++        **extra,
++    }
++
++
++def write_bundle(tmp_path: Path, tamper_embedded_hash: bool = False) -> Path:
++    source_directory = tmp_path / "successfactors" / "example"
++    source_directory.mkdir(parents=True)
++    detail_page = page(
++        "https://example.test/job/Johannesburg-Software-Developer/1001/",
++        DETAIL,
++        source_job_id="1001",
++    )
++    if tamper_embedded_hash:
++        detail_page["content_sha256"] = "0" * 64
++    payload = {
++        "provider": "successfactors",
++        "source_token": "example",
++        "listing_url": "https://example.test/go/All/123/",
++        "reported_job_count": 1,
++        "listing_pages": [page("https://example.test/go/All/123/", LISTING)],
++        "job_index": [
++            {
++                "source_job_id": "1001",
++                "title": "Software Developer",
++                "location_raw": "Johannesburg, ZA",
++                "published_text": "20 Jul 2026",
++                "application_url": "https://example.test/job/Johannesburg-Software-Developer/1001/",
++            }
++        ],
++        "job_pages": [detail_page],
++    }
++    raw_bytes = (json.dumps(payload) + "\n").encode()
++    raw_path = source_directory / "snapshot.json"
++    raw_path.write_bytes(raw_bytes)
++    metadata_path = source_directory / "snapshot.metadata.json"
++    metadata_path.write_text(
++        json.dumps(
++            {
++                "source": "successfactors",
++                "source_name": "Example Bank",
++                "source_token": "example",
++                "collected_at": "2026-07-23T12:00:00Z",
++                "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
++                "source_job_count": 1,
++                "raw_file": raw_path.name,
++            }
++        )
++    )
++    return metadata_path
++
++
++def test_read_successfactors_snapshot_verifies_and_parses_bundle(tmp_path):
++    snapshot = read_successfactors_snapshot(write_bundle(tmp_path))
++
++    assert snapshot.provider == "successfactors"
++    assert len(snapshot.jobs) == 1
++    assert snapshot.jobs[0]["source_job_id"] == "1001"
++    assert snapshot.jobs[0]["title"] == "Software Developer"
++
++
++def test_read_successfactors_snapshot_rejects_modified_embedded_page(tmp_path):
++    metadata_path = write_bundle(tmp_path, tamper_embedded_hash=True)
++
++    with pytest.raises(SnapshotReadError, match="embedded page SHA-256 mismatch"):
++        read_successfactors_snapshot(metadata_path)
+diff --git a/tests/test_successfactors_transformation.py b/tests/test_successfactors_transformation.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d9f4c359e547fa212de638e87ec27922a2222abd
+--- /dev/null
++++ b/tests/test_successfactors_transformation.py
+@@ -0,0 +1,57 @@
++from pathlib import Path
++
++from src.transformation.successfactors import (
++    parse_successfactors_detail,
++    transform_successfactors_job,
++)
++
++
++DETAIL = b"""
++<html><body>
++<div class="job">
++  <div class="jobTitle"><h1>Junior Data Analyst</h1></div>
++  <div class="jobGeoLocation">Location: Johannesburg, ZA</div>
++  <div>Date: 20 Jul 2026</div>
++  <div class="jobdescription">
++    <h2>Job Purpose</h2>
++    <p>Use SQL and Python to analyse customer data.</p>
++  </div>
++</div>
++</body></html>
++"""
++
++
++def test_parse_successfactors_detail_extracts_core_fields():
++    job = parse_successfactors_detail(
++        DETAIL,
++        "https://example.test/job/Johannesburg-Junior-Data-Analyst/1001/",
++    )
++
++    assert job["source_job_id"] == "1001"
++    assert job["title"] == "Junior Data Analyst"
++    assert job["location_raw"] == "Johannesburg, ZA"
++    assert job["published_text"] == "20 Jul 2026"
++    assert "SQL and Python" in job["description_text"]
++
++
++def test_transform_successfactors_job_uses_broadened_market_scope():
++    parsed = parse_successfactors_detail(
++        DETAIL,
++        "https://example.test/job/Johannesburg-Junior-Data-Analyst/1001/",
++    )
++    metadata = {
++        "source_name": "Example Bank",
++        "source_token": "example-bank",
++        "collected_at": "2026-07-23T12:00:00Z",
++        "content_sha256": "abc",
++    }
++
++    job = transform_successfactors_job(parsed, metadata, Path("snapshot.json"))
++
++    assert job.source_provider == "successfactors"
++    assert job.company == "Example Bank"
++    assert job.is_south_africa is True
++    assert job.is_technology_role is True
++    assert job.is_target_market is True
++    assert job.is_early_career is True
++    assert job.source_updated_at.isoformat() == "2026-07-20T00:00:00+00:00"

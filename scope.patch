@@ -1,0 +1,507 @@
+diff --git a/README.md b/README.md
+index 8cd3ee3..3c9cac3 100644
+--- a/README.md
++++ b/README.md
+@@ -1,12 +1,13 @@
+-# South African Graduate Tech Job Market Intelligence
++# South African Tech Job Market Intelligence
+ 
+ An end-to-end analytics engineering project that collects public job postings,
+-builds a reliable job-market dataset, extracts role and skill requirements, and
+-publishes insights about South African graduate and junior technology hiring.
++builds a reliable job-market dataset, and publishes evidence about technology
++hiring in South Africa. Graduate and junior opportunities remain a dedicated
++early-career lens within the broader market.
+ 
+ ## Current status
+ 
+-**Milestone 2B complete: classification quality and Lever coverage**
++**Scope migration complete: broad technology market with an early-career lens**
+ 
+ The project can now:
+ 
+@@ -18,15 +19,16 @@ The project can now:
+ - classify workplace type, role level and technology relevance;
+ - retain source-tagged evidence behind role-level classifications;
+ - use explicit Lever workplace and level fields when available;
+-- identify the target South African early-career technology market;
++- identify the target South African technology market;
++- flag explicitly early-career roles as a separate analytical lens;
+ - deduplicate stable postings across collection snapshots;
+ - preserve first-seen, last-seen and observation history;
+ - write a schema-controlled Parquet dataset; and
+ - produce a data-quality report.
+ 
+-The latest verified Milestone 1 collection contained 100 raw jobs across the
+-three Greenhouse sources. Live counts change as employers publish and remove
+-vacancies.
++The latest verified Milestone 2B build contained 267 canonical jobs across five
++employers, including 45 South African technology roles and 2 explicitly
++early-career roles. Live counts change as employers publish and remove vacancies.
+ 
+ ## Setup
+ 
+@@ -70,9 +72,10 @@ data/processed/
+ └── quality-report.json
+ ```
+ 
+-`jobs.parquet` retains every standardised job and provides flags for South
+-African, technology and target-market roles. Jobs are not silently discarded
+-because a classification is uncertain.
++`jobs.parquet` retains every standardised job. `is_target_market` identifies
++South African technology roles, while `is_early_career` identifies internship,
++graduate and junior roles. Combining both flags produces the early-career
++market lens without discarding broader hiring evidence.
+ 
+ ### 3. Run tests
+ 
+@@ -123,7 +126,8 @@ Greenhouse + Lever collectors
+ │   ├── data-source-assessment.md
+ │   ├── milestone-1-raw-ingestion.md
+ │   ├── milestone-2-cleaning.md
+-│   └── milestone-2b-quality-and-coverage.md
++│   ├── milestone-2b-quality-and-coverage.md
++│   └── project-scope.md
+ ├── scripts/
+ │   └── validate_sources.py
+ ├── src/
+@@ -152,6 +156,9 @@ Greenhouse + Lever collectors
+   snapshots; fuzzy cross-company matching is deferred.
+ - **Parquet is the analytical contract.** Milestone 3 and later work will read
+   the canonical file rather than reimplement raw parsing.
++- **Early career is a lens, not a destructive filter.** The main analysis covers
++  all South African technology roles and reports graduate and junior evidence
++  separately.
+ 
+ ## MVP roadmap
+ 
+@@ -171,6 +178,7 @@ Greenhouse + Lever collectors
+ - [Milestone 1: raw ingestion](docs/milestone-1-raw-ingestion.md)
+ - [Milestone 2: cleaning and standardisation](docs/milestone-2-cleaning.md)
+ - [Milestone 2B: quality and source coverage](docs/milestone-2b-quality-and-coverage.md)
++- [Project scope decision](docs/project-scope.md)
+ 
+ ## Responsible-use scope
+ 
+diff --git a/docs/milestone-2-cleaning.md b/docs/milestone-2-cleaning.md
+index 0ec525b..a23f50e 100644
+--- a/docs/milestone-2-cleaning.md
++++ b/docs/milestone-2-cleaning.md
+@@ -102,6 +102,7 @@ source posting and retains its history and lineage.
+ - `role_level_evidence`
+ - `is_technology_role`
+ - `technology_evidence`
++- `is_early_career`
+ - `is_target_market`
+ 
+ ### Data quality
+@@ -181,14 +182,14 @@ Known false positives such as `Data Protection Officer`, `Data Capturer` and
+ evidence, but ordinary non-technical titles are not classified from incidental
+ technology words in their descriptions.
+ 
+-A posting is marked `is_target_market = true` only when it is:
++Following the project scope expansion, a posting is marked
++`is_target_market = true` when it is both explicitly South African and
++classified as a technology role.
+ 
+-1. explicitly South African;
+-2. classified as a technology role; and
+-3. classified as internship, graduate or junior.
+-
+-The full canonical dataset still retains jobs that do not meet those conditions.
+-This prevents early filtering from hiding classification mistakes.
++`is_early_career = true` is stored separately when the role level is internship,
++graduate or junior. Analysts combine both flags for the early-career lens. The
++full canonical dataset still retains jobs outside the target market so that
++classification mistakes and source coverage remain visible.
+ 
+ ## Deduplication decision
+ 
+@@ -211,7 +212,7 @@ titles at different employers are not evidence that two adverts are duplicates.
+ 
+ - snapshot and observation counts;
+ - canonical and duplicate counts;
+-- South African, technology and target-market counts;
++- South African, technology, target-market and early-career counts;
+ - company, role-level and workplace distributions; and
+ - counts of recorded data-quality issues.
+ 
+diff --git a/docs/milestone-2b-quality-and-coverage.md b/docs/milestone-2b-quality-and-coverage.md
+index 3b2ef48..1bb2933 100644
+--- a/docs/milestone-2b-quality-and-coverage.md
++++ b/docs/milestone-2b-quality-and-coverage.md
+@@ -174,6 +174,18 @@ Milestone 2B is accepted when:
+ 7. the quality report provides enough detail to judge whether the sample is
+    ready for baseline market analysis.
+ 
++## Subsequent scope decision
++
++Milestone 2B was designed while the target market still meant South African,
++technology-related and explicitly early-career. The live build later produced
++45 South African technology roles but only 2 explicitly early-career roles.
++
++Before Milestone 3, the product scope was broadened. `is_target_market` now
++means all South African technology roles, and `is_early_career` preserves the
++original graduate and junior lens. The historical motivation and classification
++work in this document remain valid; the new semantics are documented in
++[`project-scope.md`](project-scope.md).
++
+ ## Next milestone
+ 
+ Milestone 3 is baseline market analysis. It will use the canonical Parquet file
+diff --git a/docs/project-scope.md b/docs/project-scope.md
+new file mode 100644
+index 0000000..5ff6e80
+--- /dev/null
++++ b/docs/project-scope.md
+@@ -0,0 +1,98 @@
++# Project Scope Decision: Broader Technology Market
++
++## Status
++
++Adopted before Milestone 3.
++
++## Decision
++
++The product is now **South African Tech Job Market Intelligence**. Its primary
++analytical population is all publicly advertised South African technology roles
++collected from supported employer career pages. Graduate, internship and junior
++roles remain a dedicated early-career lens rather than the only records included
++in the market analysis.
++
++The repository slug remains `sa-grad-tech-job-market` to preserve links and Git
++history. The product title and analytical contract carry the new scope.
++
++## Evidence that prompted the change
++
++The verified Milestone 2B build produced:
++
++- 267 canonical jobs across five employers;
++- 72 South African jobs;
++- 121 technology jobs;
++- 45 South African technology jobs; and
++- 2 explicitly early-career South African technology jobs.
++
++The pipeline and classifiers were working as intended. The narrow result was
++mainly caused by the timing and coverage of current employer vacancies: most
++observed South African technology openings were senior or did not state a role
++level. A graduate-only product would therefore underuse the available data and
++produce unstable analysis whenever graduate programmes were closed.
++
++## Revised research question
++
++> What roles, skills, seniority levels, locations and working arrangements are
++> South African technology employers hiring for, and what does that market imply
++> for early-career candidates?
++
++## Data-contract change
++
++The canonical dataset now separates market scope from career stage:
++
++| Field | Meaning |
++|---|---|
++| `is_target_market` | The posting is South African and technology-related |
++| `is_early_career` | The role is classified as internship, graduate or junior |
++| both flags are true | The posting belongs to the early-career market lens |
++
++The quality report exposes both the broad market count and the early-career
++subset. This prevents the small early-career sample from being mistaken for the
++size of the entire observed technology market.
++
++## Why this is the preferred trade-off
++
++### Benefits
++
++- Uses the 45-role South African technology sample rather than analysing only two
++  vacancies.
++- Produces useful company, city, seniority and workplace analysis immediately.
++- Allows skills and requirements to be compared across career stages.
++- Makes low early-career availability a measurable finding rather than a product
++  failure.
++- Reduces dependence on graduate-programme recruitment seasons.
++
++### Costs and risks
++
++- The project title is broader than the original repository name.
++- Senior roles may dominate aggregate skill counts unless analysis is segmented.
++- Findings still represent the supported employers, not the entire South African
++  labour market.
++- The early-career sample remains too small for strong standalone conclusions.
++
++These risks will be handled through explicit filters, sample-size warnings and
++clear source-coverage reporting.
++
++## Scope boundaries retained
++
++The MVP still covers:
++
++- South African roles only for published market findings;
++- technology-related roles only;
++- public employer career pages and supported public ATS endpoints;
++- explainable deterministic classifications; and
++- aggregate market analysis rather than applicant profiling.
++
++The MVP still excludes salary prediction, résumé matching, application
++automation, protected-attribute inference and unrestricted scraping of every job
++platform.
++
++## Milestone implications
++
++- **Milestone 3:** Analyse the broad South African technology market, with a
++  dedicated early-career section and sample-size warnings.
++- **Milestone 4:** Extract skills, qualifications and experience requirements,
++  segmented by role family and seniority.
++- **Milestone 5:** Build a dashboard with market overview, role comparison and
++  Entry-Level Reality views.
+diff --git a/src/transformation/build.py b/src/transformation/build.py
+index 25e6098..465231d 100644
+--- a/src/transformation/build.py
++++ b/src/transformation/build.py
+@@ -39,6 +39,10 @@ def print_summary(result: object, parquet_path: Path, quality_path: Path) -> Non
+         f"{quality_report['south_africa_technology_job_count']}"
+     )
+     print(f"Target-market jobs:     {quality_report['target_market_job_count']}")
++    print(
++        f"Early-career target:    "
++        f"{quality_report['early_career_target_market_job_count']}"
++    )
+     print(f"Provider job counts:    {quality_report['provider_job_counts']}")
+     print(f"\nDataset:        {parquet_path}")
+     print(f"Quality report: {quality_path}")
+diff --git a/src/transformation/dataset.py b/src/transformation/dataset.py
+index a87da80..206d76b 100644
+--- a/src/transformation/dataset.py
++++ b/src/transformation/dataset.py
+@@ -76,8 +76,15 @@ def _build_quality_report(
+     )
+     company_counts = Counter(job.company for job in jobs)
+     provider_job_counts = Counter(job.source_provider for job in jobs)
++    target_market_jobs = [job for job in jobs if job.is_target_market]
++    early_career_target_market_jobs = [
++        job for job in target_market_jobs if job.is_early_career
++    ]
+     target_market_company_counts = Counter(
+-        job.company for job in jobs if job.is_target_market
++        job.company for job in target_market_jobs
++    )
++    early_career_target_market_company_counts = Counter(
++        job.company for job in early_career_target_market_jobs
+     )
+     south_africa_technology_jobs = [
+         job for job in jobs if job.is_south_africa and job.is_technology_role
+@@ -101,8 +108,16 @@ def _build_quality_report(
+         "south_africa_job_count": sum(job.is_south_africa for job in jobs),
+         "technology_job_count": sum(job.is_technology_role for job in jobs),
+         "south_africa_technology_job_count": len(south_africa_technology_jobs),
+-        "target_market_job_count": sum(job.is_target_market for job in jobs),
++        "target_market_definition": "south_africa_technology_roles",
++        "target_market_job_count": len(target_market_jobs),
++        "early_career_job_count": sum(job.is_early_career for job in jobs),
++        "early_career_target_market_job_count": len(
++            early_career_target_market_jobs
++        ),
+         "role_level_counts": _count_values(jobs, "role_level"),
++        "target_market_role_level_counts": _count_values(
++            target_market_jobs, "role_level"
++        ),
+         "south_africa_technology_role_level_counts": _count_values(
+             south_africa_technology_jobs, "role_level"
+         ),
+@@ -115,6 +130,9 @@ def _build_quality_report(
+         "target_market_company_counts": dict(
+             sorted(target_market_company_counts.items())
+         ),
++        "early_career_target_market_company_counts": dict(
++            sorted(early_career_target_market_company_counts.items())
++        ),
+         "source_snapshot_counts": dict(sorted(source_snapshot_counts.items())),
+         "data_quality_issue_counts": dict(sorted(issue_counts.items())),
+     }
+@@ -193,6 +211,7 @@ def _parquet_schema() -> Any:
+             ("role_level_evidence", pa.list_(pa.string())),
+             ("is_technology_role", pa.bool_()),
+             ("technology_evidence", pa.list_(pa.string())),
++            ("is_early_career", pa.bool_()),
+             ("is_target_market", pa.bool_()),
+             ("description_text", pa.string()),
+             ("application_url", pa.string()),
+diff --git a/src/transformation/greenhouse.py b/src/transformation/greenhouse.py
+index b34f068..43f657c 100644
+--- a/src/transformation/greenhouse.py
++++ b/src/transformation/greenhouse.py
+@@ -23,7 +23,7 @@ from src.transformation.cleaning import (
+ from src.transformation.schema import CanonicalJob
+ 
+ 
+-_TARGET_ROLE_LEVELS = {"internship", "graduate", "junior"}
++_EARLY_CAREER_ROLE_LEVELS = {"internship", "graduate", "junior"}
+ 
+ 
+ def parse_datetime(value: Any) -> datetime | None:
+@@ -96,11 +96,8 @@ def transform_greenhouse_job(
+     role_level = classify_role_level(title, description_text)
+     technology = classify_technology_role(title, department, description_text)
+ 
+-    is_target_market = (
+-        location.is_south_africa
+-        and technology.is_technology_role
+-        and role_level.label in _TARGET_ROLE_LEVELS
+-    )
++    is_early_career = role_level.label in _EARLY_CAREER_ROLE_LEVELS
++    is_target_market = location.is_south_africa and technology.is_technology_role
+ 
+     issues: list[str] = []
+     if not source_job_id:
+@@ -155,6 +152,7 @@ def transform_greenhouse_job(
+         role_level_evidence=role_level.evidence,
+         is_technology_role=technology.is_technology_role,
+         technology_evidence=technology.evidence,
++        is_early_career=is_early_career,
+         is_target_market=is_target_market,
+         description_text=description_text,
+         application_url=application_url,
+diff --git a/src/transformation/lever.py b/src/transformation/lever.py
+index d35db1b..78c6f93 100644
+--- a/src/transformation/lever.py
++++ b/src/transformation/lever.py
+@@ -23,7 +23,7 @@ from src.transformation.greenhouse import parse_datetime
+ from src.transformation.schema import CanonicalJob
+ 
+ 
+-_TARGET_ROLE_LEVELS = {"internship", "graduate", "junior"}
++_EARLY_CAREER_ROLE_LEVELS = {"internship", "graduate", "junior"}
+ _COUNTRY_NAMES = {
+     "ZA": "South Africa",
+     "GB": "United Kingdom",
+@@ -161,11 +161,8 @@ def transform_lever_job(
+     )
+     technology = classify_technology_role(title, department, description_text)
+ 
+-    is_target_market = (
+-        location.is_south_africa
+-        and technology.is_technology_role
+-        and role_level.label in _TARGET_ROLE_LEVELS
+-    )
++    is_early_career = role_level.label in _EARLY_CAREER_ROLE_LEVELS
++    is_target_market = location.is_south_africa and technology.is_technology_role
+ 
+     issues: list[str] = []
+     if not source_job_id:
+@@ -216,6 +213,7 @@ def transform_lever_job(
+         role_level_evidence=role_level.evidence,
+         is_technology_role=technology.is_technology_role,
+         technology_evidence=technology.evidence,
++        is_early_career=is_early_career,
+         is_target_market=is_target_market,
+         description_text=description_text,
+         application_url=application_url,
+diff --git a/src/transformation/schema.py b/src/transformation/schema.py
+index ffa872d..89e66ef 100644
+--- a/src/transformation/schema.py
++++ b/src/transformation/schema.py
+@@ -38,6 +38,7 @@ class CanonicalJob:
+     role_level_evidence: tuple[str, ...]
+     is_technology_role: bool
+     technology_evidence: tuple[str, ...]
++    is_early_career: bool
+     is_target_market: bool
+     description_text: str
+     application_url: str
+diff --git a/tests/test_greenhouse_transformation.py b/tests/test_greenhouse_transformation.py
+index eee7fab..a870d09 100644
+--- a/tests/test_greenhouse_transformation.py
++++ b/tests/test_greenhouse_transformation.py
+@@ -37,6 +37,7 @@ def test_transform_greenhouse_job_builds_target_market_record() -> None:
+     assert result.workplace_type == "hybrid"
+     assert result.role_level == "junior"
+     assert result.is_technology_role is True
++    assert result.is_early_career is True
+     assert result.is_target_market is True
+     assert result.data_quality_issues == ()
+ 
+@@ -55,6 +56,7 @@ def test_transform_greenhouse_job_classifies_remote_graduate() -> None:
+     assert result.workplace_type == "remote"
+     assert result.role_level == "graduate"
+     assert result.is_technology_role is True
++    assert result.is_early_career is True
+     assert result.is_target_market is True
+ 
+ 
+@@ -73,6 +75,7 @@ def test_transform_greenhouse_job_records_missing_fields_instead_of_dropping_job
+     assert result.job_key.startswith("greenhouse:example:content-")
+     assert result.source_job_id == ""
+     assert result.application_url == ""
++    assert result.is_early_career is True
+     assert result.is_target_market is True
+     assert result.data_quality_issues == (
+         "missing_source_job_id",
+diff --git a/tests/test_lever_transformation.py b/tests/test_lever_transformation.py
+index cde3918..adf8c06 100644
+--- a/tests/test_lever_transformation.py
++++ b/tests/test_lever_transformation.py
+@@ -38,6 +38,7 @@ def test_transform_lever_job_builds_target_market_record() -> None:
+     assert result.role_level == "graduate"
+     assert result.role_level_evidence == ("description: recent graduate",)
+     assert result.is_technology_role is True
++    assert result.is_early_career is True
+     assert result.is_target_market is True
+     assert "What you will do" in result.description_text
+     assert result.application_url.endswith("/apply")
+@@ -56,7 +57,8 @@ def test_senior_title_cannot_be_downgraded_by_source_or_description() -> None:
+ 
+     assert result.role_level == "senior"
+     assert result.role_level_evidence == ("title: Senior",)
+-    assert result.is_target_market is False
++    assert result.is_early_career is False
++    assert result.is_target_market is True
+ 
+ 
+ def test_non_technology_lever_job_is_not_target_market() -> None:
+@@ -71,4 +73,5 @@ def test_non_technology_lever_job_is_not_target_market() -> None:
+     assert result.workplace_type == "on_site"
+     assert result.is_south_africa is True
+     assert result.is_technology_role is False
++    assert result.is_early_career is False
+     assert result.is_target_market is False
+diff --git a/tests/test_transformation_dataset.py b/tests/test_transformation_dataset.py
+index 2b62967..2008921 100644
+--- a/tests/test_transformation_dataset.py
++++ b/tests/test_transformation_dataset.py
+@@ -113,7 +113,9 @@ def test_build_dataset_reports_deduplication_and_market_counts(tmp_path: Path) -
+     assert report["duplicate_observations_removed"] == 2
+     assert report["south_africa_job_count"] == 2
+     assert report["technology_job_count"] == 2
++    assert report["target_market_definition"] == "south_africa_technology_roles"
+     assert report["target_market_job_count"] == 2
++    assert report["early_career_target_market_job_count"] == 2
+     assert report["role_level_counts"] == {
+         "graduate": 1,
+         "junior": 1,
+@@ -150,6 +152,7 @@ def test_write_dataset_outputs_creates_real_parquet_and_quality_report(
+     quality = json.loads(quality_path.read_text(encoding="utf-8"))
+     assert table.num_rows == 3
+     assert table.column_names[0] == "job_key"
++    assert "is_early_career" in table.column_names
+     assert quality["canonical_job_count"] == 3
+ 
+ 
+@@ -208,11 +211,18 @@ def test_build_dataset_combines_greenhouse_and_lever_snapshots(tmp_path: Path) -
+     assert report["raw_snapshot_count"] == 2
+     assert report["provider_job_counts"] == {"greenhouse": 3, "lever": 3}
+     assert report["south_africa_technology_job_count"] == 4
+-    assert report["target_market_job_count"] == 3
++    assert report["target_market_job_count"] == 4
++    assert report["target_market_job_count"] == report["south_africa_technology_job_count"]
++    assert report["early_career_target_market_job_count"] == 3
+     assert report["target_market_company_counts"] == {
++        "Example Tech": 2,
++        "Lever Example": 2,
++    }
++    assert report["early_career_target_market_company_counts"] == {
+         "Example Tech": 2,
+         "Lever Example": 1,
+     }
+     lever_job = next(job for job in result.jobs if job.source_job_id == "lever-1001")
+     assert lever_job.source_snapshot_path == "lever/lever-example/lever.json"
++    assert lever_job.is_early_career is True
+     assert lever_job.role_level_evidence
