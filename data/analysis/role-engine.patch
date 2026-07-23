@@ -1,0 +1,709 @@
+diff --git a/docs/role-classification-engine.md b/docs/role-classification-engine.md
+new file mode 100644
+index 0000000..25a8e59
+--- /dev/null
++++ b/docs/role-classification-engine.md
+@@ -0,0 +1,33 @@
++# Explainable role-classification engine
++
++The canonical `role_level` remains the conservative production label. The new
++scored inference is stored alongside it for evaluation:
++
++- `inferred_role_level`
++- `role_level_score`
++- `role_level_confidence`
++- `role_level_score_evidence`
++- `is_talent_pool`
++
++This avoids silently replacing stable rules before the scored model has been
++reviewed against real postings.
++
++## Inferred levels
++
++- internship
++- graduate
++- junior
++- mid_level
++- senior
++- ambiguous
++
++Two years of experience alone remains ambiguous because employers use it for
++both junior and intermediate roles. Three to four years is treated as likely
++mid-level, while five or more years is treated as likely senior.
++
++Explicit title evidence remains authoritative. A title containing `Senior`,
++`Lead`, `Principal`, `Manager`, or equivalent cannot be downgraded by weaker
++description evidence.
++
++Talent-pool detection is independent of seniority and should be excluded or
++shown separately in vacancy-volume analysis.
+diff --git a/scripts/audit_role_classification.py b/scripts/audit_role_classification.py
+new file mode 100644
+index 0000000..c552f08
+--- /dev/null
++++ b/scripts/audit_role_classification.py
+@@ -0,0 +1,73 @@
++"""Export the scored role classification for target-market jobs."""
++
++from __future__ import annotations
++
++import argparse
++import csv
++from collections import Counter
++from pathlib import Path
++
++
++PROJECT_ROOT = Path(__file__).resolve().parents[1]
++DEFAULT_DATASET = PROJECT_ROOT / "data" / "processed" / "jobs.parquet"
++DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "analysis" / "role-classification-audit.csv"
++
++
++def parse_args() -> argparse.Namespace:
++    parser = argparse.ArgumentParser(
++        description="Export explainable role-level scoring for target-market jobs."
++    )
++    parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
++    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
++    return parser.parse_args()
++
++
++def main() -> int:
++    args = parse_args()
++
++    import pyarrow.parquet as pq
++
++    jobs = [
++        job
++        for job in pq.read_table(args.dataset).to_pylist()
++        if job.get("is_target_market") is True
++    ]
++
++    fields = [
++        "company",
++        "title",
++        "role_level",
++        "inferred_role_level",
++        "role_level_score",
++        "role_level_confidence",
++        "is_talent_pool",
++        "role_level_score_evidence",
++        "application_url",
++    ]
++
++    args.output.parent.mkdir(parents=True, exist_ok=True)
++    with args.output.open("w", encoding="utf-8", newline="") as file:
++        writer = csv.DictWriter(file, fieldnames=fields)
++        writer.writeheader()
++        for job in sorted(jobs, key=lambda item: (item["company"], item["title"])):
++            row = {field: job.get(field) for field in fields}
++            row["role_level_score_evidence"] = " | ".join(
++                job.get("role_level_score_evidence") or []
++            )
++            writer.writerow(row)
++
++    levels = Counter(job.get("inferred_role_level") for job in jobs)
++    confidence = Counter(job.get("role_level_confidence") for job in jobs)
++
++    print("\nRole classification audit")
++    print("=" * 72)
++    print(f"Target-market jobs: {len(jobs)}")
++    print(f"Levels:             {dict(sorted(levels.items()))}")
++    print(f"Confidence:         {dict(sorted(confidence.items()))}")
++    print(f"Talent pools:       {sum(bool(job.get('is_talent_pool')) for job in jobs)}")
++    print(f"\nCSV: {args.output}")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/src/role_classification/__init__.py b/src/role_classification/__init__.py
+new file mode 100644
+index 0000000..e599bfc
+--- /dev/null
++++ b/src/role_classification/__init__.py
+@@ -0,0 +1,13 @@
++"""Explainable role-seniority scoring."""
++
++from src.role_classification.classifier import classify_role
++from src.role_classification.models import (
++    ClassificationEvidence,
++    RoleClassificationResult,
++)
++
++__all__ = [
++    "ClassificationEvidence",
++    "RoleClassificationResult",
++    "classify_role",
++]
+diff --git a/src/role_classification/classifier.py b/src/role_classification/classifier.py
+new file mode 100644
+index 0000000..e014865
+--- /dev/null
++++ b/src/role_classification/classifier.py
+@@ -0,0 +1,73 @@
++"""Combine role evidence into an explainable inference."""
++
++from __future__ import annotations
++
++from src.role_classification.evidence import (
++    detect_talent_pool,
++    extract_description_text_evidence,
++    extract_explicit_level_evidence,
++    extract_experience_evidence,
++    extract_title_evidence,
++)
++from src.role_classification.models import RoleClassificationResult
++from src.role_classification.scorer import confidence_for, score_evidence
++
++
++_AUTHORITATIVE_TITLE_LEVELS = ("senior", "internship", "graduate", "junior")
++
++
++def classify_role(
++    title: str,
++    description: str,
++    explicit_level: str | None = None,
++) -> RoleClassificationResult:
++    title_evidence = extract_title_evidence(title)
++    source_evidence = extract_explicit_level_evidence(explicit_level)
++    description_evidence = extract_description_text_evidence(description)
++    experience = extract_experience_evidence(description)
++
++    evidence = (
++        title_evidence
++        + source_evidence
++        + description_evidence
++        + experience.evidence
++    )
++    score = score_evidence(evidence)
++
++    # Explicit title/source evidence takes priority over numeric thresholds.
++    authoritative = title_evidence + source_evidence
++    level = "ambiguous"
++    for candidate in _AUTHORITATIVE_TITLE_LEVELS:
++        if any(item.category == candidate for item in authoritative):
++            level = candidate
++            break
++
++    if level == "ambiguous":
++        if any(item.category == "graduate" for item in description_evidence):
++            level = "graduate"
++        elif any(item.category == "junior" for item in description_evidence):
++            level = "junior"
++        elif experience.minimum_years is not None:
++            minimum = experience.minimum_years
++            if minimum <= 1:
++                level = "junior"
++            elif minimum == 2:
++                level = "ambiguous"
++            elif minimum <= 4:
++                level = "mid_level"
++            else:
++                level = "senior"
++        elif score >= 8:
++            level = "junior"
++        elif score <= -8:
++            level = "senior"
++
++    confidence = confidence_for(level, evidence)
++
++    return RoleClassificationResult(
++        level=level,
++        confidence=confidence,
++        score=score,
++        evidence=evidence,
++        is_talent_pool=detect_talent_pool(title, description),
++    )
+diff --git a/src/role_classification/evidence.py b/src/role_classification/evidence.py
+new file mode 100644
+index 0000000..c791c05
+--- /dev/null
++++ b/src/role_classification/evidence.py
+@@ -0,0 +1,157 @@
++"""Extract explainable title, source-level and experience evidence."""
++
++from __future__ import annotations
++
++import re
++from dataclasses import dataclass
++from typing import Iterable
++
++from src.role_classification.models import ClassificationEvidence
++from src.role_classification.patterns import (
++    DESCRIPTION_TEXT_RULES,
++    EXPLICIT_LEVEL_RULES,
++    TALENT_POOL_PATTERNS,
++    TITLE_RULES,
++)
++
++
++_RANGE_YEARS = re.compile(
++    r"\b(\d+)\s*(?:-|–|—|to)\s*(\d+)\s*(?:years?|yrs?)"
++    r"(?:\s*(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?\b",
++    re.IGNORECASE,
++)
++_SINGLE_YEARS = re.compile(
++    r"\b(?:(?:at\s+least|minimum(?:\s+of)?|min\.?)\s+)?"
++    r"(\d+)\s*(?:\+|plus)?\s*(?:years?|yrs?)"
++    r"(?:['’]?\s*(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?\b",
++    re.IGNORECASE,
++)
++
++
++@dataclass(frozen=True)
++class ExperienceEvidence:
++    minimum_years: int | None
++    maximum_years: int | None
++    evidence: tuple[ClassificationEvidence, ...]
++
++
++def _unique_evidence(
++    evidence: Iterable[ClassificationEvidence],
++) -> tuple[ClassificationEvidence, ...]:
++    seen: set[tuple[str, str, int, str]] = set()
++    result: list[ClassificationEvidence] = []
++    for item in evidence:
++        key = (item.source, item.value.casefold(), item.weight, item.category)
++        if key not in seen:
++            seen.add(key)
++            result.append(item)
++    return tuple(result)
++
++
++def _rule_evidence(
++    text: str,
++    source: str,
++    rules: tuple[tuple[str, int, str, tuple[str, ...]], ...],
++) -> tuple[ClassificationEvidence, ...]:
++    items: list[ClassificationEvidence] = []
++    for _, weight, category, patterns in rules:
++        for pattern in patterns:
++            for match in re.finditer(pattern, text, flags=re.IGNORECASE):
++                items.append(
++                    ClassificationEvidence(
++                        source=source,
++                        value=match.group(0),
++                        weight=weight,
++                        category=category,
++                    )
++                )
++    return _unique_evidence(items)
++
++
++def extract_title_evidence(title: str) -> tuple[ClassificationEvidence, ...]:
++    return _rule_evidence(title, "title", TITLE_RULES)
++
++
++def extract_explicit_level_evidence(
++    explicit_level: str | None,
++) -> tuple[ClassificationEvidence, ...]:
++    if not explicit_level:
++        return ()
++    return _rule_evidence(explicit_level, "source_level", EXPLICIT_LEVEL_RULES)
++
++
++def extract_description_text_evidence(
++    description: str,
++) -> tuple[ClassificationEvidence, ...]:
++    return _rule_evidence(description, "description", DESCRIPTION_TEXT_RULES)
++
++
++def _experience_weight(minimum_years: int) -> tuple[int, str]:
++    if minimum_years <= 1:
++        return 5, "junior"
++    if minimum_years == 2:
++        return 2, "ambiguous"
++    if minimum_years == 3:
++        return -2, "mid_level"
++    if minimum_years == 4:
++        return -5, "mid_level"
++    return -10, "senior"
++
++
++def extract_experience_evidence(description: str) -> ExperienceEvidence:
++    minimums: list[int] = []
++    maximums: list[int] = []
++    items: list[ClassificationEvidence] = []
++    occupied_spans: list[tuple[int, int]] = []
++
++    def overlaps(start: int, end: int) -> bool:
++        return any(
++            start < existing_end and end > existing_start
++            for existing_start, existing_end in occupied_spans
++        )
++
++    for match in _RANGE_YEARS.finditer(description):
++        lower = min(int(match.group(1)), int(match.group(2)))
++        upper = max(int(match.group(1)), int(match.group(2)))
++        weight, category = _experience_weight(lower)
++        minimums.append(lower)
++        maximums.append(upper)
++        occupied_spans.append(match.span())
++        items.append(
++            ClassificationEvidence(
++                source="experience",
++                value=match.group(0),
++                weight=weight,
++                category=category,
++            )
++        )
++
++    for match in _SINGLE_YEARS.finditer(description):
++        if overlaps(*match.span()):
++            continue
++        years = int(match.group(1))
++        weight, category = _experience_weight(years)
++        minimums.append(years)
++        occupied_spans.append(match.span())
++        items.append(
++            ClassificationEvidence(
++                source="experience",
++                value=match.group(0),
++                weight=weight,
++                category=category,
++            )
++        )
++
++    return ExperienceEvidence(
++        minimum_years=min(minimums) if minimums else None,
++        maximum_years=max(maximums) if maximums else None,
++        evidence=_unique_evidence(items),
++    )
++
++
++def detect_talent_pool(title: str, description: str) -> bool:
++    combined = f"{title} {description}"
++    return any(
++        re.search(pattern, combined, flags=re.IGNORECASE)
++        for pattern in TALENT_POOL_PATTERNS
++    )
+diff --git a/src/role_classification/models.py b/src/role_classification/models.py
+new file mode 100644
+index 0000000..cce3056
+--- /dev/null
++++ b/src/role_classification/models.py
+@@ -0,0 +1,30 @@
++"""Value objects returned by the role-classification engine."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++
++
++@dataclass(frozen=True)
++class ClassificationEvidence:
++    """One explainable signal contributing to a role-level score."""
++
++    source: str
++    value: str
++    weight: int
++    category: str
++
++    def as_text(self) -> str:
++        sign = "+" if self.weight >= 0 else ""
++        return f"{self.source}: {self.value} ({sign}{self.weight}, {self.category})"
++
++
++@dataclass(frozen=True)
++class RoleClassificationResult:
++    """Scored seniority inference kept alongside the conservative canonical label."""
++
++    level: str
++    confidence: str
++    score: int
++    evidence: tuple[ClassificationEvidence, ...]
++    is_talent_pool: bool
+diff --git a/src/role_classification/patterns.py b/src/role_classification/patterns.py
+new file mode 100644
+index 0000000..dd4eed2
+--- /dev/null
++++ b/src/role_classification/patterns.py
+@@ -0,0 +1,81 @@
++"""Regex patterns and weights for role-level evidence."""
++
++from __future__ import annotations
++
++TITLE_RULES: tuple[tuple[str, int, str, tuple[str, ...]], ...] = (
++    ("internship", 15, "internship", (
++        r"\bintern(?:ship)?\b",
++        r"\bvacation\s+work\b",
++        r"\blearnership\b",
++        r"\bapprentice(?:ship)?\b",
++    )),
++    ("graduate", 15, "graduate", (
++        r"\bgraduate\b",
++        r"\bnew\s+grad\b",
++        r"\bgrad(?:uate)?\s+programme\b",
++        r"\bgrad(?:uate)?\s+program\b",
++    )),
++    ("junior", 10, "junior", (
++        r"\bjunior\b",
++        r"\bentry[- ]level\b",
++        r"\btrainee\b",
++    )),
++    ("associate", 6, "junior", (r"\bassociate\b",)),
++    ("engineer_i", 6, "junior", (
++        r"\b(?:engineer|developer|analyst)\s+i\b",
++        r"\b(?:engineer|developer|analyst)\s+1\b",
++    )),
++    ("level_ii", -2, "mid_level", (
++        r"\b(?:engineer|developer|analyst)\s+ii\b",
++        r"\b(?:engineer|developer|analyst)\s+2\b",
++    )),
++    ("senior", -20, "senior", (r"\bsenior\b",)),
++    ("staff", -24, "senior", (r"\bstaff\b",)),
++    ("principal", -28, "senior", (r"\bprincipal\b",)),
++    ("lead", -24, "senior", (r"\blead\b",)),
++    ("manager", -22, "senior", (r"\bmanager\b",)),
++    ("director", -28, "senior", (r"\bdirector\b",)),
++    ("head", -28, "senior", (r"\bhead\s+of\b",)),
++    ("architect", -22, "senior", (r"\barchitect\b",)),
++    ("executive", -30, "senior", (
++        r"\bvice\s+president\b",
++        r"\bvp\b",
++        r"\bchief\b",
++    )),
++)
++
++EXPLICIT_LEVEL_RULES: tuple[tuple[str, int, str, tuple[str, ...]], ...] = (
++    ("internship", 15, "internship", (r"\bintern(?:ship)?\b",)),
++    ("graduate", 15, "graduate", (r"\bgraduate\b", r"\bnew\s+grad\b")),
++    ("junior", 10, "junior", (r"\bjunior\b", r"\bentry[- ]level\b")),
++    ("mid_level", -3, "mid_level", (r"\bmid(?:dle)?[- ]level\b", r"\bintermediate\b")),
++    ("senior", -20, "senior", (
++        r"\bsenior\b",
++        r"\blead\b",
++        r"\bprincipal\b",
++        r"\bmanager\b",
++    )),
++)
++
++DESCRIPTION_TEXT_RULES: tuple[tuple[str, int, str, tuple[str, ...]], ...] = (
++    ("no_experience", 7, "junior", (
++        r"\bno\s+(?:(?:prior|professional)\s+)*experience\s+(?:is\s+)?(?:required|necessary)\b",
++        r"\bno\s+prior\s+(?:work\s+)?experience\b",
++    )),
++    ("recent_graduate", 12, "graduate", (
++        r"\brecent\s+graduate\b",
++        r"\bfresh\s+graduate\b",
++        r"\bnew\s+graduate\b",
++    )),
++    ("early_career", 8, "junior", (
++        r"\bearly[- ]career\b",
++        r"\bentry[- ]level\b",
++    )),
++)
++
++TALENT_POOL_PATTERNS: tuple[str, ...] = (
++    r"\btalent\s+pool\b",
++    r"\btalent\s+community\b",
++    r"\bexpression\s+of\s+interest\b",
++    r"\bfuture\s+opportunit(?:y|ies)\b",
++)
+diff --git a/src/role_classification/scorer.py b/src/role_classification/scorer.py
+new file mode 100644
+index 0000000..c413bd7
+--- /dev/null
++++ b/src/role_classification/scorer.py
+@@ -0,0 +1,51 @@
++"""Score evidence and convert it into an inferred role-level band."""
++
++from __future__ import annotations
++
++from collections import Counter
++
++from src.role_classification.models import ClassificationEvidence
++
++
++def score_evidence(evidence: tuple[ClassificationEvidence, ...]) -> int:
++    return sum(item.weight for item in evidence)
++
++
++def strongest_category(
++    evidence: tuple[ClassificationEvidence, ...],
++) -> str | None:
++    """Return the category with the greatest absolute accumulated weight."""
++
++    if not evidence:
++        return None
++
++    category_scores = Counter()
++    for item in evidence:
++        category_scores[item.category] += item.weight
++
++    return max(
++        category_scores,
++        key=lambda category: abs(category_scores[category]),
++    )
++
++
++def confidence_for(
++    level: str,
++    evidence: tuple[ClassificationEvidence, ...],
++) -> str:
++    title_categories = {
++        item.category
++        for item in evidence
++        if item.source in {"title", "source_level"}
++    }
++    if level != "ambiguous" and level in title_categories:
++        return "high"
++
++    experience_items = [item for item in evidence if item.source == "experience"]
++    if level != "ambiguous" and experience_items:
++        return "medium"
++
++    if len(evidence) >= 2 and level != "ambiguous":
++        return "medium"
++
++    return "low"
+diff --git a/tests/test_role_classification.py b/tests/test_role_classification.py
+new file mode 100644
+index 0000000..6cf2146
+--- /dev/null
++++ b/tests/test_role_classification.py
+@@ -0,0 +1,68 @@
++from src.role_classification.classifier import classify_role
++from src.role_classification.evidence import extract_experience_evidence
++
++
++def test_explicit_graduate_title_has_high_confidence():
++    result = classify_role("Graduate Software Engineer", "")
++
++    assert result.level == "graduate"
++    assert result.confidence == "high"
++    assert result.score >= 15
++
++
++def test_two_plus_years_remains_ambiguous():
++    result = classify_role(
++        "Software Engineer",
++        "The role requires 2+ years experience.",
++    )
++
++    assert result.level == "ambiguous"
++    assert result.confidence == "low"
++    assert result.score == 2
++
++
++def test_three_plus_years_is_mid_level():
++    result = classify_role(
++        "Software Engineer",
++        "Candidates need 3+ years of experience.",
++    )
++
++    assert result.level == "mid_level"
++    assert result.confidence == "medium"
++
++
++def test_five_years_is_senior():
++    result = classify_role(
++        "Data Engineer",
++        "At least 5 years' experience is required.",
++    )
++
++    assert result.level == "senior"
++    assert result.confidence == "medium"
++
++
++def test_senior_title_overrides_early_career_description():
++    result = classify_role(
++        "Senior Software Engineer",
++        "We welcome recent graduates and candidates with 1 year of experience.",
++    )
++
++    assert result.level == "senior"
++    assert result.confidence == "high"
++
++
++def test_talent_pool_is_independent_metadata():
++    result = classify_role(
++        "Android Developer - Talent Pool",
++        "Two years of experience preferred.",
++    )
++
++    assert result.is_talent_pool is True
++
++
++def test_experience_parser_avoids_nested_duplicate_matches():
++    result = extract_experience_evidence("Requires 1-2 years of experience.")
++
++    assert result.minimum_years == 1
++    assert result.maximum_years == 2
++    assert len(result.evidence) == 1
+diff --git a/src/transformation/schema.py b/src/transformation/schema.py
+--- a/src/transformation/schema.py
++++ b/src/transformation/schema.py
+@@ -45,6 +45,20 @@ class CanonicalJob:
+     description_text: str
+     application_url: str
+     data_quality_issues: tuple[str, ...]
++    inferred_role_level: str = "ambiguous"
++    role_level_score: int = 0
++    role_level_confidence: str = "low"
++    role_level_score_evidence: tuple[str, ...] = ()
++    is_talent_pool: bool = False
++
++    def __post_init__(self) -> None:
++        """Populate the scored inference without changing source transformers."""
++        from src.role_classification.classifier import classify_role
++
++        result = classify_role(self.title, self.description_text, self.role_level)
++        object.__setattr__(self, "inferred_role_level", result.level)
++        object.__setattr__(self, "role_level_score", result.score)
++        object.__setattr__(self, "role_level_confidence", result.confidence)
++        object.__setattr__(self, "role_level_score_evidence", tuple(
++            item.as_text() for item in result.evidence
++        ))
++        object.__setattr__(self, "is_talent_pool", result.is_talent_pool)
+
+     def with_observation_window(
+@@ -73,6 +87,7 @@ class CanonicalJob:
+             "role_level_evidence",
+             "technology_evidence",
+             "data_quality_issues",
++            "role_level_score_evidence",
+         ):
+             record[field_name] = list(record[field_name])
+         return record
+diff --git a/src/transformation/dataset.py b/src/transformation/dataset.py
+--- a/src/transformation/dataset.py
++++ b/src/transformation/dataset.py
+@@ -130,6 +130,13 @@ def _build_quality_report(
+         "role_level_evidence_count": sum(
+             bool(job.role_level_evidence) for job in jobs
+         ),
++        "inferred_role_level_counts": _count_values(jobs, "inferred_role_level"),
++        "target_market_inferred_role_level_counts": _count_values(
++            target_market_jobs, "inferred_role_level"
++        ),
++        "role_level_confidence_counts": _count_values(
++            jobs, "role_level_confidence"
++        ),
++        "talent_pool_job_count": sum(job.is_talent_pool for job in jobs),
+         "workplace_type_counts": _count_values(jobs, "workplace_type"),
+@@ -230,6 +237,11 @@ def _parquet_schema() -> Any:
+             ("description_text", pa.string()),
+             ("application_url", pa.string()),
+             ("data_quality_issues", pa.list_(pa.string())),
++            ("inferred_role_level", pa.string()),
++            ("role_level_score", pa.int64()),
++            ("role_level_confidence", pa.string()),
++            ("role_level_score_evidence", pa.list_(pa.string())),
++            ("is_talent_pool", pa.bool_()),
+         ]
+     )
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -77,6 +77,12 @@ data/processed/
+ pytest
+ ```
+
++Audit the explainable role-level scoring:
++
++```bash
++python scripts/audit_role_classification.py
++```
++
+ ### 4. Validate source candidates
