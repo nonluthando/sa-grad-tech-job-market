@@ -1,0 +1,2445 @@
+diff --git a/README.md b/README.md
+index 8f8dbf0..8cd3ee3 100644
+--- a/README.md
++++ b/README.md
+@@ -6,16 +6,18 @@ publishes insights about South African graduate and junior technology hiring.
+ 
+ ## Current status
+ 
+-**Milestone 2 complete: cleaning and standardisation**
++**Milestone 2B complete: classification quality and Lever coverage**
+ 
+ The project can now:
+ 
+ - collect exact raw Greenhouse snapshots from Takealot Group, Luno and Impact.com;
++- collect exact raw Lever snapshots from Mama Money and Yassir;
+ - verify raw-file integrity from metadata and SHA-256 hashes;
+ - clean HTML job descriptions into analysis-ready text;
+ - normalise South African locations and selected international countries;
+ - classify workplace type, role level and technology relevance;
+-- retain the evidence behind classifications;
++- retain source-tagged evidence behind role-level classifications;
++- use explicit Lever workplace and level fields when available;
+ - identify the target South African early-career technology market;
+ - deduplicate stable postings across collection snapshots;
+ - preserve first-seen, last-seen and observation history;
+@@ -42,13 +44,13 @@ Codespaces uses Bash. In Windows PowerShell outside Codespaces, activate with:
+ 
+ ## Run the pipeline
+ 
+-### 1. Collect raw Greenhouse snapshots
++### 1. Collect raw job-board snapshots
+ 
+ ```bash
+ python -m src.ingestion.collect
+ ```
+ 
+-Collect one configured board:
++Collect one configured source:
+ 
+ ```bash
+ python -m src.ingestion.collect --source-token takealotgroup
+@@ -90,7 +92,7 @@ python scripts/validate_sources.py
+ config/sources.json
+         |
+         v
+-Greenhouse collector
++Greenhouse + Lever collectors
+         |
+         +--> exact raw JSON + metadata + SHA-256
+                          |
+@@ -120,7 +122,8 @@ Greenhouse collector
+ ├── docs/
+ │   ├── data-source-assessment.md
+ │   ├── milestone-1-raw-ingestion.md
+-│   └── milestone-2-cleaning.md
++│   ├── milestone-2-cleaning.md
++│   └── milestone-2b-quality-and-coverage.md
+ ├── scripts/
+ │   └── validate_sources.py
+ ├── src/
+@@ -131,6 +134,7 @@ Greenhouse collector
+ │       ├── cleaning.py
+ │       ├── dataset.py
+ │       ├── greenhouse.py
++│       ├── lever.py
+ │       ├── schema.py
+ │       └── snapshots.py
+ └── tests/
+@@ -144,7 +148,7 @@ Greenhouse collector
+ - **Classifications are explainable.** Evidence is stored with each label.
+ - **Unknown is preferable to guessing.** Missing or ambiguous values remain
+   unspecified and are visible in the quality report.
+-- **Deduplication is conservative.** Repeated Greenhouse IDs are merged across
++- **Deduplication is conservative.** Repeated provider job IDs are merged across
+   snapshots; fuzzy cross-company matching is deferred.
+ - **Parquet is the analytical contract.** Milestone 3 and later work will read
+   the canonical file rather than reimplement raw parsing.
+@@ -156,8 +160,9 @@ Greenhouse collector
+ | 0. Source validation | Select viable public sources | Complete |
+ | 1. Raw ingestion | Preserve reproducible Greenhouse snapshots | Complete |
+ | 2. Cleaning and standardisation | Produce one canonical jobs dataset | Complete |
+-| 3. Skills extraction | Derive technologies and requirements | Next |
+-| 4. Analytics engine | Build market metrics and analysis tables | Planned |
++| 2B. Quality and source coverage | Add Lever and strengthen level evidence | Complete |
++| 3. Baseline market analysis | Answer core market questions | Next |
++| 4. Skills extraction | Derive technologies and requirements | Planned |
+ | 5. Dashboard | Publish the interactive MVP | Planned |
+ 
+ ## Documentation
+@@ -165,6 +170,7 @@ Greenhouse collector
+ - [Data-source assessment](docs/data-source-assessment.md)
+ - [Milestone 1: raw ingestion](docs/milestone-1-raw-ingestion.md)
+ - [Milestone 2: cleaning and standardisation](docs/milestone-2-cleaning.md)
++- [Milestone 2B: quality and source coverage](docs/milestone-2b-quality-and-coverage.md)
+ 
+ ## Responsible-use scope
+ 
+diff --git a/docs/milestone-2-cleaning.md b/docs/milestone-2-cleaning.md
+index dffa618..0ec525b 100644
+--- a/docs/milestone-2-cleaning.md
++++ b/docs/milestone-2-cleaning.md
+@@ -6,7 +6,7 @@ Complete.
+ 
+ ## Goal
+ 
+-Turn immutable Greenhouse snapshots into one deterministic, analysis-ready
++Turn immutable supported job-board snapshots into one deterministic, analysis-ready
+ Parquet dataset without changing or deleting the raw source data.
+ 
+ ## Command
+@@ -15,7 +15,7 @@ Parquet dataset without changing or deleting the raw source data.
+ python -m src.transformation.build
+ ```
+ 
+-The command reads all Greenhouse metadata sidecars beneath `data/raw`, verifies
++The command reads all supported Greenhouse and Lever metadata sidecars beneath `data/raw`, verifies
+ each raw file, transforms every job observation, deduplicates repeated postings
+ across snapshots and writes:
+ 
+@@ -60,7 +60,7 @@ raw metadata + exact raw JSON
+ ## Canonical record
+ 
+ Each Parquet row represents the latest known observation of one stable
+-Greenhouse posting and retains its history and lineage.
++source posting and retains its history and lineage.
+ 
+ ### Identity and lineage
+ 
+@@ -113,7 +113,7 @@ and the issue is recorded.
+ 
+ ## Text cleaning
+ 
+-Greenhouse descriptions can contain HTML, HTML entities and inconsistent
++Source descriptions can contain HTML, HTML entities and inconsistent
+ whitespace. The cleaner:
+ 
+ 1. decodes escaped entities;
+@@ -192,7 +192,7 @@ This prevents early filtering from hiding classification mistakes.
+ 
+ ## Deduplication decision
+ 
+-The stable key uses the provider, board token and Greenhouse job ID. When an ID
++The stable key uses the provider, source token and provider job ID. When an ID
+ is unavailable, the application URL is hashed; content-based identity is the
+ last fallback.
+ 
+@@ -233,7 +233,7 @@ Tests cover:
+ - HTML and entity cleaning;
+ - location, workplace, level and technology rules;
+ - known false positives;
+-- canonical Greenhouse transformation;
++- canonical Greenhouse and Lever transformation;
+ - missing-field quality flags;
+ - raw snapshot integrity checks;
+ - repeat-observation deduplication;
+diff --git a/docs/milestone-2b-quality-and-coverage.md b/docs/milestone-2b-quality-and-coverage.md
+new file mode 100644
+index 0000000..3b2ef48
+--- /dev/null
++++ b/docs/milestone-2b-quality-and-coverage.md
+@@ -0,0 +1,182 @@
++# Milestone 2B: Classification Quality and Source Coverage
++
++## Status
++
++Implemented. Run the live collector and dataset build to produce current counts.
++
++## Why this pass was needed
++
++Milestone 2 successfully produced 100 canonical records, but only one record met
++all three target-market conditions: South African, technology-related and
++explicitly early-career.
++
++A manual diagnostic showed that most senior classifications were supported by
++real title evidence such as `Senior`, `Lead`, `Principal` and `Manager`. The
++larger issue was coverage: the first production dataset only contained three
++Greenhouse employers, and many relevant engineering titles did not explicitly
++state a level.
++
++Milestone 2B therefore improves both source coverage and classification
++traceability without weakening the conservative target-market definition.
++
++## Added source coverage
++
++The production collector now supports the public Lever Postings API as well as
++Greenhouse. The two already validated Lever sources are enabled:
++
++- Mama Money
++- Yassir
++
++The collector preserves the exact JSON response bytes, writes the same metadata
++and SHA-256 integrity fields used for Greenhouse, and stores snapshots beneath:
++
++```text
++data/raw/
++├── greenhouse/<board-token>/
++└── lever/<site-token>/
++```
++
++### Lever completeness guard
++
++The MVP requests one large Lever page so that the exact HTTP response remains
++the raw-data contract. If the response reaches the configured page limit, the
++collector fails rather than silently treating a possibly truncated page as a
++complete source snapshot.
++
++The default limit is 500 and can be changed with:
++
++```bash
++python -m src.ingestion.collect --lever-page-limit 500
++```
++
++Full multi-page raw-response storage can be added later if a source grows beyond
++this boundary.
++
++## Lever transformation mapping
++
++Lever records are mapped into the existing canonical schema:
++
++| Lever field | Canonical field |
++|---|---|
++| `id` | `source_job_id` |
++| `text` | `title` |
++| `categories.location` / `allLocations` | `location_raw` |
++| `categories.department` / `team` | `department` / `office` |
++| `descriptionPlain`, `lists`, `additionalPlain` | `description_text` |
++| `applyUrl` or `hostedUrl` | `application_url` |
++| `workplaceType` | `workplace_type` |
++| `categories.level`, when present | role-level evidence |
++| `country` | location-country evidence |
++
++Lever does not provide a public posting-updated timestamp in the same way as
++Greenhouse. `source_updated_at` therefore remains null for Lever records rather
++than creating a misleading timestamp.
++
++## Role-level quality changes
++
++### Senior title evidence is authoritative
++
++The following title terms are evaluated before any early-career evidence:
++
++- Senior
++- Staff
++- Principal
++- Lead
++- Manager
++- Director
++- Head of
++- Architect
++- Vice President / VP
++- Chief
++
++This prevents a title such as `Graduate Programme Manager` from being
++incorrectly downgraded because the description or title also contains
++`graduate`.
++
++### Stronger early-career description evidence
++
++When the title does not specify a level, the classifier can use explicit phrases
++such as:
++
++- recent, new or fresh graduate;
++- entry-level or early-career role;
++- 0–1, 0–2 or 1–2 years of experience;
++- up to two years of experience;
++- less than two years of experience;
++- one year of professional experience; and
++- no prior or professional experience required.
++
++The classifier remains conservative. A plain title such as `Software Engineer`
++is not automatically labelled junior merely because it lacks a senior keyword.
++
++### Evidence provenance
++
++`role_level_evidence` now identifies where the evidence came from, for example:
++
++```text
++title: Senior
++description: 0-2 years of professional experience
++source_level: Associate
++```
++
++This makes quality reviews possible without rereading every full description.
++
++## Explicit Lever fields
++
++When Lever provides an explicit workplace type, it takes precedence over loose
++mentions of remote work elsewhere in the description. Supported values are
++normalised to:
++
++- `hybrid`
++- `remote`
++- `on_site`
++- `unspecified`
++
++An explicit Lever level can support a role-level classification, but it cannot
++override a senior title.
++
++## Updated quality report
++
++The report now includes:
++
++- canonical job counts by provider;
++- South African technology-job count;
++- role-level distribution within South African technology jobs;
++- number of jobs carrying role-level evidence; and
++- target-market counts by company.
++
++These fields make the next source-coverage decision visible before analysis is
++published.
++
++## Run order
++
++```bash
++python -m src.ingestion.collect
++python -m src.transformation.build
++pytest -q
++cat data/processed/quality-report.json
++```
++
++Existing duplicate snapshots may be reported as `DUPLICATE`; that is expected.
++New Lever directories should appear beneath `data/raw/lever` after the first
++successful collection.
++
++## Acceptance checks
++
++Milestone 2B is accepted when:
++
++1. Greenhouse and Lever sources collect without silent truncation;
++2. snapshot hashes and job counts validate;
++3. the canonical dataset contains both providers;
++4. senior titles remain senior despite early-career description text;
++5. explicit early-career evidence is stored with its provenance;
++6. all tests pass; and
++7. the quality report provides enough detail to judge whether the sample is
++   ready for baseline market analysis.
++
++## Next milestone
++
++Milestone 3 is baseline market analysis. It will use the canonical Parquet file
++to answer core questions about companies, locations, workplace types, role
++levels and role families before detailed skill extraction is added in Milestone
++4.
+diff --git a/src/ingestion/collect.py b/src/ingestion/collect.py
+index 4d93027..f8c9e30 100644
+--- a/src/ingestion/collect.py
++++ b/src/ingestion/collect.py
+@@ -1,4 +1,4 @@
+-"""Command-line entry point for raw Greenhouse ingestion."""
++"""Command-line entry point for raw Greenhouse and Lever ingestion."""
+ 
+ from __future__ import annotations
+ 
+@@ -8,11 +8,18 @@ import sys
+ from dataclasses import asdict, dataclass
+ from datetime import datetime, timezone
+ from pathlib import Path
++from typing import Protocol
+ 
+ import requests
+ 
+-from src.ingestion.config import GreenhouseSource, load_greenhouse_sources
++from src.ingestion.config import (
++    ConfiguredSource,
++    GreenhouseSource,
++    LeverSource,
++    load_collection_sources,
++)
+ from src.ingestion.greenhouse import GreenhouseClient
++from src.ingestion.lever import LeverClient
+ from src.ingestion.snapshot import RawSnapshotStore, filename_timestamp
+ 
+ 
+@@ -24,6 +31,7 @@ DEFAULT_RAW_ROOT = PROJECT_ROOT / "data" / "raw"
+ @dataclass(frozen=True)
+ class CollectionResult:
+     source_name: str
++    source_provider: str
+     source_token: str
+     status: str
+     job_count: int
+@@ -32,12 +40,25 @@ class CollectionResult:
+     error: str | None
+ 
+ 
++class GreenhouseFetcher(Protocol):
++    def fetch_board(self, board_token: str): ...
++
++
++class LeverFetcher(Protocol):
++    def fetch_site(self, site_token: str): ...
++
++
+ def collect_source(
+     source: GreenhouseSource,
+-    client: GreenhouseClient,
++    client: GreenhouseFetcher,
+     store: RawSnapshotStore,
+     collected_at: datetime,
+ ) -> CollectionResult:
++    """Collect one Greenhouse source.
++
++    This name is retained for backwards compatibility with the Milestone 1 API.
++    """
++
+     try:
+         response = client.fetch_board(source.token)
+         snapshot = store.write_greenhouse_snapshot(
+@@ -47,6 +68,7 @@ def collect_source(
+         )
+         return CollectionResult(
+             source_name=source.name,
++            source_provider="greenhouse",
+             source_token=source.token,
+             status=snapshot.status,
+             job_count=response.job_count,
+@@ -57,6 +79,7 @@ def collect_source(
+     except (requests.RequestException, ValueError, OSError) as error:
+         return CollectionResult(
+             source_name=source.name,
++            source_provider="greenhouse",
+             source_token=source.token,
+             status="failed",
+             job_count=0,
+@@ -66,6 +89,68 @@ def collect_source(
+         )
+ 
+ 
++def collect_lever_source(
++    source: LeverSource,
++    client: LeverFetcher,
++    store: RawSnapshotStore,
++    collected_at: datetime,
++) -> CollectionResult:
++    """Collect one Lever source."""
++
++    try:
++        response = client.fetch_site(source.token)
++        snapshot = store.write_lever_snapshot(
++            source_name=source.name,
++            response=response,
++            collected_at=collected_at,
++        )
++        return CollectionResult(
++            source_name=source.name,
++            source_provider="lever",
++            source_token=source.token,
++            status=snapshot.status,
++            job_count=response.job_count,
++            raw_path=str(snapshot.raw_path),
++            metadata_path=str(snapshot.metadata_path),
++            error=None,
++        )
++    except (requests.RequestException, ValueError, OSError) as error:
++        return CollectionResult(
++            source_name=source.name,
++            source_provider="lever",
++            source_token=source.token,
++            status="failed",
++            job_count=0,
++            raw_path=None,
++            metadata_path=None,
++            error=str(error),
++        )
++
++
++def collect_configured_source(
++    source: ConfiguredSource,
++    greenhouse_client: GreenhouseFetcher,
++    lever_client: LeverFetcher,
++    store: RawSnapshotStore,
++    collected_at: datetime,
++) -> CollectionResult:
++    if source.provider == "greenhouse":
++        return collect_source(
++            GreenhouseSource(name=source.name, token=source.token),
++            greenhouse_client,
++            store,
++            collected_at,
++        )
++    if source.provider == "lever":
++        return collect_lever_source(
++            LeverSource(name=source.name, token=source.token),
++            lever_client,
++            store,
++            collected_at,
++        )
++    raise ValueError(f"Unsupported collection provider: {source.provider}")
++
++
+ def write_run_report(
+     raw_root: Path,
+     collected_at: datetime,
+@@ -79,6 +164,14 @@ def write_run_report(
+         "successful_sources": sum(result.status != "failed" for result in results),
+         "failed_sources": sum(result.status == "failed" for result in results),
+         "total_source_jobs": sum(result.job_count for result in results),
++        "provider_job_counts": {
++            provider: sum(
++                result.job_count
++                for result in results
++                if result.source_provider == provider
++            )
++            for provider in sorted({result.source_provider for result in results})
++        },
+         "results": [asdict(result) for result in results],
+     }
+     report_path.write_text(
+@@ -89,12 +182,13 @@ def write_run_report(
+ 
+ 
+ def print_summary(results: list[CollectionResult], report_path: Path) -> None:
+-    print("\nGreenhouse raw-ingestion summary")
+-    print("=" * 80)
++    print("\nRaw-ingestion summary")
++    print("=" * 88)
+     for result in results:
+         print(
+-            f"{result.status.upper():9} | {result.source_name:18} | "
+-            f"jobs={result.job_count:3} | token={result.source_token}"
++            f"{result.status.upper():9} | {result.source_provider:10} | "
++            f"{result.source_name:18} | jobs={result.job_count:3} | "
++            f"token={result.source_token}"
+         )
+         if result.error:
+             print(f"           - {result.error}")
+@@ -103,7 +197,7 @@ def print_summary(results: list[CollectionResult], report_path: Path) -> None:
+ 
+ def parse_args() -> argparse.Namespace:
+     parser = argparse.ArgumentParser(
+-        description="Collect exact raw Greenhouse job-board snapshots."
++        description="Collect exact raw Greenhouse and Lever job-board snapshots."
+     )
+     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+     parser.add_argument("--raw-root", type=Path, default=DEFAULT_RAW_ROOT)
+@@ -111,9 +205,10 @@ def parse_args() -> argparse.Namespace:
+         "--source-token",
+         action="append",
+         dest="source_tokens",
+-        help="Collect only this Greenhouse token. May be supplied more than once.",
++        help="Collect only this source token. May be supplied more than once.",
+     )
+     parser.add_argument("--timeout", type=int, default=30)
++    parser.add_argument("--lever-page-limit", type=int, default=500)
+     return parser.parse_args()
+ 
+ 
+@@ -122,8 +217,12 @@ def main() -> int:
+     requested_tokens = set(args.source_tokens) if args.source_tokens else None
+ 
+     try:
+-        sources = load_greenhouse_sources(args.config, requested_tokens)
+-        client = GreenhouseClient(timeout_seconds=args.timeout)
++        sources = load_collection_sources(args.config, requested_tokens)
++        greenhouse_client = GreenhouseClient(timeout_seconds=args.timeout)
++        lever_client = LeverClient(
++            timeout_seconds=args.timeout,
++            page_limit=args.lever_page_limit,
++        )
+     except (OSError, json.JSONDecodeError, ValueError) as error:
+         print(f"Configuration error: {error}", file=sys.stderr)
+         return 2
+@@ -131,7 +230,13 @@ def main() -> int:
+     collected_at = datetime.now(timezone.utc)
+     store = RawSnapshotStore(args.raw_root)
+     results = [
+-        collect_source(source, client, store, collected_at)
++        collect_configured_source(
++            source,
++            greenhouse_client,
++            lever_client,
++            store,
++            collected_at,
++        )
+         for source in sources
+     ]
+     report_path = write_run_report(args.raw_root, collected_at, results)
+diff --git a/src/ingestion/config.py b/src/ingestion/config.py
+index 3c5f591..ed62cc7 100644
+--- a/src/ingestion/config.py
++++ b/src/ingestion/config.py
+@@ -5,7 +5,19 @@ from __future__ import annotations
+ import json
+ from dataclasses import dataclass
+ from pathlib import Path
+-from typing import Any
++from typing import Any, Iterable
++
++
++SUPPORTED_COLLECTION_PROVIDERS = ("greenhouse", "lever")
++
++
++@dataclass(frozen=True)
++class ConfiguredSource:
++    """One enabled public job-board source."""
++
++    name: str
++    provider: str
++    token: str
+ 
+ 
+ @dataclass(frozen=True)
+@@ -16,24 +28,39 @@ class GreenhouseSource:
+     token: str
+ 
+ 
+-def load_greenhouse_sources(
+-    config_path: Path,
+-    requested_tokens: set[str] | None = None,
+-) -> list[GreenhouseSource]:
+-    """Return enabled Greenhouse sources, optionally filtered by board token."""
++@dataclass(frozen=True)
++class LeverSource:
++    """A configured public Lever postings site."""
++
++    name: str
++    token: str
++
+ 
++def _read_raw_sources(config_path: Path) -> list[dict[str, Any]]:
+     payload: Any = json.loads(config_path.read_text(encoding="utf-8"))
+     raw_sources = payload.get("sources")
+     if not isinstance(raw_sources, list):
+         raise ValueError("Source configuration must contain a sources list.")
+ 
+-    sources: list[GreenhouseSource] = []
+-    seen_tokens: set[str] = set()
+-
++    validated: list[dict[str, Any]] = []
+     for raw_source in raw_sources:
+         if not isinstance(raw_source, dict):
+             raise ValueError("Every configured source must be an object.")
+-        if raw_source.get("provider") != "greenhouse":
++        validated.append(raw_source)
++    return validated
++
++
++def _load_provider_sources(
++    config_path: Path,
++    *,
++    provider: str,
++    requested_tokens: set[str] | None,
++) -> list[tuple[str, str]]:
++    sources: list[tuple[str, str]] = []
++    seen_tokens: set[str] = set()
++
++    for raw_source in _read_raw_sources(config_path):
++        if raw_source.get("provider") != provider:
+             continue
+         if not raw_source.get("enabled", True):
+             continue
+@@ -41,22 +68,117 @@ def load_greenhouse_sources(
+         name = str(raw_source.get("name") or "").strip()
+         token = str(raw_source.get("token") or "").strip()
+         if not name or not token:
+-            raise ValueError("Enabled Greenhouse sources require name and token.")
++            raise ValueError(
++                f"Enabled {provider} sources require name and token."
++            )
+         if token in seen_tokens:
+-            raise ValueError(f"Duplicate Greenhouse board token: {token}")
++            raise ValueError(f"Duplicate {provider} source token: {token}")
+ 
+         seen_tokens.add(token)
+         if requested_tokens is None or token in requested_tokens:
+-            sources.append(GreenhouseSource(name=name, token=token))
++            sources.append((name, token))
+ 
+     if requested_tokens:
+-        configured_tokens = {source.token for source in sources}
++        configured_tokens = {token for _, token in sources}
+         missing_tokens = requested_tokens - configured_tokens
+         if missing_tokens:
+             missing = ", ".join(sorted(missing_tokens))
+-            raise ValueError(f"Unknown or disabled Greenhouse source token(s): {missing}")
++            raise ValueError(
++                f"Unknown or disabled {provider} source token(s): {missing}"
++            )
++
++    if not sources:
++        raise ValueError(f"No enabled {provider} sources matched the request.")
++
++    return sources
++
++
++def load_greenhouse_sources(
++    config_path: Path,
++    requested_tokens: set[str] | None = None,
++) -> list[GreenhouseSource]:
++    """Return enabled Greenhouse sources, optionally filtered by board token."""
++
++    return [
++        GreenhouseSource(name=name, token=token)
++        for name, token in _load_provider_sources(
++            config_path,
++            provider="greenhouse",
++            requested_tokens=requested_tokens,
++        )
++    ]
++
++
++def load_lever_sources(
++    config_path: Path,
++    requested_tokens: set[str] | None = None,
++) -> list[LeverSource]:
++    """Return enabled Lever sources, optionally filtered by site token."""
++
++    return [
++        LeverSource(name=name, token=token)
++        for name, token in _load_provider_sources(
++            config_path,
++            provider="lever",
++            requested_tokens=requested_tokens,
++        )
++    ]
++
++
++def load_collection_sources(
++    config_path: Path,
++    requested_tokens: set[str] | None = None,
++    providers: Iterable[str] = SUPPORTED_COLLECTION_PROVIDERS,
++) -> list[ConfiguredSource]:
++    """Return all enabled sources supported by the production collector.
++
++    Token filtering is resolved across providers so requesting a Lever token does
++    not incorrectly fail Greenhouse validation, and vice versa.
++    """
++
++    requested_providers = tuple(providers)
++    unsupported = set(requested_providers) - set(SUPPORTED_COLLECTION_PROVIDERS)
++    if unsupported:
++        names = ", ".join(sorted(unsupported))
++        raise ValueError(f"Unsupported collection provider(s): {names}")
++
++    sources: list[ConfiguredSource] = []
++    seen_source_keys: set[tuple[str, str]] = set()
++
++    for raw_source in _read_raw_sources(config_path):
++        provider = str(raw_source.get("provider") or "").strip()
++        if provider not in requested_providers:
++            continue
++        if not raw_source.get("enabled", True):
++            continue
++
++        name = str(raw_source.get("name") or "").strip()
++        token = str(raw_source.get("token") or "").strip()
++        if not name or not token:
++            raise ValueError(
++                f"Enabled {provider} sources require name and token."
++            )
++
++        source_key = (provider, token)
++        if source_key in seen_source_keys:
++            raise ValueError(
++                f"Duplicate configured source: {provider}:{token}"
++            )
++        seen_source_keys.add(source_key)
++
++        if requested_tokens is None or token in requested_tokens:
++            sources.append(
++                ConfiguredSource(name=name, provider=provider, token=token)
++            )
++
++    if requested_tokens:
++        matched_tokens = {source.token for source in sources}
++        missing_tokens = requested_tokens - matched_tokens
++        if missing_tokens:
++            missing = ", ".join(sorted(missing_tokens))
++            raise ValueError(f"Unknown or disabled source token(s): {missing}")
+ 
+     if not sources:
+-        raise ValueError("No enabled Greenhouse sources matched the request.")
++        raise ValueError("No enabled supported sources matched the request.")
+ 
+     return sources
+diff --git a/src/ingestion/lever.py b/src/ingestion/lever.py
+new file mode 100644
+index 0000000..e29fcd3
+--- /dev/null
++++ b/src/ingestion/lever.py
+@@ -0,0 +1,136 @@
++"""Client for the public Lever Postings API."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any
++
++import requests
++
++from src.ingestion.greenhouse import DEFAULT_TIMEOUT_SECONDS, USER_AGENT
++
++
++DEFAULT_PAGE_LIMIT = 500
++
++
++@dataclass(frozen=True)
++class LeverResponse:
++    """One successfully retrieved Lever postings response."""
++
++    site_token: str
++    endpoint: str
++    status_code: int
++    content_type: str
++    raw_bytes: bytes
++    payload: list[dict[str, Any]]
++
++    @property
++    def job_count(self) -> int:
++        return len(self.payload)
++
++
++class LeverClient:
++    """Fetch public Lever postings without authentication.
++
++    The MVP deliberately requests one large page so the exact HTTP response can
++    be retained as the immutable raw snapshot. A full page is rejected rather
++    than silently assuming the source has no additional postings.
++    """
++
++    base_url = "https://api.lever.co/v0/postings"
++
++    def __init__(
++        self,
++        session: requests.Session | None = None,
++        timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
++        page_limit: int = DEFAULT_PAGE_LIMIT,
++    ) -> None:
++        if timeout_seconds <= 0:
++            raise ValueError("timeout_seconds must be greater than zero.")
++        if page_limit <= 0:
++            raise ValueError("page_limit must be greater than zero.")
++        self.session = session or requests.Session()
++        self.timeout_seconds = timeout_seconds
++        self.page_limit = page_limit
++
++    def fetch_site(self, site_token: str) -> LeverResponse:
++        token = site_token.strip()
++        if not token:
++            raise ValueError("site_token cannot be empty.")
++
++        endpoint = f"{self.base_url}/{token}"
++        response = self.session.get(
++            endpoint,
++            params={"mode": "json", "limit": self.page_limit},
++            headers={
++                "Accept": "application/json",
++                "User-Agent": USER_AGENT,
++            },
++            timeout=self.timeout_seconds,
++        )
++        response.raise_for_status()
++
++        content_type = response.headers.get("Content-Type", "")
++        try:
++            payload = response.json()
++        except requests.JSONDecodeError as error:
++            raise ValueError(
++                f"Lever returned invalid JSON for site {token}."
++            ) from error
++
++        if not isinstance(payload, list) or any(
++            not isinstance(job, dict) for job in payload
++        ):
++            raise ValueError(
++                f"Lever response for site {token} must be a list of job objects."
++            )
++
++        if len(payload) >= self.page_limit:
++            raise ValueError(
++                f"Lever site {token} returned the configured page limit "
++                f"({self.page_limit}); pagination is required before this "
++                "snapshot can be considered complete."
++            )
++
++        # Some APIs enforce a server-side cap smaller than the requested limit.
++        # Probe immediately after the returned page so a capped response cannot
++        # be accepted silently as a complete snapshot.
++        if payload:
++            continuation = self.session.get(
++                endpoint,
++                params={
++                    "mode": "json",
++                    "skip": len(payload),
++                    "limit": 1,
++                },
++                headers={
++                    "Accept": "application/json",
++                    "User-Agent": USER_AGENT,
++                },
++                timeout=self.timeout_seconds,
++            )
++            continuation.raise_for_status()
++            try:
++                continuation_payload = continuation.json()
++            except requests.JSONDecodeError as error:
++                raise ValueError(
++                    f"Lever returned invalid pagination JSON for site {token}."
++                ) from error
++            if not isinstance(continuation_payload, list):
++                raise ValueError(
++                    f"Lever pagination response for site {token} must be a list."
++                )
++            if continuation_payload:
++                raise ValueError(
++                    f"Lever site {token} has additional postings beyond the "
++                    "saved response; paginated raw storage is required."
++                )
++
++        return LeverResponse(
++            site_token=token,
++            endpoint=response.url,
++            status_code=response.status_code,
++            content_type=content_type,
++            raw_bytes=response.content,
++            payload=payload,
++        )
+diff --git a/src/ingestion/snapshot.py b/src/ingestion/snapshot.py
+index abc4e23..60db7b4 100644
+--- a/src/ingestion/snapshot.py
++++ b/src/ingestion/snapshot.py
+@@ -10,6 +10,7 @@ from pathlib import Path
+ from tempfile import NamedTemporaryFile
+ 
+ from src.ingestion.greenhouse import GreenhouseResponse
++from src.ingestion.lever import LeverResponse
+ 
+ 
+ @dataclass(frozen=True)
+@@ -46,10 +47,53 @@ class RawSnapshotStore:
+         source_name: str,
+         response: GreenhouseResponse,
+         collected_at: datetime | None = None,
++    ) -> SnapshotWriteResult:
++        return self._write_snapshot(
++            provider="greenhouse",
++            source_name=source_name,
++            source_token=response.board_token,
++            endpoint=response.endpoint,
++            status_code=response.status_code,
++            content_type=response.content_type,
++            raw_bytes=response.raw_bytes,
++            job_count=response.job_count,
++            collected_at=collected_at,
++        )
++
++    def write_lever_snapshot(
++        self,
++        source_name: str,
++        response: LeverResponse,
++        collected_at: datetime | None = None,
++    ) -> SnapshotWriteResult:
++        return self._write_snapshot(
++            provider="lever",
++            source_name=source_name,
++            source_token=response.site_token,
++            endpoint=response.endpoint,
++            status_code=response.status_code,
++            content_type=response.content_type,
++            raw_bytes=response.raw_bytes,
++            job_count=response.job_count,
++            collected_at=collected_at,
++        )
++
++    def _write_snapshot(
++        self,
++        *,
++        provider: str,
++        source_name: str,
++        source_token: str,
++        endpoint: str,
++        status_code: int,
++        content_type: str,
++        raw_bytes: bytes,
++        job_count: int,
++        collected_at: datetime | None,
+     ) -> SnapshotWriteResult:
+         collection_time = collected_at or utc_now()
+-        digest = hashlib.sha256(response.raw_bytes).hexdigest()
+-        source_directory = self.root / "greenhouse" / response.board_token
++        digest = hashlib.sha256(raw_bytes).hexdigest()
++        source_directory = self.root / provider / source_token
+         source_directory.mkdir(parents=True, exist_ok=True)
+ 
+         existing_metadata = self._find_existing_digest(source_directory, digest)
+@@ -67,18 +111,18 @@ class RawSnapshotStore:
+         raw_path = source_directory / f"{timestamp}.json"
+         metadata_path = source_directory / f"{timestamp}.metadata.json"
+ 
+-        self._atomic_write_bytes(raw_path, response.raw_bytes)
++        self._atomic_write_bytes(raw_path, raw_bytes)
+         metadata = {
+-            "source": "greenhouse",
++            "source": provider,
+             "source_name": source_name,
+-            "source_token": response.board_token,
+-            "endpoint": response.endpoint,
++            "source_token": source_token,
++            "endpoint": endpoint,
+             "collected_at": collection_time.astimezone(timezone.utc).isoformat(),
+-            "http_status": response.status_code,
+-            "content_type": response.content_type,
++            "http_status": status_code,
++            "content_type": content_type,
+             "content_sha256": digest,
+-            "byte_count": len(response.raw_bytes),
+-            "source_job_count": response.job_count,
++            "byte_count": len(raw_bytes),
++            "source_job_count": job_count,
+             "raw_file": raw_path.name,
+         }
+         self._atomic_write_text(
+diff --git a/src/transformation/build.py b/src/transformation/build.py
+index c61e4ed..25e6098 100644
+--- a/src/transformation/build.py
++++ b/src/transformation/build.py
+@@ -34,7 +34,12 @@ def print_summary(result: object, parquet_path: Path, quality_path: Path) -> Non
+     print(f"Duplicate observations: {quality_report['duplicate_observations_removed']}")
+     print(f"South African jobs:     {quality_report['south_africa_job_count']}")
+     print(f"Technology jobs:        {quality_report['technology_job_count']}")
++    print(
++        f"SA technology jobs:     "
++        f"{quality_report['south_africa_technology_job_count']}"
++    )
+     print(f"Target-market jobs:     {quality_report['target_market_job_count']}")
++    print(f"Provider job counts:    {quality_report['provider_job_counts']}")
+     print(f"\nDataset:        {parquet_path}")
+     print(f"Quality report: {quality_path}")
+ 
+diff --git a/src/transformation/classification.py b/src/transformation/classification.py
+index e65519a..c433861 100644
+--- a/src/transformation/classification.py
++++ b/src/transformation/classification.py
+@@ -67,7 +67,24 @@ _REMOTE_SOUTH_AFRICA_PATTERNS = (
+     r"candidates?\s+(?:must\s+be\s+)?(?:located|based)\s+in\s+south\s+africa",
+ )
+ 
+-_ROLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
++# Senior title evidence is deliberately authoritative. A role such as
++# "Graduate Programme Manager" must not be downgraded because the title also
++# contains the word "graduate".
++_SENIOR_TITLE_PATTERNS = (
++    r"\bsenior\b",
++    r"\bstaff\b",
++    r"\bprincipal\b",
++    r"\blead\b",
++    r"\bmanager\b",
++    r"\bdirector\b",
++    r"\bhead\s+of\b",
++    r"\barchitect\b",
++    r"\bvice\s+president\b",
++    r"\bvp\b",
++    r"\bchief\b",
++)
++
++_EARLY_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+     ("internship", (r"\bintern(?:ship)?\b", r"\bvacation\s+work\b", r"\blearnership\b", r"\bapprentice(?:ship)?\b")),
+     ("graduate", (r"\bgraduate\b", r"\bnew\s+grad\b", r"\bgrad\s+programme\b", r"\bgrad\s+program\b")),
+     (
+@@ -80,28 +97,41 @@ _ROLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+             r"\b(?:software|web|backend|front[- ]?end|full[- ]?stack)\s+developer\s+i\b",
+         ),
+     ),
++)
++
++_DESCRIPTION_LEVEL_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+     (
+-        "senior",
++        "internship",
+         (
+-            r"\bsenior\b",
+-            r"\bstaff\b",
+-            r"\bprincipal\b",
+-            r"\blead\b",
+-            r"\bmanager\b",
+-            r"\bdirector\b",
+-            r"\bhead\s+of\b",
+-            r"\barchitect\b",
+-            r"\bvice\s+president\b",
+-            r"\bvp\b",
+-            r"\bchief\b",
++            r"\bthis\s+internship\b",
++            r"\binternship\s+programme\b",
++            r"\binternship\s+program\b",
++        ),
++    ),
++    (
++        "graduate",
++        (
++            r"\bgraduate\s+programme\b",
++            r"\bgraduate\s+program\b",
++            r"\bnew\s+graduate\b",
++            r"\brecent\s+graduate\b",
++            r"\bfresh\s+graduate\b",
++        ),
++    ),
++    (
++        "junior",
++        (
++            r"\bentry[- ]level(?:\s+(?:role|position|opportunity|candidate))?\b",
++            r"\bearly[- ]career(?:\s+(?:role|position|opportunity|candidate))?\b",
++            r"\b0\s*(?:-|–|—|to)\s*[12]\s+years?(?:\s+of\s+(?:professional\s+)?experience)?\b",
++            r"\b1\s*(?:-|–|—|to)\s*2\s+years?(?:\s+of\s+(?:professional\s+)?experience)?\b",
++            r"\bup\s+to\s+2\s+years?(?:\s+of\s+(?:professional\s+)?experience)?\b",
++            r"\bless\s+than\s+2\s+years?(?:\s+of\s+(?:professional\s+)?experience)?\b",
++            r"\b(?:minimum\s+of\s+|at\s+least\s+)?1\s+year(?:\s+of\s+(?:professional\s+)?experience)\b",
++            r"\bno\s+(?:(?:prior|professional)\s+)*experience\s+(?:is\s+)?(?:required|necessary)\b",
++            r"\bno\s+prior\s+(?:work\s+)?experience\b",
+         ),
+     ),
+-)
+-
+-_DESCRIPTION_LEVEL_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+-    ("internship", (r"\bthis\s+internship\b", r"\binternship\s+programme\b")),
+-    ("graduate", (r"\bgraduate\s+programme\b", r"\bgraduate\s+program\b", r"\bnew\s+graduate\b")),
+-    ("junior", (r"\bentry[- ]level\s+(?:role|position|opportunity)\b", r"\b0\s*(?:-|to)\s*2\s+years?\b")),
+ )
+ 
+ _TECH_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+@@ -183,6 +213,22 @@ _WORKPLACE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+     ("on_site", (r"\bon[- ]?site\b", r"\boffice[- ]based\b", r"\bin[- ]office\b")),
+ )
+ 
++_EXPLICIT_WORKPLACE_LABELS = {
++    "hybrid": "hybrid",
++    "remote": "remote",
++    "on-site": "on_site",
++    "on site": "on_site",
++    "onsite": "on_site",
++    "unspecified": "unspecified",
++}
++
++_EXPLICIT_LEVEL_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
++    ("senior", _SENIOR_TITLE_PATTERNS),
++    ("internship", (r"\bintern(?:ship)?\b",)),
++    ("graduate", (r"\bgraduate\b", r"\bnew\s+grad\b")),
++    ("junior", (r"\bjunior\b", r"\bentry[- ]level\b", r"\bassociate\b")),
++)
++
+ 
+ def _match_rules(text: str, patterns: Iterable[str]) -> tuple[str, ...]:
+     return unique_strings(
+@@ -192,6 +238,10 @@ def _match_rules(text: str, patterns: Iterable[str]) -> tuple[str, ...]:
+     )
+ 
+ 
++def _tag_evidence(source: str, matches: Iterable[str]) -> tuple[str, ...]:
++    return unique_strings(f"{source}: {match}" for match in matches)
++
++
+ def classify_location(location_raw: str, description_text: str = "") -> LocationClassification:
+     """Normalise location evidence without guessing unsupported cities."""
+ 
+@@ -236,29 +286,76 @@ def classify_location(location_raw: str, description_text: str = "") -> Location
+     )
+ 
+ 
+-def classify_workplace(title: str, location_raw: str, description_text: str) -> LabelClassification:
+-    """Classify workplace type, preferring explicit hybrid evidence."""
++def classify_workplace(
++    title: str,
++    location_raw: str,
++    description_text: str,
++    explicit_workplace_type: str | None = None,
++) -> LabelClassification:
++    """Classify workplace type, preferring an explicit source field."""
++
++    explicit = normalize_whitespace(explicit_workplace_type).casefold()
++    explicit_label = _EXPLICIT_WORKPLACE_LABELS.get(explicit)
++    if explicit_label and explicit_label != "unspecified":
++        return LabelClassification(
++            label=explicit_label,
++            evidence=(f"source: {explicit_workplace_type}",),
++        )
+ 
+     combined_text = " ".join((title, location_raw, description_text))
+     for label, patterns in _WORKPLACE_RULES:
+         matches = _match_rules(combined_text, patterns)
+         if matches:
+-            return LabelClassification(label=label, evidence=matches)
++            return LabelClassification(
++                label=label,
++                evidence=_tag_evidence("text", matches),
++            )
+     return LabelClassification(label="unspecified", evidence=())
+ 
+ 
+-def classify_role_level(title: str, description_text: str) -> LabelClassification:
+-    """Classify advertised seniority using title-first deterministic rules."""
++def classify_role_level(
++    title: str,
++    description_text: str,
++    explicit_level: str | None = None,
++) -> LabelClassification:
++    """Classify seniority using authoritative title-first rules.
++
++    Senior title terms always win. Early-career description evidence is only
++    consulted when the title and any explicit source level are inconclusive.
++    """
++
++    senior_matches = _match_rules(title, _SENIOR_TITLE_PATTERNS)
++    if senior_matches:
++        return LabelClassification(
++            label="senior",
++            evidence=_tag_evidence("title", senior_matches),
++        )
+ 
+-    for label, patterns in _ROLE_RULES:
++    for label, patterns in _EARLY_TITLE_RULES:
+         matches = _match_rules(title, patterns)
+         if matches:
+-            return LabelClassification(label=label, evidence=matches)
++            return LabelClassification(
++                label=label,
++                evidence=_tag_evidence("title", matches),
++            )
++
++    explicit_text = normalize_whitespace(explicit_level)
++    if explicit_text:
++        for label, patterns in _EXPLICIT_LEVEL_RULES:
++            matches = _match_rules(explicit_text, patterns)
++            if matches:
++                return LabelClassification(
++                    label=label,
++                    evidence=_tag_evidence("source_level", matches),
++                )
+ 
+     for label, patterns in _DESCRIPTION_LEVEL_RULES:
+         matches = _match_rules(description_text, patterns)
+         if matches:
+-            return LabelClassification(label=label, evidence=matches)
++            return LabelClassification(
++                label=label,
++                evidence=_tag_evidence("description", matches),
++            )
+ 
+     return LabelClassification(label="unspecified", evidence=())
+ 
+diff --git a/src/transformation/dataset.py b/src/transformation/dataset.py
+index 860a348..a87da80 100644
+--- a/src/transformation/dataset.py
++++ b/src/transformation/dataset.py
+@@ -12,8 +12,9 @@ from typing import Any, Iterable
+ 
+ from src.transformation.cleaning import unique_strings
+ from src.transformation.greenhouse import parse_datetime, transform_greenhouse_job
++from src.transformation.lever import transform_lever_job
+ from src.transformation.schema import CanonicalJob
+-from src.transformation.snapshots import GreenhouseSnapshot, load_greenhouse_snapshots
++from src.transformation.snapshots import SourceSnapshot, load_snapshots
+ 
+ 
+ @dataclass(frozen=True)
+@@ -63,7 +64,7 @@ def _count_values(jobs: Iterable[CanonicalJob], field_name: str) -> dict[str, in
+ 
+ 
+ def _build_quality_report(
+-    snapshots: list[GreenhouseSnapshot],
++    snapshots: list[SourceSnapshot],
+     observations: list[CanonicalJob],
+     jobs: list[CanonicalJob],
+ ) -> dict[str, Any]:
+@@ -74,6 +75,13 @@ def _build_quality_report(
+         str(snapshot.metadata.get("source_name")) for snapshot in snapshots
+     )
+     company_counts = Counter(job.company for job in jobs)
++    provider_job_counts = Counter(job.source_provider for job in jobs)
++    target_market_company_counts = Counter(
++        job.company for job in jobs if job.is_target_market
++    )
++    south_africa_technology_jobs = [
++        job for job in jobs if job.is_south_africa and job.is_technology_role
++    ]
+ 
+     snapshot_times = [
+         timestamp
+@@ -92,10 +100,21 @@ def _build_quality_report(
+         "duplicate_observations_removed": len(observations) - len(jobs),
+         "south_africa_job_count": sum(job.is_south_africa for job in jobs),
+         "technology_job_count": sum(job.is_technology_role for job in jobs),
++        "south_africa_technology_job_count": len(south_africa_technology_jobs),
+         "target_market_job_count": sum(job.is_target_market for job in jobs),
+         "role_level_counts": _count_values(jobs, "role_level"),
++        "south_africa_technology_role_level_counts": _count_values(
++            south_africa_technology_jobs, "role_level"
++        ),
++        "role_level_evidence_count": sum(
++            bool(job.role_level_evidence) for job in jobs
++        ),
+         "workplace_type_counts": _count_values(jobs, "workplace_type"),
+         "company_counts": dict(sorted(company_counts.items())),
++        "provider_job_counts": dict(sorted(provider_job_counts.items())),
++        "target_market_company_counts": dict(
++            sorted(target_market_company_counts.items())
++        ),
+         "source_snapshot_counts": dict(sorted(source_snapshot_counts.items())),
+         "data_quality_issue_counts": dict(sorted(issue_counts.items())),
+     }
+@@ -110,16 +129,25 @@ def _relative_snapshot_path(raw_path: Path, raw_root: Path) -> Path:
+         return raw_path
+ 
+ 
++def _transform_snapshot_job(
++    snapshot: SourceSnapshot,
++    job: dict[str, Any] | Any,
++    raw_root: Path,
++) -> CanonicalJob:
++    raw_path = _relative_snapshot_path(snapshot.raw_path, raw_root)
++    if snapshot.provider == "greenhouse":
++        return transform_greenhouse_job(job, snapshot.metadata, raw_path)
++    if snapshot.provider == "lever":
++        return transform_lever_job(job, snapshot.metadata, raw_path)
++    raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
++
++
+ def build_dataset(raw_root: Path) -> DatasetBuildResult:
+     """Read saved snapshots and produce deterministic canonical job rows."""
+ 
+-    snapshots = load_greenhouse_snapshots(raw_root)
++    snapshots = load_snapshots(raw_root)
+     observations = [
+-        transform_greenhouse_job(
+-            job,
+-            snapshot.metadata,
+-            _relative_snapshot_path(snapshot.raw_path, raw_root),
+-        )
++        _transform_snapshot_job(snapshot, job, raw_root)
+         for snapshot in snapshots
+         for job in snapshot.jobs
+     ]
+diff --git a/src/transformation/lever.py b/src/transformation/lever.py
+new file mode 100644
+index 0000000..d35db1b
+--- /dev/null
++++ b/src/transformation/lever.py
+@@ -0,0 +1,223 @@
++"""Transform Lever postings into the canonical job schema."""
++
++from __future__ import annotations
++
++import hashlib
++from pathlib import Path
++from typing import Any, Mapping
++
++from src.transformation.classification import (
++    classify_location,
++    classify_role_level,
++    classify_technology_role,
++    classify_workplace,
++)
++from src.transformation.cleaning import (
++    clean_display_text,
++    html_to_text,
++    normalize_whitespace,
++    normalized_key,
++    unique_strings,
++)
++from src.transformation.greenhouse import parse_datetime
++from src.transformation.schema import CanonicalJob
++
++
++_TARGET_ROLE_LEVELS = {"internship", "graduate", "junior"}
++_COUNTRY_NAMES = {
++    "ZA": "South Africa",
++    "GB": "United Kingdom",
++    "US": "United States",
++    "CA": "Canada",
++    "AU": "Australia",
++    "DE": "Germany",
++    "FR": "France",
++    "IE": "Ireland",
++    "IN": "India",
++    "KE": "Kenya",
++    "MY": "Malaysia",
++    "NG": "Nigeria",
++    "NL": "Netherlands",
++    "PT": "Portugal",
++    "SG": "Singapore",
++    "ES": "Spain",
++}
++
++
++def _mapping(value: Any) -> Mapping[str, Any]:
++    return value if isinstance(value, Mapping) else {}
++
++
++def _string_list(value: Any) -> tuple[str, ...]:
++    if not isinstance(value, list):
++        return ()
++    return unique_strings(clean_display_text(item) for item in value)
++
++
++def _description_text(job: Mapping[str, Any]) -> str:
++    parts: list[str] = []
++
++    description_plain = clean_display_text(job.get("descriptionPlain"))
++    if description_plain:
++        parts.append(description_plain)
++    else:
++        parts.append(html_to_text(clean_display_text(job.get("description"))))
++
++    raw_lists = job.get("lists")
++    if isinstance(raw_lists, list):
++        for raw_list in raw_lists:
++            if not isinstance(raw_list, Mapping):
++                continue
++            heading = clean_display_text(raw_list.get("text"))
++            content = html_to_text(clean_display_text(raw_list.get("content")))
++            if heading:
++                parts.append(heading)
++            if content:
++                parts.append(content)
++
++    additional_plain = clean_display_text(job.get("additionalPlain"))
++    if additional_plain:
++        parts.append(additional_plain)
++    else:
++        parts.append(html_to_text(clean_display_text(job.get("additional"))))
++
++    return normalize_whitespace(" ".join(part for part in parts if part))
++
++
++def _location_text(categories: Mapping[str, Any], country_code: str) -> str:
++    primary = clean_display_text(categories.get("location"))
++    all_locations = _string_list(categories.get("allLocations"))
++    values = list(all_locations)
++    if primary and primary.casefold() not in {value.casefold() for value in values}:
++        values.insert(0, primary)
++
++    country_name = _COUNTRY_NAMES.get(country_code.upper())
++    if country_name and country_name.casefold() not in {
++        value.casefold() for value in values
++    }:
++        values.append(country_name)
++
++    return ", ".join(values)
++
++
++def _stable_job_key(
++    source_token: str,
++    source_job_id: str,
++    application_url: str,
++    fallback_content: str,
++) -> str:
++    if source_job_id:
++        identity = source_job_id
++    elif application_url:
++        identity = "url-" + hashlib.sha256(application_url.encode("utf-8")).hexdigest()[:24]
++    else:
++        identity = "content-" + hashlib.sha256(fallback_content.encode("utf-8")).hexdigest()[:24]
++    return f"lever:{source_token}:{identity}"
++
++
++def transform_lever_job(
++    job: Mapping[str, Any],
++    metadata: Mapping[str, Any],
++    raw_path: Path,
++) -> CanonicalJob:
++    """Create one fully classified canonical Lever observation."""
++
++    source_name = clean_display_text(metadata.get("source_name"))
++    source_token = clean_display_text(metadata.get("source_token"))
++    snapshot_sha256 = clean_display_text(metadata.get("content_sha256"))
++    collected_at = parse_datetime(metadata.get("collected_at"))
++    if collected_at is None:
++        raise ValueError("Snapshot metadata contains an invalid collected_at value.")
++
++    source_job_id = clean_display_text(job.get("id"))
++    title = clean_display_text(job.get("text"))
++    title_normalized = normalized_key(title)
++    application_url = clean_display_text(job.get("applyUrl"))
++    if not application_url:
++        application_url = clean_display_text(job.get("hostedUrl"))
++
++    categories = _mapping(job.get("categories"))
++    department = clean_display_text(categories.get("department")) or None
++    team = clean_display_text(categories.get("team")) or None
++    if department is None:
++        department = team
++    office = team if team and team != department else None
++
++    country_code = clean_display_text(job.get("country"))
++    location_raw = _location_text(categories, country_code)
++    description_text = _description_text(job)
++
++    location = classify_location(location_raw, description_text)
++    workplace = classify_workplace(
++        title,
++        location_raw,
++        description_text,
++        explicit_workplace_type=clean_display_text(job.get("workplaceType")),
++    )
++    role_level = classify_role_level(
++        title,
++        description_text,
++        explicit_level=clean_display_text(categories.get("level")),
++    )
++    technology = classify_technology_role(title, department, description_text)
++
++    is_target_market = (
++        location.is_south_africa
++        and technology.is_technology_role
++        and role_level.label in _TARGET_ROLE_LEVELS
++    )
++
++    issues: list[str] = []
++    if not source_job_id:
++        issues.append("missing_source_job_id")
++    if not title:
++        issues.append("missing_title")
++    if not application_url:
++        issues.append("missing_application_url")
++    if not location_raw:
++        issues.append("missing_location")
++    if not description_text:
++        issues.append("missing_description")
++
++    fallback_content = "|".join(
++        (source_name, title_normalized, normalized_key(location_raw), description_text[:500])
++    )
++
++    return CanonicalJob(
++        job_key=_stable_job_key(
++            source_token,
++            source_job_id,
++            application_url,
++            fallback_content,
++        ),
++        source_provider="lever",
++        source_name=source_name,
++        source_token=source_token,
++        source_job_id=source_job_id,
++        source_snapshot_sha256=snapshot_sha256,
++        source_snapshot_path=str(raw_path),
++        first_seen_at=collected_at,
++        last_seen_at=collected_at,
++        source_updated_at=None,
++        observation_count=1,
++        title=title,
++        title_normalized=title_normalized,
++        company=source_name,
++        department=department,
++        office=office,
++        location_raw=location_raw,
++        city=location.city,
++        province=location.province,
++        country=location.country,
++        location_evidence=location.evidence,
++        is_south_africa=location.is_south_africa,
++        workplace_type=workplace.label,
++        role_level=role_level.label,
++        role_level_evidence=role_level.evidence,
++        is_technology_role=technology.is_technology_role,
++        technology_evidence=technology.evidence,
++        is_target_market=is_target_market,
++        description_text=description_text,
++        application_url=application_url,
++        data_quality_issues=unique_strings(issues),
++    )
+diff --git a/src/transformation/snapshots.py b/src/transformation/snapshots.py
+index a4a2d9f..79b6c0c 100644
+--- a/src/transformation/snapshots.py
++++ b/src/transformation/snapshots.py
+@@ -1,4 +1,4 @@
+-"""Read and verify immutable raw Greenhouse snapshots."""
++"""Read and verify immutable raw job-board snapshots."""
+ 
+ from __future__ import annotations
+ 
+@@ -12,27 +12,49 @@ from typing import Any, Mapping
+ from src.transformation.greenhouse import parse_datetime
+ 
+ 
++SUPPORTED_SNAPSHOT_PROVIDERS = ("greenhouse", "lever")
++
++
+ class SnapshotReadError(ValueError):
+     """Raised when a saved raw snapshot violates the ingestion contract."""
+ 
+ 
+ @dataclass(frozen=True)
+-class GreenhouseSnapshot:
++class SourceSnapshot:
+     metadata_path: Path
+     raw_path: Path
+     metadata: Mapping[str, Any]
+     jobs: tuple[Mapping[str, Any], ...]
+ 
++    @property
++    def provider(self) -> str:
++        return str(self.metadata.get("source") or "")
+ 
+-def discover_metadata_paths(raw_root: Path) -> list[Path]:
+-    """Return all Greenhouse metadata sidecars in deterministic order."""
+ 
+-    return sorted((raw_root / "greenhouse").glob("*/*.metadata.json"))
++# Backwards-compatible names used by Milestone 2 imports and tests.
++GreenhouseSnapshot = SourceSnapshot
++LeverSnapshot = SourceSnapshot
+ 
+ 
+-def read_greenhouse_snapshot(metadata_path: Path) -> GreenhouseSnapshot:
+-    """Validate metadata, integrity and the minimum raw JSON structure."""
++def discover_metadata_paths(raw_root: Path, provider: str) -> list[Path]:
++    """Return provider metadata sidecars in deterministic order."""
++
++    if provider not in SUPPORTED_SNAPSHOT_PROVIDERS:
++        raise SnapshotReadError(f"Unsupported snapshot provider: {provider}")
++    return sorted((raw_root / provider).glob("*/*.metadata.json"))
+ 
++
++def discover_all_metadata_paths(raw_root: Path) -> list[Path]:
++    """Return every supported source sidecar in deterministic order."""
++
++    return sorted(
++        path
++        for provider in SUPPORTED_SNAPSHOT_PROVIDERS
++        for path in discover_metadata_paths(raw_root, provider)
++    )
++
++
++def _read_metadata(metadata_path: Path, expected_provider: str) -> dict[str, Any]:
+     try:
+         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+     except (OSError, json.JSONDecodeError) as error:
+@@ -55,8 +77,11 @@ def read_greenhouse_snapshot(metadata_path: Path) -> GreenhouseSnapshot:
+         missing = ", ".join(missing_fields)
+         raise SnapshotReadError(f"Metadata {metadata_path} is missing: {missing}")
+ 
+-    if metadata.get("source") != "greenhouse":
+-        raise SnapshotReadError(f"Unsupported source in metadata: {metadata_path}")
++    if metadata.get("source") != expected_provider:
++        raise SnapshotReadError(
++            f"Expected {expected_provider} metadata but found "
++            f"{metadata.get('source')!r}: {metadata_path}"
++        )
+ 
+     for field_name in ("source_name", "source_token"):
+         field_value = metadata.get(field_name)
+@@ -83,15 +108,22 @@ def read_greenhouse_snapshot(metadata_path: Path) -> GreenhouseSnapshot:
+         raise SnapshotReadError(
+             f"raw_file must be a filename within its snapshot directory: {metadata_path}"
+         )
+-    raw_path = metadata_path.parent / raw_file
+ 
++    return metadata
++
++
++def _read_verified_payload(
++    metadata_path: Path,
++    metadata: Mapping[str, Any],
++) -> tuple[Path, Any]:
++    raw_path = metadata_path.parent / str(metadata["raw_file"])
+     try:
+         raw_bytes = raw_path.read_bytes()
+     except OSError as error:
+         raise SnapshotReadError(f"Cannot read raw snapshot {raw_path}: {error}") from error
+ 
+     actual_digest = hashlib.sha256(raw_bytes).hexdigest()
+-    if actual_digest != expected_digest:
++    if actual_digest != metadata["content_sha256"]:
+         raise SnapshotReadError(f"SHA-256 mismatch for raw snapshot: {raw_path}")
+ 
+     try:
+@@ -99,18 +131,26 @@ def read_greenhouse_snapshot(metadata_path: Path) -> GreenhouseSnapshot:
+     except json.JSONDecodeError as error:
+         raise SnapshotReadError(f"Raw snapshot is not valid JSON: {raw_path}") from error
+ 
+-    if not isinstance(payload, dict) or not isinstance(payload.get("jobs"), list):
++    return raw_path, payload
++
++
++def _validate_jobs(
++    payload_jobs: Any,
++    metadata_path: Path,
++    raw_path: Path,
++    expected_count: Any,
++) -> tuple[Mapping[str, Any], ...]:
++    if not isinstance(payload_jobs, list):
+         raise SnapshotReadError(f"Raw snapshot must contain a jobs list: {raw_path}")
+ 
+     jobs: list[Mapping[str, Any]] = []
+-    for index, job in enumerate(payload["jobs"]):
++    for index, job in enumerate(payload_jobs):
+         if not isinstance(job, dict):
+             raise SnapshotReadError(
+                 f"Job at index {index} is not an object in snapshot: {raw_path}"
+             )
+         jobs.append(job)
+ 
+-    expected_count = metadata.get("source_job_count")
+     if (
+         not isinstance(expected_count, int)
+         or isinstance(expected_count, bool)
+@@ -120,28 +160,100 @@ def read_greenhouse_snapshot(metadata_path: Path) -> GreenhouseSnapshot:
+             f"source_job_count does not match the jobs list in: {raw_path}"
+         )
+ 
+-    return GreenhouseSnapshot(
++    return tuple(jobs)
++
++
++def read_greenhouse_snapshot(metadata_path: Path) -> GreenhouseSnapshot:
++    """Validate Greenhouse metadata, integrity and raw JSON structure."""
++
++    metadata = _read_metadata(metadata_path, "greenhouse")
++    raw_path, payload = _read_verified_payload(metadata_path, metadata)
++    if not isinstance(payload, dict):
++        raise SnapshotReadError(f"Greenhouse snapshot must be an object: {raw_path}")
++    jobs = _validate_jobs(
++        payload.get("jobs"),
++        metadata_path,
++        raw_path,
++        metadata.get("source_job_count"),
++    )
++    return SourceSnapshot(
+         metadata_path=metadata_path,
+         raw_path=raw_path,
+         metadata=metadata,
+-        jobs=tuple(jobs),
++        jobs=jobs,
+     )
+ 
+ 
+-def load_greenhouse_snapshots(raw_root: Path) -> list[GreenhouseSnapshot]:
+-    """Load every valid Greenhouse snapshot under the raw root."""
++def read_lever_snapshot(metadata_path: Path) -> LeverSnapshot:
++    """Validate Lever metadata, integrity and raw JSON structure."""
++
++    metadata = _read_metadata(metadata_path, "lever")
++    raw_path, payload = _read_verified_payload(metadata_path, metadata)
++    jobs = _validate_jobs(
++        payload,
++        metadata_path,
++        raw_path,
++        metadata.get("source_job_count"),
++    )
++    return SourceSnapshot(
++        metadata_path=metadata_path,
++        raw_path=raw_path,
++        metadata=metadata,
++        jobs=jobs,
++    )
+ 
+-    metadata_paths = discover_metadata_paths(raw_root)
+-    if not metadata_paths:
+-        raise SnapshotReadError(
+-            f"No Greenhouse metadata snapshots found beneath: {raw_root}"
+-        )
+ 
+-    snapshots = [read_greenhouse_snapshot(path) for path in metadata_paths]
++def _sort_snapshots(snapshots: list[SourceSnapshot]) -> list[SourceSnapshot]:
+     return sorted(
+         snapshots,
+         key=lambda snapshot: (
+             parse_datetime(snapshot.metadata.get("collected_at")),
++            snapshot.provider,
+             str(snapshot.metadata_path),
+         ),
+     )
++
++
++def load_greenhouse_snapshots(raw_root: Path) -> list[GreenhouseSnapshot]:
++    """Load every valid Greenhouse snapshot under the raw root."""
++
++    metadata_paths = discover_metadata_paths(raw_root, "greenhouse")
++    if not metadata_paths:
++        raise SnapshotReadError(
++            f"No Greenhouse metadata snapshots found beneath: {raw_root}"
++        )
++    return _sort_snapshots([read_greenhouse_snapshot(path) for path in metadata_paths])
++
++
++def load_lever_snapshots(raw_root: Path) -> list[LeverSnapshot]:
++    """Load every valid Lever snapshot under the raw root."""
++
++    metadata_paths = discover_metadata_paths(raw_root, "lever")
++    if not metadata_paths:
++        raise SnapshotReadError(
++            f"No Lever metadata snapshots found beneath: {raw_root}"
++        )
++    return _sort_snapshots([read_lever_snapshot(path) for path in metadata_paths])
++
++
++def load_snapshots(raw_root: Path) -> list[SourceSnapshot]:
++    """Load every supported snapshot, allowing either provider to be absent."""
++
++    metadata_paths = discover_all_metadata_paths(raw_root)
++    if not metadata_paths:
++        raise SnapshotReadError(
++            f"No supported metadata snapshots found beneath: {raw_root}"
++        )
++
++    snapshots: list[SourceSnapshot] = []
++    for metadata_path in metadata_paths:
++        provider = metadata_path.parent.parent.name
++        if provider == "greenhouse":
++            snapshots.append(read_greenhouse_snapshot(metadata_path))
++        elif provider == "lever":
++            snapshots.append(read_lever_snapshot(metadata_path))
++        else:
++            raise SnapshotReadError(
++                f"Unsupported snapshot provider directory: {metadata_path}"
++            )
++    return _sort_snapshots(snapshots)
+diff --git a/tests/fixtures/lever_jobs.json b/tests/fixtures/lever_jobs.json
+new file mode 100644
+index 0000000..05cf6cc
+--- /dev/null
++++ b/tests/fixtures/lever_jobs.json
+@@ -0,0 +1,62 @@
++[
++  {
++    "id": "lever-1001",
++    "text": "Software Engineer",
++    "categories": {
++      "location": "Cape Town",
++      "allLocations": ["Cape Town"],
++      "commitment": "Full-time",
++      "team": "Engineering",
++      "department": "Technology"
++    },
++    "country": "ZA",
++    "descriptionPlain": "This is an entry-level role for a recent graduate with 0-2 years of professional experience.",
++    "lists": [
++      {
++        "text": "What you will do",
++        "content": "<li>Build software products</li><li>Write automated tests</li>"
++      }
++    ],
++    "additionalPlain": "No prior professional experience is required.",
++    "hostedUrl": "https://jobs.lever.co/example/lever-1001",
++    "applyUrl": "https://jobs.lever.co/example/lever-1001/apply",
++    "workplaceType": "hybrid"
++  },
++  {
++    "id": "lever-1002",
++    "text": "Senior Software Engineer",
++    "categories": {
++      "location": "Johannesburg",
++      "allLocations": ["Johannesburg"],
++      "commitment": "Full-time",
++      "team": "Engineering",
++      "department": "Technology",
++      "level": "Entry Level"
++    },
++    "country": "ZA",
++    "descriptionPlain": "Recent graduates are welcome to read about our team, but this vacancy leads major architecture work.",
++    "lists": [],
++    "additionalPlain": "",
++    "hostedUrl": "https://jobs.lever.co/example/lever-1002",
++    "applyUrl": "https://jobs.lever.co/example/lever-1002/apply",
++    "workplaceType": "remote"
++  },
++  {
++    "id": "lever-1003",
++    "text": "Finance Analyst",
++    "categories": {
++      "location": "Cape Town",
++      "allLocations": ["Cape Town"],
++      "commitment": "Full-time",
++      "team": "Finance",
++      "department": "Finance"
++    },
++    "country": "ZA",
++    "descriptionPlain": "Analyse monthly financial performance.",
++    "lists": [],
++    "additionalPlain": "",
++    "hostedUrl": "https://jobs.lever.co/example/lever-1003",
++    "applyUrl": "https://jobs.lever.co/example/lever-1003/apply",
++    "workplaceType": "on-site"
++  }
++]
+diff --git a/tests/test_collect.py b/tests/test_collect.py
+index 8d0d6e6..6793783 100644
+--- a/tests/test_collect.py
++++ b/tests/test_collect.py
+@@ -31,3 +31,34 @@ def test_collect_source_returns_written_result(tmp_path):
+     assert result.source_token == "example"
+     assert result.job_count == 0
+     assert result.error is None
++
++
++def test_collect_lever_source_returns_written_result(tmp_path):
++    from src.ingestion.collect import collect_lever_source
++    from src.ingestion.config import LeverSource
++    from src.ingestion.lever import LeverResponse
++
++    class StubLeverClient:
++        def fetch_site(self, site_token):
++            return LeverResponse(
++                site_token=site_token,
++                endpoint=f"https://example.test/{site_token}",
++                status_code=200,
++                content_type="application/json",
++                raw_bytes=b"[]",
++                payload=[],
++            )
++
++    source = LeverSource(name="Lever Example", token="lever-example")
++    result = collect_lever_source(
++        source=source,
++        client=StubLeverClient(),
++        store=RawSnapshotStore(tmp_path),
++        collected_at=datetime(2026, 7, 23, tzinfo=timezone.utc),
++    )
++
++    assert result.status == "written"
++    assert result.source_provider == "lever"
++    assert result.source_token == "lever-example"
++    assert result.job_count == 0
++    assert result.error is None
+diff --git a/tests/test_ingestion_config.py b/tests/test_ingestion_config.py
+index 45e41a8..5f45939 100644
+--- a/tests/test_ingestion_config.py
++++ b/tests/test_ingestion_config.py
+@@ -53,3 +53,73 @@ def test_load_greenhouse_sources_rejects_unknown_requested_token(tmp_path):
+ 
+     with pytest.raises(ValueError, match="Unknown or disabled"):
+         load_greenhouse_sources(config_path, {"missing"})
++
++
++def test_load_collection_sources_includes_greenhouse_and_lever(tmp_path):
++    from src.ingestion.config import load_collection_sources
++
++    config_path = tmp_path / "sources.json"
++    config_path.write_text(
++        json.dumps(
++            {
++                "sources": [
++                    {
++                        "name": "Greenhouse Example",
++                        "provider": "greenhouse",
++                        "token": "greenhouse-example",
++                        "enabled": True,
++                    },
++                    {
++                        "name": "Lever Example",
++                        "provider": "lever",
++                        "token": "LeverExample",
++                        "enabled": True,
++                    },
++                    {
++                        "name": "HTML Example",
++                        "provider": "html_listing_page",
++                        "token": "html-example",
++                        "enabled": True,
++                    },
++                ]
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    sources = load_collection_sources(config_path)
++
++    assert [(source.provider, source.token) for source in sources] == [
++        ("greenhouse", "greenhouse-example"),
++        ("lever", "LeverExample"),
++    ]
++
++
++def test_collection_token_filter_is_resolved_across_providers(tmp_path):
++    from src.ingestion.config import load_collection_sources
++
++    config_path = tmp_path / "sources.json"
++    config_path.write_text(
++        json.dumps(
++            {
++                "sources": [
++                    {
++                        "name": "Greenhouse Example",
++                        "provider": "greenhouse",
++                        "token": "greenhouse-example",
++                    },
++                    {
++                        "name": "Lever Example",
++                        "provider": "lever",
++                        "token": "LeverExample",
++                    },
++                ]
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    sources = load_collection_sources(config_path, {"LeverExample"})
++
++    assert len(sources) == 1
++    assert sources[0].provider == "lever"
+diff --git a/tests/test_lever_client.py b/tests/test_lever_client.py
+new file mode 100644
+index 0000000..c851a49
+--- /dev/null
++++ b/tests/test_lever_client.py
+@@ -0,0 +1,94 @@
++import json
++from pathlib import Path
++
++import pytest
++import requests
++
++from src.ingestion.lever import LeverClient
++
++
++FIXTURE_PATH = Path(__file__).parent / "fixtures" / "lever_jobs.json"
++
++
++class FakeResponse:
++    def __init__(self, raw_bytes: bytes, status_code: int = 200):
++        self.content = raw_bytes
++        self.status_code = status_code
++        self.url = "https://api.lever.co/v0/postings/example?mode=json&limit=500"
++        self.headers = {"Content-Type": "application/json; charset=utf-8"}
++
++    def raise_for_status(self):
++        if self.status_code >= 400:
++            raise requests.HTTPError(f"HTTP {self.status_code}")
++
++    def json(self):
++        return json.loads(self.content.decode("utf-8"))
++
++
++class FakeSession:
++    def __init__(self, *responses):
++        self.responses = list(responses)
++        self.calls = []
++
++    def get(self, url, **kwargs):
++        self.calls.append((url, kwargs))
++        if not self.responses:
++            raise AssertionError("No fake response remains for this request.")
++        return self.responses.pop(0)
++
++
++def test_fetch_site_preserves_exact_response_bytes_and_checks_completeness():
++    raw_bytes = FIXTURE_PATH.read_bytes()
++    session = FakeSession(
++        FakeResponse(raw_bytes),
++        FakeResponse(b"[]"),
++    )
++    client = LeverClient(session=session, timeout_seconds=12, page_limit=500)
++
++    result = client.fetch_site("ExampleSite")
++
++    assert result.raw_bytes == raw_bytes
++    assert result.job_count == 3
++    assert session.calls[0][0].endswith("/ExampleSite")
++    assert session.calls[0][1]["params"] == {"mode": "json", "limit": 500}
++    assert session.calls[0][1]["timeout"] == 12
++    assert session.calls[1][1]["params"] == {
++        "mode": "json",
++        "skip": 3,
++        "limit": 1,
++    }
++
++
++def test_fetch_site_rejects_non_list_payload():
++    client = LeverClient(
++        session=FakeSession(FakeResponse(b'{"jobs": []}')),
++    )
++
++    with pytest.raises(ValueError, match="list of job objects"):
++        client.fetch_site("example")
++
++
++def test_fetch_site_rejects_full_page_to_avoid_silent_truncation():
++    raw_bytes = json.dumps([{"id": "1"}, {"id": "2"}]).encode("utf-8")
++    client = LeverClient(
++        session=FakeSession(FakeResponse(raw_bytes)),
++        page_limit=2,
++    )
++
++    with pytest.raises(ValueError, match="pagination is required"):
++        client.fetch_site("example")
++
++
++def test_fetch_site_rejects_hidden_server_side_page_cap():
++    first_page = json.dumps([{"id": "1"}, {"id": "2"}]).encode("utf-8")
++    continuation = json.dumps([{"id": "3"}]).encode("utf-8")
++    client = LeverClient(
++        session=FakeSession(
++            FakeResponse(first_page),
++            FakeResponse(continuation),
++        ),
++        page_limit=500,
++    )
++
++    with pytest.raises(ValueError, match="additional postings"):
++        client.fetch_site("example")
+diff --git a/tests/test_lever_transformation.py b/tests/test_lever_transformation.py
+new file mode 100644
+index 0000000..cde3918
+--- /dev/null
++++ b/tests/test_lever_transformation.py
+@@ -0,0 +1,74 @@
++import json
++from pathlib import Path
++
++from src.transformation.lever import transform_lever_job
++
++
++FIXTURE = Path(__file__).parent / "fixtures" / "lever_jobs.json"
++
++
++def metadata() -> dict[str, object]:
++    return {
++        "source": "lever",
++        "source_name": "Example Tech",
++        "source_token": "example",
++        "collected_at": "2026-07-23T15:00:00+00:00",
++        "content_sha256": "abc123",
++    }
++
++
++def test_transform_lever_job_builds_target_market_record() -> None:
++    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
++
++    result = transform_lever_job(
++        payload[0],
++        metadata(),
++        Path("lever/example/snapshot.json"),
++    )
++
++    assert result.job_key == "lever:example:lever-1001"
++    assert result.source_provider == "lever"
++    assert result.company == "Example Tech"
++    assert result.title == "Software Engineer"
++    assert result.department == "Technology"
++    assert result.location_raw == "Cape Town, South Africa"
++    assert result.city == "Cape Town"
++    assert result.country == "South Africa"
++    assert result.workplace_type == "hybrid"
++    assert result.role_level == "graduate"
++    assert result.role_level_evidence == ("description: recent graduate",)
++    assert result.is_technology_role is True
++    assert result.is_target_market is True
++    assert "What you will do" in result.description_text
++    assert result.application_url.endswith("/apply")
++    assert result.source_updated_at is None
++    assert result.data_quality_issues == ()
++
++
++def test_senior_title_cannot_be_downgraded_by_source_or_description() -> None:
++    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
++
++    result = transform_lever_job(
++        payload[1],
++        metadata(),
++        Path("lever/example/snapshot.json"),
++    )
++
++    assert result.role_level == "senior"
++    assert result.role_level_evidence == ("title: Senior",)
++    assert result.is_target_market is False
++
++
++def test_non_technology_lever_job_is_not_target_market() -> None:
++    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
++
++    result = transform_lever_job(
++        payload[2],
++        metadata(),
++        Path("lever/example/snapshot.json"),
++    )
++
++    assert result.workplace_type == "on_site"
++    assert result.is_south_africa is True
++    assert result.is_technology_role is False
++    assert result.is_target_market is False
+diff --git a/tests/test_snapshot_store.py b/tests/test_snapshot_store.py
+index 2dd1d0b..eb0db7b 100644
+--- a/tests/test_snapshot_store.py
++++ b/tests/test_snapshot_store.py
+@@ -53,3 +53,33 @@ def test_snapshot_store_skips_identical_payload(tmp_path):
+     assert second.status == "duplicate"
+     assert second.raw_path == first.raw_path
+     assert len(list((tmp_path / "greenhouse" / "example").glob("*.json"))) == 2
++
++
++def test_snapshot_store_writes_lever_raw_bytes_and_metadata(tmp_path):
++    from src.ingestion.lever import LeverResponse
++
++    fixture_path = Path(__file__).parent / "fixtures" / "lever_jobs.json"
++    raw_bytes = fixture_path.read_bytes()
++    response = LeverResponse(
++        site_token="example",
++        endpoint="https://api.lever.co/v0/postings/example?mode=json&limit=500",
++        status_code=200,
++        content_type="application/json",
++        raw_bytes=raw_bytes,
++        payload=json.loads(raw_bytes.decode("utf-8")),
++    )
++    store = RawSnapshotStore(tmp_path)
++
++    result = store.write_lever_snapshot(
++        source_name="Lever Example",
++        response=response,
++        collected_at=datetime(2026, 7, 23, 19, 0, tzinfo=timezone.utc),
++    )
++
++    assert result.was_written
++    assert result.raw_path.parent == tmp_path / "lever" / "example"
++    assert result.raw_path.read_bytes() == raw_bytes
++    metadata = json.loads(result.metadata_path.read_text(encoding="utf-8"))
++    assert metadata["source"] == "lever"
++    assert metadata["source_name"] == "Lever Example"
++    assert metadata["source_job_count"] == 3
+diff --git a/tests/test_transformation_classification.py b/tests/test_transformation_classification.py
+index a84cfb5..394aecb 100644
+--- a/tests/test_transformation_classification.py
++++ b/tests/test_transformation_classification.py
+@@ -46,7 +46,7 @@ def test_workplace_prefers_hybrid_when_remote_is_also_mentioned() -> None:
+     )
+ 
+     assert result.label == "hybrid"
+-    assert result.evidence == ("Hybrid",)
++    assert result.evidence == ("text: Hybrid",)
+ 
+ 
+ def test_role_level_uses_title_before_description() -> None:
+@@ -56,7 +56,7 @@ def test_role_level_uses_title_before_description() -> None:
+     )
+ 
+     assert result.label == "senior"
+-    assert result.evidence == ("Senior",)
++    assert result.evidence == ("title: Senior",)
+ 
+ 
+ def test_role_level_can_use_explicit_description_evidence() -> None:
+@@ -66,7 +66,7 @@ def test_role_level_can_use_explicit_description_evidence() -> None:
+     )
+ 
+     assert result.label == "junior"
+-    assert "entry-level role" in result.evidence
++    assert "description: entry-level role" in result.evidence
+ 
+ 
+ def test_technology_classifier_avoids_data_privacy_false_positive() -> None:
+@@ -119,3 +119,59 @@ def test_real_market_technology_titles_are_recognised(title: str) -> None:
+     result = classify_technology_role(title, None, "")
+ 
+     assert result.is_technology_role is True
++
++
++def test_recent_graduate_description_is_classified_as_graduate() -> None:
++    result = classify_role_level(
++        "Software Engineer",
++        "This opportunity is designed for a recent graduate.",
++    )
++
++    assert result.label == "graduate"
++    assert result.evidence == ("description: recent graduate",)
++
++
++def test_no_experience_required_is_junior_evidence() -> None:
++    result = classify_role_level(
++        "QA Engineer",
++        "No prior professional experience is required.",
++    )
++
++    assert result.label == "junior"
++    assert result.evidence == (
++        "description: No prior professional experience is required",
++    )
++
++
++def test_senior_title_overrides_early_career_description_and_source_level() -> None:
++    result = classify_role_level(
++        "Senior Software Engineer",
++        "This entry-level opportunity welcomes recent graduates.",
++        explicit_level="Entry Level",
++    )
++
++    assert result.label == "senior"
++    assert result.evidence == ("title: Senior",)
++
++
++def test_explicit_source_level_is_used_before_description() -> None:
++    result = classify_role_level(
++        "Software Engineer",
++        "General engineering role.",
++        explicit_level="Associate",
++    )
++
++    assert result.label == "junior"
++    assert result.evidence == ("source_level: Associate",)
++
++
++def test_explicit_workplace_type_is_authoritative() -> None:
++    result = classify_workplace(
++        "Software Engineer",
++        "Cape Town",
++        "The wider company also supports remote work.",
++        explicit_workplace_type="hybrid",
++    )
++
++    assert result.label == "hybrid"
++    assert result.evidence == ("source: hybrid",)
+diff --git a/tests/test_transformation_dataset.py b/tests/test_transformation_dataset.py
+index 195d8e8..2b62967 100644
+--- a/tests/test_transformation_dataset.py
++++ b/tests/test_transformation_dataset.py
+@@ -151,3 +151,68 @@ def test_write_dataset_outputs_creates_real_parquet_and_quality_report(
+     assert table.num_rows == 3
+     assert table.column_names[0] == "job_key"
+     assert quality["canonical_job_count"] == 3
++
++
++def write_lever_snapshot(
++    raw_root: Path,
++    payload: list[dict[str, object]],
++    *,
++    timestamp: str,
++    collected_at: str,
++) -> None:
++    source_directory = raw_root / "lever" / "lever-example"
++    source_directory.mkdir(parents=True, exist_ok=True)
++    raw_bytes = (json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8")
++    raw_path = source_directory / f"{timestamp}.json"
++    raw_path.write_bytes(raw_bytes)
++    metadata_path = source_directory / f"{timestamp}.metadata.json"
++    metadata_path.write_text(
++        json.dumps(
++            {
++                "source": "lever",
++                "source_name": "Lever Example",
++                "source_token": "lever-example",
++                "collected_at": collected_at,
++                "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
++                "source_job_count": len(payload),
++                "raw_file": raw_path.name,
++            }
++        ),
++        encoding="utf-8",
++    )
++
++
++def test_build_dataset_combines_greenhouse_and_lever_snapshots(tmp_path: Path) -> None:
++    greenhouse_payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
++    lever_fixture = Path(__file__).parent / "fixtures" / "lever_jobs.json"
++    lever_payload = json.loads(lever_fixture.read_text(encoding="utf-8"))
++
++    write_snapshot(
++        tmp_path,
++        greenhouse_payload,
++        timestamp="greenhouse",
++        collected_at="2026-07-22T12:00:00Z",
++    )
++    write_lever_snapshot(
++        tmp_path,
++        lever_payload,
++        timestamp="lever",
++        collected_at="2026-07-23T12:00:00Z",
++    )
++
++    result = build_dataset(tmp_path)
++
++    assert len(result.jobs) == 6
++    assert {job.source_provider for job in result.jobs} == {"greenhouse", "lever"}
++    report = result.quality_report
++    assert report["raw_snapshot_count"] == 2
++    assert report["provider_job_counts"] == {"greenhouse": 3, "lever": 3}
++    assert report["south_africa_technology_job_count"] == 4
++    assert report["target_market_job_count"] == 3
++    assert report["target_market_company_counts"] == {
++        "Example Tech": 2,
++        "Lever Example": 1,
++    }
++    lever_job = next(job for job in result.jobs if job.source_job_id == "lever-1001")
++    assert lever_job.source_snapshot_path == "lever/lever-example/lever.json"
++    assert lever_job.role_level_evidence
+diff --git a/tests/test_transformation_snapshots.py b/tests/test_transformation_snapshots.py
+index 1b0c78e..e32b572 100644
+--- a/tests/test_transformation_snapshots.py
++++ b/tests/test_transformation_snapshots.py
+@@ -67,3 +67,68 @@ def test_read_greenhouse_snapshot_rejects_modified_raw_file(tmp_path: Path) -> N
+ def test_load_greenhouse_snapshots_requires_saved_data(tmp_path: Path) -> None:
+     with pytest.raises(SnapshotReadError, match="No Greenhouse metadata"):
+         load_greenhouse_snapshots(tmp_path)
++
++
++def test_read_lever_snapshot_verifies_list_payload(tmp_path: Path) -> None:
++    from src.transformation.snapshots import read_lever_snapshot
++
++    fixture = Path(__file__).parent / "fixtures" / "lever_jobs.json"
++    source_directory = tmp_path / "lever" / "example"
++    source_directory.mkdir(parents=True)
++    raw_bytes = fixture.read_bytes()
++    raw_path = source_directory / "snapshot.json"
++    raw_path.write_bytes(raw_bytes)
++    payload = json.loads(raw_bytes)
++    metadata_path = source_directory / "snapshot.metadata.json"
++    metadata_path.write_text(
++        json.dumps(
++            {
++                "source": "lever",
++                "source_name": "Lever Example",
++                "source_token": "example",
++                "collected_at": "2026-07-23T12:00:00+00:00",
++                "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
++                "source_job_count": len(payload),
++                "raw_file": raw_path.name,
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    snapshot = read_lever_snapshot(metadata_path)
++
++    assert snapshot.provider == "lever"
++    assert len(snapshot.jobs) == 3
++
++
++def test_load_snapshots_allows_mixed_providers(tmp_path: Path) -> None:
++    from src.transformation.snapshots import load_snapshots
++
++    greenhouse_fixture = Path(__file__).parent / "fixtures" / "greenhouse_jobs_m2.json"
++    write_snapshot(tmp_path, greenhouse_fixture)
++
++    lever_fixture = Path(__file__).parent / "fixtures" / "lever_jobs.json"
++    lever_directory = tmp_path / "lever" / "example-lever"
++    lever_directory.mkdir(parents=True)
++    raw_bytes = lever_fixture.read_bytes()
++    raw_path = lever_directory / "snapshot.json"
++    raw_path.write_bytes(raw_bytes)
++    metadata_path = lever_directory / "snapshot.metadata.json"
++    metadata_path.write_text(
++        json.dumps(
++            {
++                "source": "lever",
++                "source_name": "Lever Example",
++                "source_token": "example-lever",
++                "collected_at": "2026-07-23T12:00:00+00:00",
++                "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
++                "source_job_count": 3,
++                "raw_file": raw_path.name,
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    snapshots = load_snapshots(tmp_path)
++
++    assert [snapshot.provider for snapshot in snapshots] == ["greenhouse", "lever"]
