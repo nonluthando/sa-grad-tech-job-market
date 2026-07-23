@@ -1,0 +1,2682 @@
+diff --git a/README.md b/README.md
+index dcfeaaa..7f663f8 100644
+--- a/README.md
++++ b/README.md
+@@ -7,13 +7,16 @@ early-career lens within the broader market.
+ 
+ ## Current status
+ 
+-**Milestone 2C complete: direct-employer source expansion**
++**Milestone 2D implemented: fintech and gaming source adapters**
+ 
+ The project can now:
+ 
+ - collect exact raw Greenhouse snapshots from Takealot Group, Luno and Impact.com;
+ - collect exact raw Lever snapshots from Mama Money and Yassir;
+ - collect paginated SAP SuccessFactors listings and job-detail pages from Discovery and Nedbank;
++- collect Workday CXS listings and details from DigiOutsource;
++- collect Oracle Candidate Experience requisitions from ACI Worldwide;
++- collect WP Job Manager listing and detail pages from BET Software;
+ - verify raw-file integrity from metadata and SHA-256 hashes;
+ - clean HTML job descriptions into analysis-ready text;
+ - normalise South African locations and selected international countries;
+@@ -27,9 +30,10 @@ The project can now:
+ - write a schema-controlled Parquet dataset; and
+ - produce a data-quality report.
+ 
+-The latest verified Milestone 2B build contained 267 canonical jobs across five
+-employers. Milestone 2C adds Discovery and Nedbank as direct-employer sources;
+-live counts will be recorded after the first complete SuccessFactors collection.
++The latest verified Milestone 2C build contained 407 canonical jobs across seven
++employers, including 71 South African technology roles and four explicitly
++early-career roles. Milestone 2D adds three provider adapters; their live counts
++will be recorded only after each collector passes a complete Codespaces run.
+ 
+ ## Setup
+ 
+@@ -58,10 +62,12 @@ Collect one configured source:
+ ```bash
+ python -m src.ingestion.collect --source-token takealotgroup
+ python -m src.ingestion.collect --source-token discovery
++python -m src.ingestion.collect --source-token digioutsource
+ ```
+ 
+-SuccessFactors collection follows every result page and then downloads each job
+-detail page. It is intentionally slower than the JSON API collectors.
++Page-based collectors follow every result page and then download each job detail.
++They are intentionally slower than the compact Greenhouse and Lever feeds, and
++all enforce completeness limits to avoid silently truncated datasets.
+ 
+ ### 2. Build the canonical dataset
+ 
+@@ -100,7 +106,7 @@ python scripts/validate_sources.py
+ config/sources.json
+         |
+         v
+-Greenhouse + Lever + SuccessFactors collectors
++Greenhouse + Lever + SuccessFactors + Workday + Oracle + WP collectors
+         |
+         +--> exact raw JSON or HTML bundle + metadata + SHA-256
+                          |
+@@ -133,6 +139,7 @@ Greenhouse + Lever + SuccessFactors collectors
+ │   ├── milestone-2-cleaning.md
+ │   ├── milestone-2b-quality-and-coverage.md
+ │   ├── milestone-2c-successfactors-sources.md
++│   ├── milestone-2d-fintech-gaming-sources.md
+ │   └── project-scope.md
+ ├── scripts/
+ │   └── validate_sources.py
+@@ -146,6 +153,9 @@ Greenhouse + Lever + SuccessFactors collectors
+ │       ├── greenhouse.py
+ │       ├── lever.py
+ │       ├── successfactors.py
++│       ├── workday.py
++│       ├── oracle_hcm.py
++│       ├── wp_job_manager.py
+ │       ├── schema.py
+ │       └── snapshots.py
+ └── tests/
+@@ -176,6 +186,7 @@ Greenhouse + Lever + SuccessFactors collectors
+ | 2. Cleaning and standardisation | Produce one canonical jobs dataset | Complete |
+ | 2B. Quality and source coverage | Add Lever and strengthen level evidence | Complete |
+ | 2C. Direct-employer expansion | Add Discovery and Nedbank SuccessFactors sites | Complete |
++| 2D. Fintech and gaming coverage | Add DigiOutsource, ACI Worldwide and BET Software adapters | Implemented; live validation next |
+ | 3. Baseline market analysis | Answer core market questions | Next |
+ | 4. Skills extraction | Derive technologies and requirements | Planned |
+ | 5. Dashboard | Publish the interactive MVP | Planned |
+@@ -187,6 +198,7 @@ Greenhouse + Lever + SuccessFactors collectors
+ - [Milestone 2: cleaning and standardisation](docs/milestone-2-cleaning.md)
+ - [Milestone 2B: quality and source coverage](docs/milestone-2b-quality-and-coverage.md)
+ - [Milestone 2C: SuccessFactors source expansion](docs/milestone-2c-successfactors-sources.md)
++- [Milestone 2D: fintech and gaming sources](docs/milestone-2d-fintech-gaming-sources.md)
+ - [Project scope decision](docs/project-scope.md)
+ 
+ ## Responsible-use scope
+diff --git a/config/sources.json b/config/sources.json
+index c6f0cef..c6a9cc9 100644
+--- a/config/sources.json
++++ b/config/sources.json
+@@ -105,6 +105,43 @@
+       ],
+       "enabled": true,
+       "priority": "experimental"
++    },
++    {
++      "name": "DigiOutsource",
++      "provider": "workday",
++      "token": "digioutsource",
++      "host": "https://myhcm.wd3.myworkdayjobs.com",
++      "tenant": "myhcm",
++      "site": "digioutsource",
++      "page_size": 20,
++      "max_pages": 20,
++      "request_delay_seconds": 0.1,
++      "enabled": true,
++      "priority": "secondary"
++    },
++    {
++      "name": "ACI Worldwide",
++      "provider": "oracle_hcm",
++      "token": "aci-worldwide",
++      "host": "https://ebwg.fa.us2.oraclecloud.com",
++      "site": "CX",
++      "page_size": 25,
++      "max_pages": 20,
++      "request_delay_seconds": 0.1,
++      "enabled": true,
++      "priority": "secondary"
++    },
++    {
++      "name": "BET Software",
++      "provider": "wp_job_manager",
++      "token": "betsoftware",
++      "url": "https://betsoftware.com/jobs",
++      "api_url": "https://betsoftware.com/wp-admin/admin-ajax.php",
++      "page_size": 100,
++      "max_pages": 10,
++      "request_delay_seconds": 0.1,
++      "enabled": true,
++      "priority": "experimental"
+     }
+   ]
+ }
+diff --git a/docs/data-source-assessment.md b/docs/data-source-assessment.md
+index 2eb53cb..27a4502 100644
+--- a/docs/data-source-assessment.md
++++ b/docs/data-source-assessment.md
+@@ -165,3 +165,18 @@ including data and developer roles. Nedbank exposes a Young Professionals
+ category plus broader searchable vacancies. Electrum exposes structured-looking
+ position details on its Cape Town careers page. These are promising coverage
+ sources, but they are not equivalent to public JSON APIs.
++
++## Milestone 2D provider assessment
++
++Three additional direct-employer platforms were selected for implementation:
++
++| Employer | Provider | Decision | Main consideration |
++|---|---|---|---|
++| DigiOutsource | Workday CXS | Production candidate | Structured public JSON with reported totals and detail endpoints |
++| ACI Worldwide | Oracle Candidate Experience | Production candidate | Structured public REST layer, but tenant field names require defensive mapping |
++| BET Software | WP Job Manager | Experimental | Direct employer lineage, but WordPress AJAX customisation can vary by site |
++
++These sources are preferred over a paid aggregator because the original employer,
++posting identifier, public URL and exact source response remain auditable. The
++trade-off is maintaining several small provider adapters instead of one external
++API dependency.
+diff --git a/docs/milestone-2d-fintech-gaming-sources.md b/docs/milestone-2d-fintech-gaming-sources.md
+new file mode 100644
+index 0000000..4d6172d
+--- /dev/null
++++ b/docs/milestone-2d-fintech-gaming-sources.md
+@@ -0,0 +1,152 @@
++# Milestone 2D — Fintech and Gaming Source Expansion
++
++## Objective
++
++Expand direct-employer coverage beyond Greenhouse, Lever and SAP
++SuccessFactors without making the project dependent on a paid aggregator.
++
++The milestone introduces three provider adapters:
++
++| Employer | Public careers platform | Adapter |
++|---|---|---|
++| DigiOutsource | Workday Candidate Experience | `workday` |
++| ACI Worldwide | Oracle Fusion Candidate Experience | `oracle_hcm` |
++| BET Software | WordPress / WP Job Manager | `wp_job_manager` |
++
++## Why these employers
++
++All three are relevant to the South African technology market but use platforms
++that were not previously represented in the pipeline. Supporting them improves
++company and industry diversity while retaining direct source lineage.
++
++DigiOutsource adds online gaming and platform-engineering roles. ACI Worldwide
++adds payments and enterprise-fintech roles. BET Software adds locally advertised
++software, data and operational technology vacancies.
++
++## Architecture decision
++
++The project continues to use one shared canonical dataset, but each public
++career platform has its own ingestion and transformation adapter.
++
++```text
++public provider endpoint
++        |
++        v
++provider-specific collector
++        |
++        +--> exact listing responses
++        +--> exact detail responses
++        +--> bundle metadata and SHA-256 hashes
++                         |
++                         v
++              provider-specific parser
++                         |
++                         v
++                  CanonicalJob
++```
++
++This avoids forcing structurally different providers through one fragile generic
++scraper.
++
++## Raw-data contract
++
++Each new collector writes a JSON envelope containing:
++
++- provider and source identifiers;
++- public endpoint information;
++- the advertised job count;
++- every listing response as exact base64-encoded bytes;
++- every job-detail response as exact base64-encoded bytes;
++- SHA-256 hashes for each embedded response; and
++- a deterministic job index connecting listing and detail records.
++
++The outer bundle is also hashed and receives the same metadata sidecar used by
++existing providers.
++
++## Completeness safeguards
++
++### Workday
++
++The collector pages through the public CXS endpoint until the number of unique
++`externalPath` records equals the reported `total`. A mismatch fails the run.
++
++### Oracle HCM
++
++The collector follows the public Candidate Experience requisition endpoint,
++uses `totalResults` and `hasMore` when available, and rejects a final unique
++requisition count that does not match the reported total.
++
++### WP Job Manager
++
++The collector reads `max_num_pages`, extracts unique job-detail links from every
++AJAX result page, and then downloads each detail page. It fails if pagination
++stops producing new records before completion.
++
++## Transformation approach
++
++The adapters map provider-specific fields into the existing canonical schema and
++then reuse the common explainable classifiers for:
++
++- South African location evidence;
++- workplace type;
++- role seniority;
++- technology relevance;
++- early-career status; and
++- target-market membership.
++
++No provider is allowed to change the meaning of the common flags:
++
++```text
++is_target_market = South African technology role
++is_early_career  = internship, graduate or junior evidence
++```
++
++## Trade-offs
++
++### Benefits
++
++- Broader direct-employer coverage without paid aggregation.
++- Better industry diversity.
++- Clear source lineage and reproducible raw snapshots.
++- Provider failures remain isolated.
++- The canonical analysis contract remains unchanged.
++
++### Costs
++
++- More provider-specific code and fixtures.
++- Workday and Oracle endpoints may vary slightly by tenant configuration.
++- The BET Software AJAX implementation is less standardised than the enterprise
++  ATS APIs and therefore carries the highest live-validation risk.
++- Detail-page collection is slower and creates more requests than compact APIs.
++
++## Validation boundary
++
++The implementation is considered code-complete when tests pass. Each source is
++considered production-validated only after a complete live collection in
++Codespaces confirms:
++
++1. listing access succeeds;
++2. pagination reaches the reported total;
++3. every detail page is collected;
++4. the raw bundle can be read back and hash-verified;
++5. the canonical build succeeds; and
++6. the quality report includes the provider and employer counts.
++
++BET Software should remain marked experimental until its live AJAX response is
++confirmed against the implemented WP Job Manager contract.
++
++## Commands
++
++```bash
++python -m src.ingestion.collect --source-token digioutsource
++python -m src.ingestion.collect --source-token aci-worldwide
++python -m src.ingestion.collect --source-token betsoftware
++python -m src.transformation.build
++pytest -q
++```
++
++## Exit condition
++
++Milestone 2D is complete when at least DigiOutsource and ACI Worldwide pass live
++collection and transformation, while BET Software is either validated or kept
++explicitly experimental with the observed incompatibility documented.
+diff --git a/src/ingestion/collect.py b/src/ingestion/collect.py
+index 168aed8..cdd09bd 100644
+--- a/src/ingestion/collect.py
++++ b/src/ingestion/collect.py
+@@ -17,12 +17,18 @@ from src.ingestion.config import (
+     GreenhouseSource,
+     LeverSource,
+     SuccessFactorsSource,
++    WorkdaySource,
++    OracleHCMSource,
++    WPJobManagerSource,
+     load_collection_sources,
+ )
+ from src.ingestion.greenhouse import GreenhouseClient
+ from src.ingestion.lever import LeverClient
+ from src.ingestion.snapshot import RawSnapshotStore, filename_timestamp
+ from src.ingestion.successfactors import SuccessFactorsClient
++from src.ingestion.workday import WorkdayClient
++from src.ingestion.oracle_hcm import OracleHCMClient
++from src.ingestion.wp_job_manager import WPJobManagerClient
+ 
+ 
+ PROJECT_ROOT = Path(__file__).resolve().parents[2]
+@@ -54,6 +60,18 @@ class SuccessFactorsFetcher(Protocol):
+     def fetch_source(self, source: SuccessFactorsSource): ...
+ 
+ 
++class WorkdayFetcher(Protocol):
++    def fetch_source(self, source: WorkdaySource): ...
++
++
++class OracleHCMFetcher(Protocol):
++    def fetch_source(self, source: OracleHCMSource): ...
++
++
++class WPJobManagerFetcher(Protocol):
++    def fetch_source(self, source: WPJobManagerSource): ...
++
++
+ def _failed_result(source_name: str, provider: str, token: str, error: Exception) -> CollectionResult:
+     return CollectionResult(
+         source_name=source_name,
+@@ -157,11 +175,83 @@ def collect_successfactors_source(
+         return _failed_result(source.name, "successfactors", source.token, error)
+ 
+ 
++
++def collect_workday_source(
++    source: WorkdaySource,
++    client: WorkdayFetcher,
++    store: RawSnapshotStore,
++    collected_at: datetime,
++) -> CollectionResult:
++    """Collect one complete Workday CXS listing-and-detail bundle."""
++
++    try:
++        response = client.fetch_source(source)
++        snapshot = store.write_workday_snapshot(
++            source_name=source.name, response=response, collected_at=collected_at
++        )
++        return CollectionResult(
++            source_name=source.name, source_provider="workday",
++            source_token=source.token, status=snapshot.status,
++            job_count=response.job_count, raw_path=str(snapshot.raw_path),
++            metadata_path=str(snapshot.metadata_path), error=None,
++        )
++    except (requests.RequestException, ValueError, OSError) as error:
++        return _failed_result(source.name, "workday", source.token, error)
++
++
++def collect_oracle_hcm_source(
++    source: OracleHCMSource,
++    client: OracleHCMFetcher,
++    store: RawSnapshotStore,
++    collected_at: datetime,
++) -> CollectionResult:
++    """Collect one complete Oracle Candidate Experience bundle."""
++
++    try:
++        response = client.fetch_source(source)
++        snapshot = store.write_oracle_hcm_snapshot(
++            source_name=source.name, response=response, collected_at=collected_at
++        )
++        return CollectionResult(
++            source_name=source.name, source_provider="oracle_hcm",
++            source_token=source.token, status=snapshot.status,
++            job_count=response.job_count, raw_path=str(snapshot.raw_path),
++            metadata_path=str(snapshot.metadata_path), error=None,
++        )
++    except (requests.RequestException, ValueError, OSError) as error:
++        return _failed_result(source.name, "oracle_hcm", source.token, error)
++
++
++def collect_wp_job_manager_source(
++    source: WPJobManagerSource,
++    client: WPJobManagerFetcher,
++    store: RawSnapshotStore,
++    collected_at: datetime,
++) -> CollectionResult:
++    """Collect one complete WP Job Manager bundle."""
++
++    try:
++        response = client.fetch_source(source)
++        snapshot = store.write_wp_job_manager_snapshot(
++            source_name=source.name, response=response, collected_at=collected_at
++        )
++        return CollectionResult(
++            source_name=source.name, source_provider="wp_job_manager",
++            source_token=source.token, status=snapshot.status,
++            job_count=response.job_count, raw_path=str(snapshot.raw_path),
++            metadata_path=str(snapshot.metadata_path), error=None,
++        )
++    except (requests.RequestException, ValueError, OSError) as error:
++        return _failed_result(source.name, "wp_job_manager", source.token, error)
++
+ def collect_configured_source(
+     source: ConfiguredSource,
+     greenhouse_client: GreenhouseFetcher,
+     lever_client: LeverFetcher,
+     successfactors_client: SuccessFactorsFetcher,
++    workday_client: WorkdayFetcher,
++    oracle_hcm_client: OracleHCMFetcher,
++    wp_job_manager_client: WPJobManagerFetcher,
+     store: RawSnapshotStore,
+     collected_at: datetime,
+ ) -> CollectionResult:
+@@ -194,9 +284,42 @@ def collect_configured_source(
+                 request_delay_seconds=source.request_delay_seconds,
+             ),
+             successfactors_client,
++            workday_client,
++            oracle_hcm_client,
++            wp_job_manager_client,
+             store,
+             collected_at,
+         )
++    if source.provider == "workday":
++        if not source.host or not source.tenant or not source.site:
++            raise ValueError(f"Workday source {source.token} is incomplete.")
++        return collect_workday_source(
++            WorkdaySource(
++                name=source.name, token=source.token, host=source.host,
++                tenant=source.tenant, site=source.site, page_size=source.page_size,
++                max_pages=source.max_pages, request_delay_seconds=source.request_delay_seconds,
++            ), workday_client, store, collected_at,
++        )
++    if source.provider == "oracle_hcm":
++        if not source.host or not source.site:
++            raise ValueError(f"Oracle HCM source {source.token} is incomplete.")
++        return collect_oracle_hcm_source(
++            OracleHCMSource(
++                name=source.name, token=source.token, host=source.host, site=source.site,
++                page_size=source.page_size, max_pages=source.max_pages,
++                request_delay_seconds=source.request_delay_seconds,
++            ), oracle_hcm_client, store, collected_at,
++        )
++    if source.provider == "wp_job_manager":
++        if not source.listing_url or not source.api_url:
++            raise ValueError(f"WP Job Manager source {source.token} is incomplete.")
++        return collect_wp_job_manager_source(
++            WPJobManagerSource(
++                name=source.name, token=source.token, listing_url=source.listing_url,
++                api_url=source.api_url, page_size=source.page_size,
++                max_pages=source.max_pages, request_delay_seconds=source.request_delay_seconds,
++            ), wp_job_manager_client, store, collected_at,
++        )
+     raise ValueError(f"Unsupported collection provider: {source.provider}")
+ 
+ 
+@@ -247,7 +370,7 @@ def print_summary(results: list[CollectionResult], report_path: Path) -> None:
+ def parse_args() -> argparse.Namespace:
+     parser = argparse.ArgumentParser(
+         description=(
+-            "Collect exact raw Greenhouse, Lever and SuccessFactors snapshots."
++            "Collect exact raw snapshots from every configured public provider."
+         )
+     )
+     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+@@ -274,9 +397,10 @@ def main() -> int:
+             timeout_seconds=args.timeout,
+             page_limit=args.lever_page_limit,
+         )
+-        successfactors_client = SuccessFactorsClient(
+-            timeout_seconds=args.timeout,
+-        )
++        successfactors_client = SuccessFactorsClient(timeout_seconds=args.timeout)
++        workday_client = WorkdayClient(timeout_seconds=args.timeout)
++        oracle_hcm_client = OracleHCMClient(timeout_seconds=args.timeout)
++        wp_job_manager_client = WPJobManagerClient(timeout_seconds=args.timeout)
+     except (OSError, json.JSONDecodeError, ValueError) as error:
+         print(f"Configuration error: {error}", file=sys.stderr)
+         return 2
+@@ -289,6 +413,9 @@ def main() -> int:
+             greenhouse_client,
+             lever_client,
+             successfactors_client,
++            workday_client,
++            oracle_hcm_client,
++            wp_job_manager_client,
+             store,
+             collected_at,
+         )
+diff --git a/src/ingestion/config.py b/src/ingestion/config.py
+index e25265c..25e14a3 100644
+--- a/src/ingestion/config.py
++++ b/src/ingestion/config.py
+@@ -9,7 +9,14 @@ from typing import Any, Iterable
+ from urllib.parse import urlparse
+ 
+ 
+-SUPPORTED_COLLECTION_PROVIDERS = ("greenhouse", "lever", "successfactors")
++SUPPORTED_COLLECTION_PROVIDERS = (
++    "greenhouse",
++    "lever",
++    "successfactors",
++    "workday",
++    "oracle_hcm",
++    "wp_job_manager",
++)
+ 
+ 
+ @dataclass(frozen=True)
+@@ -20,6 +27,10 @@ class ConfiguredSource:
+     provider: str
+     token: str
+     listing_url: str | None = None
++    api_url: str | None = None
++    host: str | None = None
++    tenant: str | None = None
++    site: str | None = None
+     page_size: int = 25
+     max_pages: int = 10
+     request_delay_seconds: float = 0.2
+@@ -53,6 +64,46 @@ class SuccessFactorsSource:
+     request_delay_seconds: float = 0.2
+ 
+ 
++@dataclass(frozen=True)
++class WorkdaySource:
++    """A configured public Workday Candidate Experience site."""
++
++    name: str
++    token: str
++    host: str
++    tenant: str
++    site: str
++    page_size: int = 20
++    max_pages: int = 20
++    request_delay_seconds: float = 0.1
++
++
++@dataclass(frozen=True)
++class OracleHCMSource:
++    """A configured public Oracle Candidate Experience site."""
++
++    name: str
++    token: str
++    host: str
++    site: str
++    page_size: int = 25
++    max_pages: int = 20
++    request_delay_seconds: float = 0.1
++
++
++@dataclass(frozen=True)
++class WPJobManagerSource:
++    """A configured public WP Job Manager careers page."""
++
++    name: str
++    token: str
++    listing_url: str
++    api_url: str
++    page_size: int = 100
++    max_pages: int = 10
++    request_delay_seconds: float = 0.1
++
++
+ def _read_raw_sources(config_path: Path) -> list[dict[str, Any]]:
+     payload: Any = json.loads(config_path.read_text(encoding="utf-8"))
+     raw_sources = payload.get("sources")
+@@ -83,21 +134,101 @@ def _nonnegative_float(value: Any, field_name: str, default: float) -> float:
+     return float(value)
+ 
+ 
+-def _successfactors_settings(raw_source: dict[str, Any]) -> tuple[str, int, int, float]:
+-    listing_url = str(raw_source.get("url") or "").strip()
+-    parsed = urlparse(listing_url)
++def _https_url(raw_value: Any, field_name: str, provider: str) -> str:
++    value = str(raw_value or "").strip()
++    parsed = urlparse(value)
+     if parsed.scheme != "https" or not parsed.netloc:
+         raise ValueError(
+-            "Enabled successfactors sources require an absolute HTTPS url."
++            f"Enabled {provider} sources require an absolute HTTPS {field_name}."
+         )
+-    page_size = _positive_int(raw_source.get("page_size"), "page_size", 25)
+-    max_pages = _positive_int(raw_source.get("max_pages"), "max_pages", 10)
++    return value
++
++
++def _pagination_settings(
++    raw_source: dict[str, Any],
++    *,
++    default_page_size: int,
++    default_max_pages: int,
++    default_delay: float,
++) -> tuple[int, int, float]:
++    page_size = _positive_int(
++        raw_source.get("page_size"),
++        "page_size",
++        default_page_size,
++    )
++    max_pages = _positive_int(
++        raw_source.get("max_pages"),
++        "max_pages",
++        default_max_pages,
++    )
+     request_delay_seconds = _nonnegative_float(
+         raw_source.get("request_delay_seconds"),
+         "request_delay_seconds",
+-        0.2,
++        default_delay,
++    )
++    return page_size, max_pages, request_delay_seconds
++
++
++def _successfactors_settings(raw_source: dict[str, Any]) -> tuple[str, int, int, float]:
++    listing_url = _https_url(raw_source.get("url"), "url", "successfactors")
++    page_size, max_pages, delay = _pagination_settings(
++        raw_source,
++        default_page_size=25,
++        default_max_pages=10,
++        default_delay=0.2,
++    )
++    return listing_url, page_size, max_pages, delay
++
++
++def _workday_settings(raw_source: dict[str, Any]) -> tuple[str, str, str, int, int, float]:
++    host = _https_url(raw_source.get("host"), "host", "workday")
++    tenant = str(raw_source.get("tenant") or "").strip()
++    site = str(raw_source.get("site") or "").strip()
++    if not tenant or not site:
++        raise ValueError("Enabled workday sources require tenant and site.")
++    page_size, max_pages, delay = _pagination_settings(
++        raw_source,
++        default_page_size=20,
++        default_max_pages=20,
++        default_delay=0.1,
++    )
++    return host, tenant, site, page_size, max_pages, delay
++
++
++def _oracle_hcm_settings(raw_source: dict[str, Any]) -> tuple[str, str, int, int, float]:
++    host = _https_url(raw_source.get("host"), "host", "oracle_hcm")
++    site = str(raw_source.get("site") or "").strip()
++    if not site:
++        raise ValueError("Enabled oracle_hcm sources require site.")
++    page_size, max_pages, delay = _pagination_settings(
++        raw_source,
++        default_page_size=25,
++        default_max_pages=20,
++        default_delay=0.1,
++    )
++    return host, site, page_size, max_pages, delay
++
++
++def _wp_job_manager_settings(
++    raw_source: dict[str, Any],
++) -> tuple[str, str, int, int, float]:
++    listing_url = _https_url(
++        raw_source.get("url"),
++        "url",
++        "wp_job_manager",
++    )
++    api_url = _https_url(
++        raw_source.get("api_url"),
++        "api_url",
++        "wp_job_manager",
++    )
++    page_size, max_pages, delay = _pagination_settings(
++        raw_source,
++        default_page_size=100,
++        default_max_pages=10,
++        default_delay=0.1,
+     )
+-    return listing_url, page_size, max_pages, request_delay_seconds
++    return listing_url, api_url, page_size, max_pages, delay
+ 
+ 
+ def _load_provider_sources(
+@@ -179,43 +310,21 @@ def load_successfactors_sources(
+ ) -> list[SuccessFactorsSource]:
+     """Return enabled SuccessFactors sources with validated pagination settings."""
+ 
+-    sources: list[SuccessFactorsSource] = []
+-    for raw_source in _read_raw_sources(config_path):
+-        if raw_source.get("provider") != "successfactors":
+-            continue
+-        if not raw_source.get("enabled", True):
+-            continue
+-        name = str(raw_source.get("name") or "").strip()
+-        token = str(raw_source.get("token") or "").strip()
+-        if not name or not token:
+-            raise ValueError(
+-                "Enabled successfactors sources require name and token."
+-            )
+-        if requested_tokens is not None and token not in requested_tokens:
+-            continue
+-        listing_url, page_size, max_pages, delay = _successfactors_settings(raw_source)
+-        sources.append(
+-            SuccessFactorsSource(
+-                name=name,
+-                token=token,
+-                listing_url=listing_url,
+-                page_size=page_size,
+-                max_pages=max_pages,
+-                request_delay_seconds=delay,
+-            )
++    return [
++        SuccessFactorsSource(
++            name=source.name,
++            token=source.token,
++            listing_url=str(source.listing_url),
++            page_size=source.page_size,
++            max_pages=source.max_pages,
++            request_delay_seconds=source.request_delay_seconds,
+         )
+-
+-    if requested_tokens:
+-        matched_tokens = {source.token for source in sources}
+-        missing_tokens = requested_tokens - matched_tokens
+-        if missing_tokens:
+-            missing = ", ".join(sorted(missing_tokens))
+-            raise ValueError(
+-                f"Unknown or disabled successfactors source token(s): {missing}"
+-            )
+-    if not sources:
+-        raise ValueError("No enabled successfactors sources matched the request.")
+-    return sources
++        for source in load_collection_sources(
++            config_path,
++            requested_tokens,
++            providers=("successfactors",),
++        )
++    ]
+ 
+ 
+ def load_collection_sources(
+@@ -268,6 +377,55 @@ def load_collection_sources(
+                     request_delay_seconds=delay,
+                 )
+             )
++        elif provider == "workday":
++            host, tenant, site, page_size, max_pages, delay = _workday_settings(
++                raw_source
++            )
++            sources.append(
++                ConfiguredSource(
++                    name=name,
++                    provider=provider,
++                    token=token,
++                    host=host,
++                    tenant=tenant,
++                    site=site,
++                    page_size=page_size,
++                    max_pages=max_pages,
++                    request_delay_seconds=delay,
++                )
++            )
++        elif provider == "oracle_hcm":
++            host, site, page_size, max_pages, delay = _oracle_hcm_settings(
++                raw_source
++            )
++            sources.append(
++                ConfiguredSource(
++                    name=name,
++                    provider=provider,
++                    token=token,
++                    host=host,
++                    site=site,
++                    page_size=page_size,
++                    max_pages=max_pages,
++                    request_delay_seconds=delay,
++                )
++            )
++        elif provider == "wp_job_manager":
++            listing_url, api_url, page_size, max_pages, delay = (
++                _wp_job_manager_settings(raw_source)
++            )
++            sources.append(
++                ConfiguredSource(
++                    name=name,
++                    provider=provider,
++                    token=token,
++                    listing_url=listing_url,
++                    api_url=api_url,
++                    page_size=page_size,
++                    max_pages=max_pages,
++                    request_delay_seconds=delay,
++                )
++            )
+         else:
+             sources.append(
+                 ConfiguredSource(name=name, provider=provider, token=token)
+diff --git a/src/ingestion/oracle_hcm.py b/src/ingestion/oracle_hcm.py
+new file mode 100644
+index 0000000..a0d93bc
+--- /dev/null
++++ b/src/ingestion/oracle_hcm.py
+@@ -0,0 +1,258 @@
++"""Collect complete public Oracle Fusion Candidate Experience snapshots."""
++
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++import time
++from dataclasses import dataclass
++from typing import Any, Callable, Mapping
++
++import requests
++
++from src.ingestion.config import OracleHCMSource
++
++
++USER_AGENT = (
++    "sa-tech-job-market/0.4 "
++    "(public portfolio research project; contact via repository)"
++)
++
++
++@dataclass(frozen=True)
++class OracleHCMResponse:
++    """One complete Oracle Candidate Experience listing-and-detail bundle."""
++
++    source_token: str
++    endpoint: str
++    status_code: int
++    content_type: str
++    raw_bytes: bytes
++    job_count: int
++    listing_page_count: int
++    detail_page_count: int
++
++
++def _page_record(
++    *,
++    requested_url: str,
++    final_url: str,
++    status_code: int,
++    content_type: str,
++    raw_bytes: bytes,
++    request_params: Mapping[str, Any] | None = None,
++) -> dict[str, Any]:
++    record: dict[str, Any] = {
++        "requested_url": requested_url,
++        "final_url": final_url,
++        "status_code": status_code,
++        "content_type": content_type,
++        "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
++        "body_base64": base64.b64encode(raw_bytes).decode("ascii"),
++    }
++    if request_params is not None:
++        record["request_params"] = dict(request_params)
++    return record
++
++
++def _json_object(raw_bytes: bytes, label: str) -> dict[str, Any]:
++    try:
++        payload = json.loads(raw_bytes)
++    except json.JSONDecodeError as error:
++        raise ValueError(f"Oracle HCM {label} response was not valid JSON.") from error
++    if not isinstance(payload, dict):
++        raise ValueError(f"Oracle HCM {label} response must be an object.")
++    return payload
++
++
++def _first_identifier(item: Mapping[str, Any]) -> str:
++    for key in (
++        "Id",
++        "id",
++        "SearchId",
++        "searchId",
++        "RequisitionNumber",
++        "requisitionNumber",
++        "JobIdentification",
++    ):
++        value = str(item.get(key) or "").strip()
++        if value:
++            return value
++    return ""
++
++
++class OracleHCMClient:
++    """Fetch Oracle Candidate Experience requisitions through its public REST layer."""
++
++    def __init__(
++        self,
++        timeout_seconds: int = 30,
++        session: requests.Session | None = None,
++        sleep: Callable[[float], None] = time.sleep,
++    ) -> None:
++        self.timeout_seconds = timeout_seconds
++        self.session = session or requests.Session()
++        self.session.headers.update(
++            {
++                "Accept": "application/json",
++                "User-Agent": USER_AGENT,
++            }
++        )
++        self.sleep = sleep
++
++    def _get(
++        self,
++        url: str,
++        params: Mapping[str, Any] | None = None,
++    ) -> requests.Response:
++        response = self.session.get(
++            url,
++            params=dict(params) if params else None,
++            timeout=self.timeout_seconds,
++        )
++        response.raise_for_status()
++        return response
++
++    def fetch_source(self, source: OracleHCMSource) -> OracleHCMResponse:
++        """Fetch all requisitions and their details without silently truncating."""
++
++        api_root = f"{source.host.rstrip('/')}/hcmRestApi/resources/latest"
++        listing_url = f"{api_root}/recruitingCEJobRequisitions"
++        listing_pages: list[dict[str, Any]] = []
++        indexed_jobs: dict[str, dict[str, Any]] = {}
++        reported_total: int | None = None
++
++        for page_number in range(source.max_pages):
++            offset = page_number * source.page_size
++            params = {
++                "finder": f"findReqs;siteNumber={source.site}",
++                "limit": source.page_size,
++                "offset": offset,
++                "onlyData": "true",
++            }
++            response = self._get(listing_url, params)
++            raw_bytes = response.content
++            payload = _json_object(raw_bytes, "listing")
++            items = payload.get("items")
++            if not isinstance(items, list):
++                raise ValueError("Oracle HCM listing response has no items list.")
++
++            total_value = payload.get("totalResults")
++            if total_value is None:
++                total_value = payload.get("total")
++            if total_value is not None and (
++                not isinstance(total_value, int)
++                or isinstance(total_value, bool)
++                or total_value < 0
++            ):
++                raise ValueError("Oracle HCM listing response has an invalid total.")
++            if isinstance(total_value, int):
++                if reported_total is None:
++                    reported_total = total_value
++                elif total_value != reported_total:
++                    raise ValueError(
++                        "Oracle HCM reported job count changed during pagination."
++                    )
++
++            listing_pages.append(
++                _page_record(
++                    requested_url=listing_url,
++                    final_url=response.url,
++                    status_code=response.status_code,
++                    content_type=response.headers.get("Content-Type", ""),
++                    raw_bytes=raw_bytes,
++                    request_params=params,
++                )
++            )
++
++            before = len(indexed_jobs)
++            for item in items:
++                if not isinstance(item, dict):
++                    raise ValueError("Oracle HCM items contains a non-object.")
++                identifier = _first_identifier(item)
++                if not identifier:
++                    raise ValueError("Oracle HCM requisition is missing an identifier.")
++                indexed_jobs.setdefault(identifier, dict(item))
++
++            has_more = payload.get("hasMore")
++            if has_more is False:
++                break
++            if reported_total is not None and len(indexed_jobs) >= reported_total:
++                break
++            if not items:
++                break
++            if len(indexed_jobs) == before:
++                raise ValueError(
++                    "Oracle HCM pagination returned no new jobs before completion."
++                )
++        else:
++            raise ValueError(
++                f"Oracle HCM source exceeded max_pages={source.max_pages}."
++            )
++
++        if reported_total is None:
++            reported_total = len(indexed_jobs)
++        if len(indexed_jobs) != reported_total:
++            raise ValueError(
++                "Oracle HCM completeness check failed: "
++                f"reported {reported_total}, discovered {len(indexed_jobs)}."
++            )
++
++        job_pages: list[dict[str, Any]] = []
++        job_index: list[dict[str, Any]] = []
++        for identifier, index_record in indexed_jobs.items():
++            if source.request_delay_seconds:
++                self.sleep(source.request_delay_seconds)
++            detail_url = (
++                f"{api_root}/recruitingCEJobRequisitionDetails/{identifier}"
++            )
++            response = self._get(detail_url, {"onlyData": "true"})
++            raw_bytes = response.content
++            _json_object(raw_bytes, "detail")
++            page = _page_record(
++                requested_url=detail_url,
++                final_url=response.url,
++                status_code=response.status_code,
++                content_type=response.headers.get("Content-Type", ""),
++                raw_bytes=raw_bytes,
++                request_params={"onlyData": "true"},
++            )
++            page["source_job_id"] = identifier
++            job_pages.append(page)
++            job_index.append(index_record)
++
++        envelope: Mapping[str, Any] = {
++            "provider": "oracle_hcm",
++            "source_token": source.token,
++            "host": source.host,
++            "site": source.site,
++            "listing_url": listing_url,
++            "public_base_url": (
++                f"{source.host.rstrip('/')}/hcmUI/CandidateExperience/en/sites/"
++                f"{source.site}/job"
++            ),
++            "reported_job_count": reported_total,
++            "listing_pages": listing_pages,
++            "job_index": job_index,
++            "job_pages": job_pages,
++        }
++        raw_bundle = (
++            json.dumps(
++                envelope,
++                sort_keys=True,
++                separators=(",", ":"),
++                ensure_ascii=False,
++            )
++            + "\n"
++        ).encode("utf-8")
++        return OracleHCMResponse(
++            source_token=source.token,
++            endpoint=listing_url,
++            status_code=200,
++            content_type="application/vnd.sa-tech-job-market.oracle-hcm+json",
++            raw_bytes=raw_bundle,
++            job_count=reported_total,
++            listing_page_count=len(listing_pages),
++            detail_page_count=len(job_pages),
++        )
+diff --git a/src/ingestion/snapshot.py b/src/ingestion/snapshot.py
+index db06a19..6eb2a81 100644
+--- a/src/ingestion/snapshot.py
++++ b/src/ingestion/snapshot.py
+@@ -12,6 +12,9 @@ from tempfile import NamedTemporaryFile
+ from src.ingestion.greenhouse import GreenhouseResponse
+ from src.ingestion.lever import LeverResponse
+ from src.ingestion.successfactors import SuccessFactorsResponse
++from src.ingestion.workday import WorkdayResponse
++from src.ingestion.oracle_hcm import OracleHCMResponse
++from src.ingestion.wp_job_manager import WPJobManagerResponse
+ 
+ 
+ @dataclass(frozen=True)
+@@ -101,6 +104,72 @@ class RawSnapshotStore:
+             },
+         )
+ 
++    def write_workday_snapshot(
++        self,
++        source_name: str,
++        response: WorkdayResponse,
++        collected_at: datetime | None = None,
++    ) -> SnapshotWriteResult:
++        return self._write_snapshot(
++            provider="workday",
++            source_name=source_name,
++            source_token=response.source_token,
++            endpoint=response.endpoint,
++            status_code=response.status_code,
++            content_type=response.content_type,
++            raw_bytes=response.raw_bytes,
++            job_count=response.job_count,
++            collected_at=collected_at,
++            extra_metadata={
++                "listing_page_count": response.listing_page_count,
++                "detail_page_count": response.detail_page_count,
++            },
++        )
++
++    def write_oracle_hcm_snapshot(
++        self,
++        source_name: str,
++        response: OracleHCMResponse,
++        collected_at: datetime | None = None,
++    ) -> SnapshotWriteResult:
++        return self._write_snapshot(
++            provider="oracle_hcm",
++            source_name=source_name,
++            source_token=response.source_token,
++            endpoint=response.endpoint,
++            status_code=response.status_code,
++            content_type=response.content_type,
++            raw_bytes=response.raw_bytes,
++            job_count=response.job_count,
++            collected_at=collected_at,
++            extra_metadata={
++                "listing_page_count": response.listing_page_count,
++                "detail_page_count": response.detail_page_count,
++            },
++        )
++
++    def write_wp_job_manager_snapshot(
++        self,
++        source_name: str,
++        response: WPJobManagerResponse,
++        collected_at: datetime | None = None,
++    ) -> SnapshotWriteResult:
++        return self._write_snapshot(
++            provider="wp_job_manager",
++            source_name=source_name,
++            source_token=response.source_token,
++            endpoint=response.endpoint,
++            status_code=response.status_code,
++            content_type=response.content_type,
++            raw_bytes=response.raw_bytes,
++            job_count=response.job_count,
++            collected_at=collected_at,
++            extra_metadata={
++                "listing_page_count": response.listing_page_count,
++                "detail_page_count": response.detail_page_count,
++            },
++        )
++
+     def _write_snapshot(
+         self,
+         *,
+diff --git a/src/ingestion/workday.py b/src/ingestion/workday.py
+new file mode 100644
+index 0000000..790f35a
+--- /dev/null
++++ b/src/ingestion/workday.py
+@@ -0,0 +1,243 @@
++"""Collect complete public Workday Candidate Experience snapshots."""
++
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++import time
++from dataclasses import dataclass
++from typing import Any, Callable, Mapping
++from urllib.parse import urljoin
++
++import requests
++
++from src.ingestion.config import WorkdaySource
++
++
++USER_AGENT = (
++    "sa-tech-job-market/0.4 "
++    "(public portfolio research project; contact via repository)"
++)
++
++
++@dataclass(frozen=True)
++class WorkdayResponse:
++    """One complete Workday listing-and-detail bundle."""
++
++    source_token: str
++    endpoint: str
++    status_code: int
++    content_type: str
++    raw_bytes: bytes
++    job_count: int
++    listing_page_count: int
++    detail_page_count: int
++
++
++def _page_record(
++    *,
++    requested_url: str,
++    final_url: str,
++    status_code: int,
++    content_type: str,
++    raw_bytes: bytes,
++    request_body: Mapping[str, Any] | None = None,
++) -> dict[str, Any]:
++    record: dict[str, Any] = {
++        "requested_url": requested_url,
++        "final_url": final_url,
++        "status_code": status_code,
++        "content_type": content_type,
++        "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
++        "body_base64": base64.b64encode(raw_bytes).decode("ascii"),
++    }
++    if request_body is not None:
++        record["request_body"] = dict(request_body)
++    return record
++
++
++def _json_object(raw_bytes: bytes, label: str) -> dict[str, Any]:
++    try:
++        payload = json.loads(raw_bytes)
++    except json.JSONDecodeError as error:
++        raise ValueError(f"Workday {label} response was not valid JSON.") from error
++    if not isinstance(payload, dict):
++        raise ValueError(f"Workday {label} response must be an object.")
++    return payload
++
++
++def _external_path(posting: Mapping[str, Any]) -> str:
++    return str(
++        posting.get("externalPath")
++        or posting.get("external_path")
++        or posting.get("url")
++        or ""
++    ).strip()
++
++
++class WorkdayClient:
++    """Fetch every public CXS listing page and job-detail document."""
++
++    def __init__(
++        self,
++        timeout_seconds: int = 30,
++        session: requests.Session | None = None,
++        sleep: Callable[[float], None] = time.sleep,
++    ) -> None:
++        self.timeout_seconds = timeout_seconds
++        self.session = session or requests.Session()
++        self.session.headers.update(
++            {
++                "Accept": "application/json",
++                "Content-Type": "application/json",
++                "User-Agent": USER_AGENT,
++            }
++        )
++        self.sleep = sleep
++
++    @staticmethod
++    def _cxs_base(source: WorkdaySource) -> str:
++        return (
++            f"{source.host.rstrip('/')}/wday/cxs/"
++            f"{source.tenant}/{source.site}"
++        )
++
++    def _post(self, url: str, body: Mapping[str, Any]) -> requests.Response:
++        response = self.session.post(
++            url,
++            json=dict(body),
++            timeout=self.timeout_seconds,
++        )
++        response.raise_for_status()
++        return response
++
++    def _get(self, url: str) -> requests.Response:
++        response = self.session.get(url, timeout=self.timeout_seconds)
++        response.raise_for_status()
++        return response
++
++    def fetch_source(self, source: WorkdaySource) -> WorkdayResponse:
++        """Fetch a complete CXS source and reject truncated pagination."""
++
++        cxs_base = self._cxs_base(source)
++        listing_url = f"{cxs_base}/jobs"
++        listing_pages: list[dict[str, Any]] = []
++        indexed_jobs: dict[str, dict[str, Any]] = {}
++        reported_total: int | None = None
++
++        for page_number in range(source.max_pages):
++            offset = page_number * source.page_size
++            request_body = {
++                "appliedFacets": {},
++                "limit": source.page_size,
++                "offset": offset,
++                "searchText": "",
++            }
++            response = self._post(listing_url, request_body)
++            raw_bytes = response.content
++            payload = _json_object(raw_bytes, "listing")
++
++            total = payload.get("total")
++            if not isinstance(total, int) or isinstance(total, bool) or total < 0:
++                raise ValueError("Workday listing response has an invalid total.")
++            if reported_total is None:
++                reported_total = total
++            elif total != reported_total:
++                raise ValueError("Workday reported job count changed during pagination.")
++
++            postings = payload.get("jobPostings")
++            if not isinstance(postings, list):
++                raise ValueError("Workday listing response has no jobPostings list.")
++
++            listing_pages.append(
++                _page_record(
++                    requested_url=listing_url,
++                    final_url=response.url,
++                    status_code=response.status_code,
++                    content_type=response.headers.get("Content-Type", ""),
++                    raw_bytes=raw_bytes,
++                    request_body=request_body,
++                )
++            )
++
++            before = len(indexed_jobs)
++            for posting in postings:
++                if not isinstance(posting, dict):
++                    raise ValueError("Workday jobPostings contains a non-object.")
++                external_path = _external_path(posting)
++                if not external_path:
++                    raise ValueError("Workday posting is missing externalPath.")
++                indexed_jobs.setdefault(external_path, dict(posting))
++
++            if reported_total == 0 or len(indexed_jobs) >= reported_total:
++                break
++            if len(indexed_jobs) == before:
++                raise ValueError(
++                    "Workday pagination returned no new jobs before completion."
++                )
++        else:
++            raise ValueError(f"Workday source exceeded max_pages={source.max_pages}.")
++
++        if reported_total is None:
++            raise ValueError("Workday listing did not return a reported total.")
++        if len(indexed_jobs) != reported_total:
++            raise ValueError(
++                "Workday completeness check failed: "
++                f"reported {reported_total}, discovered {len(indexed_jobs)}."
++            )
++
++        job_pages: list[dict[str, Any]] = []
++        job_index: list[dict[str, Any]] = []
++        for external_path, index_record in indexed_jobs.items():
++            if source.request_delay_seconds:
++                self.sleep(source.request_delay_seconds)
++            detail_url = urljoin(f"{cxs_base}/", external_path.lstrip("/"))
++            response = self._get(detail_url)
++            raw_bytes = response.content
++            _json_object(raw_bytes, "detail")
++            page = _page_record(
++                requested_url=detail_url,
++                final_url=response.url,
++                status_code=response.status_code,
++                content_type=response.headers.get("Content-Type", ""),
++                raw_bytes=raw_bytes,
++            )
++            page["external_path"] = external_path
++            job_pages.append(page)
++            job_index.append(index_record)
++
++        envelope: Mapping[str, Any] = {
++            "provider": "workday",
++            "source_token": source.token,
++            "host": source.host,
++            "tenant": source.tenant,
++            "site": source.site,
++            "listing_url": listing_url,
++            "public_base_url": (
++                f"{source.host.rstrip('/')}/en-US/{source.site}"
++            ),
++            "reported_job_count": reported_total,
++            "listing_pages": listing_pages,
++            "job_index": job_index,
++            "job_pages": job_pages,
++        }
++        raw_bundle = (
++            json.dumps(
++                envelope,
++                sort_keys=True,
++                separators=(",", ":"),
++                ensure_ascii=False,
++            )
++            + "\n"
++        ).encode("utf-8")
++        return WorkdayResponse(
++            source_token=source.token,
++            endpoint=listing_url,
++            status_code=200,
++            content_type="application/vnd.sa-tech-job-market.workday+json",
++            raw_bytes=raw_bundle,
++            job_count=reported_total,
++            listing_page_count=len(listing_pages),
++            detail_page_count=len(job_pages),
++        )
+diff --git a/src/ingestion/wp_job_manager.py b/src/ingestion/wp_job_manager.py
+new file mode 100644
+index 0000000..d4b647f
+--- /dev/null
++++ b/src/ingestion/wp_job_manager.py
+@@ -0,0 +1,272 @@
++"""Collect public WP Job Manager listings and exact job-detail pages."""
++
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++import time
++from dataclasses import dataclass
++from typing import Any, Callable, Mapping
++from urllib.parse import urljoin, urlparse
++
++import requests
++from bs4 import BeautifulSoup
++
++from src.ingestion.config import WPJobManagerSource
++
++
++USER_AGENT = (
++    "sa-tech-job-market/0.4 "
++    "(public portfolio research project; contact via repository)"
++)
++
++
++@dataclass(frozen=True)
++class WPJobManagerResponse:
++    """One complete WP Job Manager listing-and-detail bundle."""
++
++    source_token: str
++    endpoint: str
++    status_code: int
++    content_type: str
++    raw_bytes: bytes
++    job_count: int
++    listing_page_count: int
++    detail_page_count: int
++
++
++def _page_record(
++    *,
++    requested_url: str,
++    final_url: str,
++    status_code: int,
++    content_type: str,
++    raw_bytes: bytes,
++    request_body: Mapping[str, Any] | None = None,
++) -> dict[str, Any]:
++    record: dict[str, Any] = {
++        "requested_url": requested_url,
++        "final_url": final_url,
++        "status_code": status_code,
++        "content_type": content_type,
++        "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
++        "body_base64": base64.b64encode(raw_bytes).decode("ascii"),
++    }
++    if request_body is not None:
++        record["request_body"] = dict(request_body)
++    return record
++
++
++def _clean_url(base_url: str, href: str) -> str:
++    absolute = urljoin(base_url, href)
++    parsed = urlparse(absolute)
++    return parsed._replace(query="", fragment="").geturl()
++
++
++def _job_links(html: str, listing_url: str) -> tuple[dict[str, str], ...]:
++    soup = BeautifulSoup(html, "html.parser")
++    jobs: list[dict[str, str]] = []
++    seen: set[str] = set()
++    for anchor in soup.find_all("a", href=True):
++        href = str(anchor.get("href") or "")
++        url = _clean_url(listing_url, href)
++        path = urlparse(url).path.rstrip("/")
++        if "/jobs/" not in path.lower() or path.lower().endswith("/jobs"):
++            continue
++        if url in seen:
++            continue
++        title = " ".join(anchor.get_text(" ", strip=True).split())
++        if not title:
++            parent = anchor.find_parent(["li", "article", "div"])
++            if parent is not None:
++                heading = parent.find(["h2", "h3", "h4"])
++                if heading is not None:
++                    title = " ".join(heading.get_text(" ", strip=True).split())
++        slug = path.split("/")[-1]
++        jobs.append(
++            {
++                "source_job_id": slug,
++                "title": title,
++                "application_url": url,
++            }
++        )
++        seen.add(url)
++    return tuple(jobs)
++
++
++class WPJobManagerClient:
++    """Fetch WP Job Manager's public AJAX listing and each detail page."""
++
++    def __init__(
++        self,
++        timeout_seconds: int = 30,
++        session: requests.Session | None = None,
++        sleep: Callable[[float], None] = time.sleep,
++    ) -> None:
++        self.timeout_seconds = timeout_seconds
++        self.session = session or requests.Session()
++        self.session.headers.update(
++            {
++                "Accept": "application/json,text/html",
++                "User-Agent": USER_AGENT,
++            }
++        )
++        self.sleep = sleep
++
++    def _post(self, url: str, body: Mapping[str, Any]) -> requests.Response:
++        response = self.session.post(
++            url,
++            data=dict(body),
++            timeout=self.timeout_seconds,
++        )
++        response.raise_for_status()
++        return response
++
++    def _get(self, url: str) -> requests.Response:
++        response = self.session.get(url, timeout=self.timeout_seconds)
++        response.raise_for_status()
++        return response
++
++    def fetch_source(self, source: WPJobManagerSource) -> WPJobManagerResponse:
++        """Fetch all AJAX pages, reject incomplete pages, then fetch details."""
++
++        listing_pages: list[dict[str, Any]] = []
++        indexed_jobs: dict[str, dict[str, str]] = {}
++        max_num_pages: int | None = None
++
++        for page_number in range(1, source.max_pages + 1):
++            request_body = {
++                "action": "get_listings",
++                "search_keywords": "",
++                "search_location": "",
++                "filter_job_type[]": "",
++                "per_page": source.page_size,
++                "page": page_number,
++                "orderby": "featured",
++                "order": "DESC",
++                "show_pagination": "false",
++            }
++            response = self._post(source.api_url, request_body)
++            raw_bytes = response.content
++            try:
++                payload = json.loads(raw_bytes)
++            except json.JSONDecodeError as error:
++                raise ValueError(
++                    "WP Job Manager listing response was not valid JSON."
++                ) from error
++            if not isinstance(payload, dict) or payload.get("success") is not True:
++                raise ValueError("WP Job Manager listing request was unsuccessful.")
++            data = payload.get("data")
++            if not isinstance(data, dict):
++                raise ValueError("WP Job Manager listing response has no data object.")
++            html = data.get("html")
++            if not isinstance(html, str):
++                raise ValueError("WP Job Manager listing response has no HTML.")
++
++            page_count_value = data.get("max_num_pages")
++            try:
++                current_page_count = int(page_count_value or 0)
++            except (TypeError, ValueError) as error:
++                raise ValueError(
++                    "WP Job Manager listing has an invalid max_num_pages."
++                ) from error
++            if max_num_pages is None:
++                max_num_pages = max(current_page_count, 1)
++            elif current_page_count and current_page_count != max_num_pages:
++                raise ValueError(
++                    "WP Job Manager page count changed during pagination."
++                )
++
++            listing_pages.append(
++                _page_record(
++                    requested_url=source.api_url,
++                    final_url=response.url,
++                    status_code=response.status_code,
++                    content_type=response.headers.get("Content-Type", ""),
++                    raw_bytes=raw_bytes,
++                    request_body=request_body,
++                )
++            )
++            before = len(indexed_jobs)
++            for job in _job_links(html, source.listing_url):
++                indexed_jobs.setdefault(job["application_url"], job)
++
++            if page_number >= (max_num_pages or 1):
++                break
++            if len(indexed_jobs) == before:
++                raise ValueError(
++                    "WP Job Manager pagination returned no new jobs before completion."
++                )
++        else:
++            raise ValueError(
++                f"WP Job Manager source exceeded max_pages={source.max_pages}."
++            )
++
++        if max_num_pages is None:
++            raise ValueError("WP Job Manager listing returned no page count.")
++        if max_num_pages > source.max_pages:
++            raise ValueError(
++                "WP Job Manager completeness check failed: "
++                f"reported {max_num_pages} pages, max_pages={source.max_pages}."
++            )
++        if not indexed_jobs:
++            found_jobs = any(
++                json.loads(base64.b64decode(page["body_base64"]))
++                .get("data", {})
++                .get("found_jobs")
++                for page in listing_pages
++            )
++            if found_jobs:
++                raise ValueError(
++                    "WP Job Manager reported jobs but no detail links were found."
++                )
++
++        job_pages: list[dict[str, Any]] = []
++        job_index: list[dict[str, str]] = []
++        for job_url, index_record in indexed_jobs.items():
++            if source.request_delay_seconds:
++                self.sleep(source.request_delay_seconds)
++            response = self._get(job_url)
++            raw_bytes = response.content
++            page = _page_record(
++                requested_url=job_url,
++                final_url=response.url,
++                status_code=response.status_code,
++                content_type=response.headers.get("Content-Type", ""),
++                raw_bytes=raw_bytes,
++            )
++            page["source_job_id"] = index_record["source_job_id"]
++            job_pages.append(page)
++            job_index.append(index_record)
++
++        envelope: Mapping[str, Any] = {
++            "provider": "wp_job_manager",
++            "source_token": source.token,
++            "listing_url": source.listing_url,
++            "api_url": source.api_url,
++            "reported_page_count": max_num_pages,
++            "reported_job_count": len(indexed_jobs),
++            "listing_pages": listing_pages,
++            "job_index": job_index,
++            "job_pages": job_pages,
++        }
++        raw_bundle = (
++            json.dumps(
++                envelope,
++                sort_keys=True,
++                separators=(",", ":"),
++                ensure_ascii=False,
++            )
++            + "\n"
++        ).encode("utf-8")
++        return WPJobManagerResponse(
++            source_token=source.token,
++            endpoint=source.api_url,
++            status_code=200,
++            content_type="application/vnd.sa-tech-job-market.wp-job-manager+json",
++            raw_bytes=raw_bundle,
++            job_count=len(indexed_jobs),
++            listing_page_count=len(listing_pages),
++            detail_page_count=len(job_pages),
++        )
+diff --git a/src/transformation/dataset.py b/src/transformation/dataset.py
+index f996e9f..1ef58d9 100644
+--- a/src/transformation/dataset.py
++++ b/src/transformation/dataset.py
+@@ -15,6 +15,9 @@ from src.transformation.greenhouse import parse_datetime, transform_greenhouse_j
+ from src.transformation.lever import transform_lever_job
+ from src.transformation.schema import CanonicalJob
+ from src.transformation.successfactors import transform_successfactors_job
++from src.transformation.workday import transform_workday_job
++from src.transformation.oracle_hcm import transform_oracle_hcm_job
++from src.transformation.wp_job_manager import transform_wp_job_manager_job
+ from src.transformation.snapshots import SourceSnapshot, load_snapshots
+ 
+ 
+@@ -160,6 +163,12 @@ def _transform_snapshot_job(
+         return transform_lever_job(job, snapshot.metadata, raw_path)
+     if snapshot.provider == "successfactors":
+         return transform_successfactors_job(job, snapshot.metadata, raw_path)
++    if snapshot.provider == "workday":
++        return transform_workday_job(job, snapshot.metadata, raw_path)
++    if snapshot.provider == "oracle_hcm":
++        return transform_oracle_hcm_job(job, snapshot.metadata, raw_path)
++    if snapshot.provider == "wp_job_manager":
++        return transform_wp_job_manager_job(job, snapshot.metadata, raw_path)
+     raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
+ 
+ 
+diff --git a/src/transformation/oracle_hcm.py b/src/transformation/oracle_hcm.py
+new file mode 100644
+index 0000000..ed4b20b
+--- /dev/null
++++ b/src/transformation/oracle_hcm.py
+@@ -0,0 +1,72 @@
++"""Transform Oracle Fusion Candidate Experience requisitions."""
++
++from __future__ import annotations
++
++import hashlib
++from pathlib import Path
++from typing import Any, Mapping
++from urllib.parse import quote
++
++from src.transformation.classification import classify_location, classify_role_level, classify_technology_role, classify_workplace
++from src.transformation.cleaning import clean_display_text, html_to_text, normalize_whitespace, normalized_key, unique_strings
++from src.transformation.greenhouse import parse_datetime
++from src.transformation.schema import CanonicalJob
++
++_EARLY = {"internship", "graduate", "junior"}
++
++
++def _first(job: Mapping[str, Any], *keys: str) -> Any:
++    for key in keys:
++        value = job.get(key)
++        if value not in (None, "", [], {}):
++            return value
++    return None
++
++
++def _stable_key(token: str, source_id: str, url: str, fallback: str) -> str:
++    identity = source_id or ("url-" + hashlib.sha256(url.encode()).hexdigest()[:24] if url else "content-" + hashlib.sha256(fallback.encode()).hexdigest()[:24])
++    return f"oracle_hcm:{token}:{identity}"
++
++
++def transform_oracle_hcm_job(job: Mapping[str, Any], metadata: Mapping[str, Any], raw_path: Path) -> CanonicalJob:
++    source_name = clean_display_text(metadata.get("source_name"))
++    token = clean_display_text(metadata.get("source_token"))
++    collected_at = parse_datetime(metadata.get("collected_at"))
++    if collected_at is None:
++        raise ValueError("Snapshot metadata contains an invalid collected_at value.")
++    source_id = clean_display_text(_first(job, "Id", "ID", "RequisitionId", "RequisitionNumber", "requisitionNumber"))
++    title = clean_display_text(_first(job, "Title", "JobTitle", "title"))
++    description = html_to_text(clean_display_text(_first(job, "ExternalDescriptionStr", "ExternalDescription", "Description", "description")))
++    location_raw = clean_display_text(_first(job, "PrimaryLocation", "Location", "JobLocation", "primaryLocation"))
++    department = clean_display_text(_first(job, "JobFunction", "JobFamily", "Department", "BusinessUnit")) or None
++    office = clean_display_text(_first(job, "PrimaryLocation")) or None
++    application_url = clean_display_text(_first(job, "ExternalApplyURL", "ApplyUrl", "JobUrl", "_detail_url"))
++    public_base = clean_display_text(job.get("_public_base_url"))
++    if public_base and source_id:
++        application_url = f"{public_base.rstrip('/')}/{quote(source_id)}"
++
++    location = classify_location(location_raw, description)
++    workplace = classify_workplace(title, location_raw, description, clean_display_text(_first(job, "WorkplaceType", "RemoteType")))
++    role_level = classify_role_level(title, description, clean_display_text(_first(job, "JobLevel", "Grade")))
++    technology = classify_technology_role(title, department, description)
++    early = role_level.label in _EARLY
++    target = location.is_south_africa and technology.is_technology_role
++    issues: list[str] = []
++    for missing, value in (("missing_source_job_id", source_id), ("missing_title", title), ("missing_application_url", application_url), ("missing_location", location_raw), ("missing_description", description)):
++        if not value: issues.append(missing)
++    source_updated = parse_datetime(_first(job, "PostedDate", "PostingDate", "LastUpdateDate", "datePosted"))
++    fallback = "|".join((source_name, normalized_key(title), normalized_key(location_raw), description[:500]))
++    return CanonicalJob(
++        job_key=_stable_key(token, source_id, application_url, fallback), source_provider="oracle_hcm",
++        source_name=source_name, source_token=token, source_job_id=source_id,
++        source_snapshot_sha256=clean_display_text(metadata.get("content_sha256")), source_snapshot_path=str(raw_path),
++        first_seen_at=collected_at, last_seen_at=collected_at, source_updated_at=source_updated,
++        observation_count=1, title=title, title_normalized=normalized_key(title), company=source_name,
++        department=department, office=office, location_raw=location_raw, city=location.city,
++        province=location.province, country=location.country, location_evidence=location.evidence,
++        is_south_africa=location.is_south_africa, workplace_type=workplace.label,
++        role_level=role_level.label, role_level_evidence=role_level.evidence,
++        is_technology_role=technology.is_technology_role, technology_evidence=technology.evidence,
++        is_early_career=early, is_target_market=target, description_text=normalize_whitespace(description),
++        application_url=application_url, data_quality_issues=unique_strings(issues),
++    )
+diff --git a/src/transformation/snapshots.py b/src/transformation/snapshots.py
+index 6dd845d..4eef5ee 100644
+--- a/src/transformation/snapshots.py
++++ b/src/transformation/snapshots.py
+@@ -1,4 +1,4 @@
+-"""Read and verify immutable raw job-board snapshots."""
++"""Read and verify immutable raw job-source snapshots."""
+ 
+ from __future__ import annotations
+ 
+@@ -8,13 +8,15 @@ import json
+ import re
+ from dataclasses import dataclass
+ from pathlib import Path
+-from typing import Any, Mapping
++from typing import Any, Callable, Mapping
+ 
+ from src.transformation.greenhouse import parse_datetime
+ from src.transformation.successfactors import parse_successfactors_detail
+ 
+-
+-SUPPORTED_SNAPSHOT_PROVIDERS = ("greenhouse", "lever", "successfactors")
++SUPPORTED_SNAPSHOT_PROVIDERS = (
++    "greenhouse", "lever", "successfactors", "workday", "oracle_hcm",
++    "wp_job_manager",
++)
+ 
+ 
+ class SnapshotReadError(ValueError):
+@@ -36,19 +38,18 @@ class SourceSnapshot:
+ GreenhouseSnapshot = SourceSnapshot
+ LeverSnapshot = SourceSnapshot
+ SuccessFactorsSnapshot = SourceSnapshot
++WorkdaySnapshot = SourceSnapshot
++OracleHCMSnapshot = SourceSnapshot
++WPJobManagerSnapshot = SourceSnapshot
+ 
+ 
+ def discover_metadata_paths(raw_root: Path, provider: str) -> list[Path]:
+-    """Return provider metadata sidecars in deterministic order."""
+-
+     if provider not in SUPPORTED_SNAPSHOT_PROVIDERS:
+         raise SnapshotReadError(f"Unsupported snapshot provider: {provider}")
+     return sorted((raw_root / provider).glob("*/*.metadata.json"))
+ 
+ 
+ def discover_all_metadata_paths(raw_root: Path) -> list[Path]:
+-    """Return every supported source sidecar in deterministic order."""
+-
+     return sorted(
+         path
+         for provider in SUPPORTED_SNAPSHOT_PROVIDERS
+@@ -61,106 +62,60 @@ def _read_metadata(metadata_path: Path, expected_provider: str) -> dict[str, Any
+         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+     except (OSError, json.JSONDecodeError) as error:
+         raise SnapshotReadError(f"Cannot read metadata {metadata_path}: {error}") from error
+-
+     if not isinstance(metadata, dict):
+         raise SnapshotReadError(f"Metadata must be an object: {metadata_path}")
+-
+-    required_fields = (
+-        "source",
+-        "source_name",
+-        "source_token",
+-        "collected_at",
+-        "content_sha256",
+-        "source_job_count",
+-        "raw_file",
++    required = (
++        "source", "source_name", "source_token", "collected_at",
++        "content_sha256", "source_job_count", "raw_file",
+     )
+-    missing_fields = [field for field in required_fields if field not in metadata]
+-    if missing_fields:
+-        missing = ", ".join(missing_fields)
+-        raise SnapshotReadError(f"Metadata {metadata_path} is missing: {missing}")
+-
++    missing = [field for field in required if field not in metadata]
++    if missing:
++        raise SnapshotReadError(
++            f"Metadata {metadata_path} is missing: {', '.join(missing)}"
++        )
+     if metadata.get("source") != expected_provider:
+         raise SnapshotReadError(
+             f"Expected {expected_provider} metadata but found "
+             f"{metadata.get('source')!r}: {metadata_path}"
+         )
+-
+-    for field_name in ("source_name", "source_token"):
+-        field_value = metadata.get(field_name)
+-        if not isinstance(field_value, str) or not field_value.strip():
+-            raise SnapshotReadError(
+-                f"Invalid {field_name} in metadata: {metadata_path}"
+-            )
+-
++    for field in ("source_name", "source_token"):
++        if not isinstance(metadata.get(field), str) or not metadata[field].strip():
++            raise SnapshotReadError(f"Invalid {field} in metadata: {metadata_path}")
+     if parse_datetime(metadata.get("collected_at")) is None:
+         raise SnapshotReadError(f"Invalid collected_at in metadata: {metadata_path}")
+-
+-    expected_digest = metadata.get("content_sha256")
+-    if not isinstance(expected_digest, str) or not re.fullmatch(
+-        r"[0-9a-f]{64}", expected_digest
+-    ):
+-        raise SnapshotReadError(
+-            f"Invalid content_sha256 in metadata: {metadata_path}"
+-        )
+-
++    digest = metadata.get("content_sha256")
++    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
++        raise SnapshotReadError(f"Invalid content_sha256 in metadata: {metadata_path}")
+     raw_file = metadata.get("raw_file")
+-    if not isinstance(raw_file, str) or not raw_file.strip():
++    if not isinstance(raw_file, str) or Path(raw_file).name != raw_file or Path(raw_file).is_absolute():
+         raise SnapshotReadError(f"Invalid raw_file in metadata: {metadata_path}")
+-    if Path(raw_file).name != raw_file or Path(raw_file).is_absolute():
+-        raise SnapshotReadError(
+-            f"raw_file must be a filename within its snapshot directory: {metadata_path}"
+-        )
+-
+     return metadata
+ 
+ 
+-def _read_verified_payload(
+-    metadata_path: Path,
+-    metadata: Mapping[str, Any],
+-) -> tuple[Path, Any]:
++def _read_verified_payload(metadata_path: Path, metadata: Mapping[str, Any]) -> tuple[Path, Any]:
+     raw_path = metadata_path.parent / str(metadata["raw_file"])
+     try:
+         raw_bytes = raw_path.read_bytes()
+     except OSError as error:
+         raise SnapshotReadError(f"Cannot read raw snapshot {raw_path}: {error}") from error
+-
+-    actual_digest = hashlib.sha256(raw_bytes).hexdigest()
+-    if actual_digest != metadata["content_sha256"]:
++    if hashlib.sha256(raw_bytes).hexdigest() != metadata["content_sha256"]:
+         raise SnapshotReadError(f"SHA-256 mismatch for raw snapshot: {raw_path}")
+-
+     try:
+-        payload = json.loads(raw_bytes)
++        return raw_path, json.loads(raw_bytes)
+     except json.JSONDecodeError as error:
+         raise SnapshotReadError(f"Raw snapshot is not valid JSON: {raw_path}") from error
+ 
+-    return raw_path, payload
+ 
+-
+-def _validate_jobs(
+-    payload_jobs: Any,
+-    raw_path: Path,
+-    expected_count: Any,
+-) -> tuple[Mapping[str, Any], ...]:
++def _validate_jobs(payload_jobs: Any, raw_path: Path, expected_count: Any) -> tuple[Mapping[str, Any], ...]:
+     if not isinstance(payload_jobs, list):
+         raise SnapshotReadError(f"Raw snapshot must contain a jobs list: {raw_path}")
+-
+     jobs: list[Mapping[str, Any]] = []
+     for index, job in enumerate(payload_jobs):
+         if not isinstance(job, dict):
+-            raise SnapshotReadError(
+-                f"Job at index {index} is not an object in snapshot: {raw_path}"
+-            )
++            raise SnapshotReadError(f"Job at index {index} is not an object: {raw_path}")
+         jobs.append(job)
+-
+-    if (
+-        not isinstance(expected_count, int)
+-        or isinstance(expected_count, bool)
+-        or expected_count != len(jobs)
+-    ):
+-        raise SnapshotReadError(
+-            f"source_job_count does not match the jobs list in: {raw_path}"
+-        )
+-
++    if not isinstance(expected_count, int) or isinstance(expected_count, bool) or expected_count != len(jobs):
++        raise SnapshotReadError(f"source_job_count does not match jobs: {raw_path}")
+     return tuple(jobs)
+ 
+ 
+@@ -180,144 +135,142 @@ def read_lever_snapshot(metadata_path: Path) -> LeverSnapshot:
+     return SourceSnapshot(metadata_path, raw_path, metadata, jobs)
+ 
+ 
+-def _decode_page(page: Any, raw_path: Path) -> bytes:
++def _decode_page(page: Any, raw_path: Path, provider: str) -> bytes:
+     if not isinstance(page, dict):
+-        raise SnapshotReadError(f"SuccessFactors page must be an object: {raw_path}")
++        raise SnapshotReadError(f"{provider} page must be an object: {raw_path}")
+     body_base64 = page.get("body_base64")
+     expected_digest = page.get("content_sha256")
+     if not isinstance(body_base64, str) or not isinstance(expected_digest, str):
+-        raise SnapshotReadError(
+-            f"SuccessFactors page is missing body or digest: {raw_path}"
+-        )
++        raise SnapshotReadError(f"{provider} page is missing body or digest: {raw_path}")
+     try:
+         body = base64.b64decode(body_base64, validate=True)
+     except (ValueError, TypeError) as error:
+-        raise SnapshotReadError(
+-            f"Invalid SuccessFactors base64 page body: {raw_path}"
+-        ) from error
++        raise SnapshotReadError(f"Invalid {provider} base64 page body: {raw_path}") from error
+     if hashlib.sha256(body).hexdigest() != expected_digest:
+-        raise SnapshotReadError(
+-            f"SuccessFactors embedded page SHA-256 mismatch: {raw_path}"
+-        )
++        raise SnapshotReadError(f"{provider} embedded page SHA-256 mismatch: {raw_path}")
+     return body
+ 
+ 
+-def read_successfactors_snapshot(metadata_path: Path) -> SuccessFactorsSnapshot:
+-    """Verify the bundle and parse every saved detail page into a source record."""
+-
+-    metadata = _read_metadata(metadata_path, "successfactors")
++def _read_bundle(
++    metadata_path: Path,
++    provider: str,
++    detail_parser: Callable[[bytes, Mapping[str, Any], Mapping[str, Any], str], Mapping[str, Any]],
++) -> SourceSnapshot:
++    metadata = _read_metadata(metadata_path, provider)
+     raw_path, payload = _read_verified_payload(metadata_path, metadata)
+-    if not isinstance(payload, dict) or payload.get("provider") != "successfactors":
+-        raise SnapshotReadError(
+-            f"SuccessFactors snapshot must be a provider envelope: {raw_path}"
+-        )
+-
++    if not isinstance(payload, dict) or payload.get("provider") != provider:
++        raise SnapshotReadError(f"{provider} snapshot must be a provider envelope: {raw_path}")
+     listing_pages = payload.get("listing_pages")
+     job_pages = payload.get("job_pages")
+     job_index = payload.get("job_index")
+     if not isinstance(listing_pages, list) or not listing_pages:
+-        raise SnapshotReadError(
+-            f"SuccessFactors snapshot has no listing pages: {raw_path}"
+-        )
++        raise SnapshotReadError(f"{provider} snapshot has no listing pages: {raw_path}")
+     if not isinstance(job_pages, list) or not isinstance(job_index, list):
+-        raise SnapshotReadError(
+-            f"SuccessFactors snapshot has invalid job pages/index: {raw_path}"
+-        )
+-
++        raise SnapshotReadError(f"{provider} snapshot has invalid pages/index: {raw_path}")
+     for page in listing_pages:
+-        _decode_page(page, raw_path)
+-
+-    index_by_id: dict[str, Mapping[str, Any]] = {}
+-    for record in job_index:
+-        if not isinstance(record, dict):
+-            raise SnapshotReadError(
+-                f"SuccessFactors job index contains a non-object: {raw_path}"
+-            )
+-        source_job_id = str(record.get("source_job_id") or "")
+-        if source_job_id:
+-            index_by_id[source_job_id] = record
+-
++        _decode_page(page, raw_path, provider)
+     jobs: list[Mapping[str, Any]] = []
+-    for page in job_pages:
+-        body = _decode_page(page, raw_path)
+-        source_job_id = str(page.get("source_job_id") or "")
+-        job_url = str(page.get("final_url") or page.get("requested_url") or "")
+-        jobs.append(
+-            parse_successfactors_detail(
+-                body,
+-                job_url,
+-                index_by_id.get(source_job_id),
+-            )
+-        )
+-
+-    expected_count = metadata.get("source_job_count")
+-    reported_count = payload.get("reported_job_count")
+-    if reported_count != expected_count or len(jobs) != expected_count:
+-        raise SnapshotReadError(
+-            f"SuccessFactors source_job_count does not match bundle pages: {raw_path}"
+-        )
++    for position, page in enumerate(job_pages):
++        body = _decode_page(page, raw_path, provider)
++        index = job_index[position] if position < len(job_index) and isinstance(job_index[position], dict) else {}
++        if not isinstance(page, dict):
++            raise SnapshotReadError(f"{provider} job page must be an object: {raw_path}")
++        final_url = str(page.get("final_url") or page.get("requested_url") or "")
++        jobs.append(detail_parser(body, index, payload, final_url))
++    expected = metadata.get("source_job_count")
++    if payload.get("reported_job_count") != expected or len(jobs) != expected:
++        raise SnapshotReadError(f"{provider} source_job_count does not match bundle pages: {raw_path}")
+     return SourceSnapshot(metadata_path, raw_path, metadata, tuple(jobs))
+ 
+ 
+-def _sort_snapshots(snapshots: list[SourceSnapshot]) -> list[SourceSnapshot]:
+-    return sorted(
+-        snapshots,
+-        key=lambda snapshot: (
+-            parse_datetime(snapshot.metadata.get("collected_at")),
+-            snapshot.provider,
+-            str(snapshot.metadata_path),
+-        ),
+-    )
++def _successfactors_detail(body: bytes, index: Mapping[str, Any], payload: Mapping[str, Any], url: str) -> Mapping[str, Any]:
++    return parse_successfactors_detail(body, url, index)
+ 
+ 
+-def load_greenhouse_snapshots(raw_root: Path) -> list[GreenhouseSnapshot]:
+-    metadata_paths = discover_metadata_paths(raw_root, "greenhouse")
+-    if not metadata_paths:
+-        raise SnapshotReadError(
+-            f"No Greenhouse metadata snapshots found beneath: {raw_root}"
+-        )
+-    return _sort_snapshots([read_greenhouse_snapshot(path) for path in metadata_paths])
++def _json_detail(body: bytes, index: Mapping[str, Any], payload: Mapping[str, Any], url: str) -> Mapping[str, Any]:
++    try:
++        raw = json.loads(body)
++    except json.JSONDecodeError as error:
++        raise SnapshotReadError(f"Embedded JSON detail is invalid: {url}") from error
++    if not isinstance(raw, dict):
++        raise SnapshotReadError(f"Embedded JSON detail must be an object: {url}")
++    items = raw.get("items")
++    if isinstance(items, list) and len(items) == 1 and isinstance(items[0], dict):
++        raw = dict(items[0])
++    combined = dict(index)
++    combined.update(raw)
++    combined["_detail_url"] = url
++    combined["_public_base_url"] = str(payload.get("public_base_url") or "")
++    external_path = str(index.get("externalPath") or index.get("external_path") or "")
++    if external_path:
++        combined["_external_path"] = external_path
++    return combined
++
++
++def _html_detail(body: bytes, index: Mapping[str, Any], payload: Mapping[str, Any], url: str) -> Mapping[str, Any]:
++    return {
++        **dict(index),
++        "_detail_html": body.decode("utf-8", errors="replace"),
++        "_detail_url": url,
++    }
+ 
+ 
+-def load_lever_snapshots(raw_root: Path) -> list[LeverSnapshot]:
+-    metadata_paths = discover_metadata_paths(raw_root, "lever")
+-    if not metadata_paths:
+-        raise SnapshotReadError(f"No Lever metadata snapshots found beneath: {raw_root}")
+-    return _sort_snapshots([read_lever_snapshot(path) for path in metadata_paths])
++def read_successfactors_snapshot(path: Path) -> SuccessFactorsSnapshot:
++    return _read_bundle(path, "successfactors", _successfactors_detail)
+ 
+ 
+-def load_successfactors_snapshots(raw_root: Path) -> list[SuccessFactorsSnapshot]:
+-    metadata_paths = discover_metadata_paths(raw_root, "successfactors")
+-    if not metadata_paths:
+-        raise SnapshotReadError(
+-            f"No SuccessFactors metadata snapshots found beneath: {raw_root}"
+-        )
+-    return _sort_snapshots(
+-        [read_successfactors_snapshot(path) for path in metadata_paths]
+-    )
++def read_workday_snapshot(path: Path) -> WorkdaySnapshot:
++    return _read_bundle(path, "workday", _json_detail)
+ 
+ 
+-def load_snapshots(raw_root: Path) -> list[SourceSnapshot]:
+-    """Load every supported snapshot, allowing any provider to be absent."""
++def read_oracle_hcm_snapshot(path: Path) -> OracleHCMSnapshot:
++    return _read_bundle(path, "oracle_hcm", _json_detail)
+ 
++
++def read_wp_job_manager_snapshot(path: Path) -> WPJobManagerSnapshot:
++    return _read_bundle(path, "wp_job_manager", _html_detail)
++
++
++def _sort_snapshots(snapshots: list[SourceSnapshot]) -> list[SourceSnapshot]:
++    return sorted(snapshots, key=lambda s: (parse_datetime(s.metadata.get("collected_at")), s.provider, str(s.metadata_path)))
++
++
++def load_snapshots(raw_root: Path) -> list[SourceSnapshot]:
+     metadata_paths = discover_all_metadata_paths(raw_root)
+     if not metadata_paths:
+-        raise SnapshotReadError(
+-            f"No supported metadata snapshots found beneath: {raw_root}"
+-        )
+-
++        raise SnapshotReadError(f"No supported metadata snapshots found beneath: {raw_root}")
+     readers = {
+         "greenhouse": read_greenhouse_snapshot,
+         "lever": read_lever_snapshot,
+         "successfactors": read_successfactors_snapshot,
++        "workday": read_workday_snapshot,
++        "oracle_hcm": read_oracle_hcm_snapshot,
++        "wp_job_manager": read_wp_job_manager_snapshot,
+     }
+-    snapshots: list[SourceSnapshot] = []
+-    for metadata_path in metadata_paths:
+-        provider = metadata_path.parent.parent.name
++    snapshots = []
++    for path in metadata_paths:
++        provider = path.parent.parent.name
+         reader = readers.get(provider)
+         if reader is None:
+-            raise SnapshotReadError(
+-                f"Unsupported snapshot provider directory: {metadata_path}"
+-            )
+-        snapshots.append(reader(metadata_path))
++            raise SnapshotReadError(f"Unsupported snapshot provider directory: {path}")
++        snapshots.append(reader(path))
+     return _sort_snapshots(snapshots)
++
++
++def _load_required(raw_root: Path, provider: str, reader: Callable[[Path], SourceSnapshot]) -> list[SourceSnapshot]:
++    paths = discover_metadata_paths(raw_root, provider)
++    if not paths:
++        raise SnapshotReadError(f"No {provider.title()} metadata snapshots found beneath: {raw_root}")
++    return _sort_snapshots([reader(path) for path in paths])
++
++
++def load_greenhouse_snapshots(raw_root: Path) -> list[GreenhouseSnapshot]:
++    return _load_required(raw_root, "greenhouse", read_greenhouse_snapshot)
++
++
++def load_lever_snapshots(raw_root: Path) -> list[LeverSnapshot]:
++    return _load_required(raw_root, "lever", read_lever_snapshot)
++
++
++def load_successfactors_snapshots(raw_root: Path) -> list[SuccessFactorsSnapshot]:
++    return _load_required(raw_root, "successfactors", read_successfactors_snapshot)
+diff --git a/src/transformation/workday.py b/src/transformation/workday.py
+new file mode 100644
+index 0000000..7bcfd5a
+--- /dev/null
++++ b/src/transformation/workday.py
+@@ -0,0 +1,106 @@
++"""Transform public Workday CXS job details into canonical jobs."""
++
++from __future__ import annotations
++
++import hashlib
++from pathlib import Path
++from typing import Any, Mapping
++from urllib.parse import urljoin
++
++from src.transformation.classification import (
++    classify_location, classify_role_level, classify_technology_role,
++    classify_workplace,
++)
++from src.transformation.cleaning import (
++    clean_display_text, html_to_text, normalize_whitespace, normalized_key,
++    unique_strings,
++)
++from src.transformation.greenhouse import parse_datetime
++from src.transformation.schema import CanonicalJob
++
++_EARLY = {"internship", "graduate", "junior"}
++
++
++def _mapping(value: Any) -> Mapping[str, Any]:
++    return value if isinstance(value, Mapping) else {}
++
++
++def _first(job: Mapping[str, Any], *keys: str) -> Any:
++    for key in keys:
++        value = job.get(key)
++        if value not in (None, "", [], {}):
++            return value
++    info = _mapping(job.get("jobPostingInfo"))
++    for key in keys:
++        value = info.get(key)
++        if value not in (None, "", [], {}):
++            return value
++    return None
++
++
++def _location(job: Mapping[str, Any]) -> str:
++    values: list[str] = []
++    primary = clean_display_text(_first(job, "location", "primaryLocation"))
++    if primary:
++        values.append(primary)
++    additions = _first(job, "additionalLocations", "locationsText")
++    if isinstance(additions, list):
++        values.extend(clean_display_text(item) for item in additions)
++    elif additions:
++        values.append(clean_display_text(additions))
++    return ", ".join(unique_strings(value for value in values if value))
++
++
++def _stable_key(token: str, source_id: str, url: str, fallback: str) -> str:
++    identity = source_id or ("url-" + hashlib.sha256(url.encode()).hexdigest()[:24] if url else "content-" + hashlib.sha256(fallback.encode()).hexdigest()[:24])
++    return f"workday:{token}:{identity}"
++
++
++def transform_workday_job(job: Mapping[str, Any], metadata: Mapping[str, Any], raw_path: Path) -> CanonicalJob:
++    source_name = clean_display_text(metadata.get("source_name"))
++    token = clean_display_text(metadata.get("source_token"))
++    collected_at = parse_datetime(metadata.get("collected_at"))
++    if collected_at is None:
++        raise ValueError("Snapshot metadata contains an invalid collected_at value.")
++
++    source_id = clean_display_text(_first(job, "jobReqId", "requisitionId", "id"))
++    title = clean_display_text(_first(job, "title", "jobTitle"))
++    description = html_to_text(clean_display_text(_first(job, "jobDescription", "description")))
++    location_raw = _location(job)
++    department = clean_display_text(_first(job, "jobFamily", "jobCategory", "businessUnit")) or None
++    office = clean_display_text(_first(job, "location")) or None
++    external_path = clean_display_text(job.get("_external_path") or _first(job, "externalPath"))
++    detail_url = clean_display_text(job.get("_detail_url"))
++    public_base = clean_display_text(job.get("_public_base_url"))
++    application_url = urljoin(public_base.rstrip("/") + "/", external_path.lstrip("/")) if external_path and public_base else detail_url
++
++    location = classify_location(location_raw, description)
++    workplace = classify_workplace(title, location_raw, description, clean_display_text(_first(job, "timeType", "workplaceType")))
++    role_level = classify_role_level(title, description)
++    technology = classify_technology_role(title, department, description)
++    early = role_level.label in _EARLY
++    target = location.is_south_africa and technology.is_technology_role
++
++    issues: list[str] = []
++    for missing, value in (("missing_source_job_id", source_id), ("missing_title", title), ("missing_application_url", application_url), ("missing_location", location_raw), ("missing_description", description)):
++        if not value:
++            issues.append(missing)
++    source_updated = parse_datetime(_first(job, "startDate", "postedOn", "datePosted"))
++    fallback = "|".join((source_name, normalized_key(title), normalized_key(location_raw), description[:500]))
++    return CanonicalJob(
++        job_key=_stable_key(token, source_id, application_url, fallback),
++        source_provider="workday", source_name=source_name, source_token=token,
++        source_job_id=source_id, source_snapshot_sha256=clean_display_text(metadata.get("content_sha256")),
++        source_snapshot_path=str(raw_path), first_seen_at=collected_at, last_seen_at=collected_at,
++        source_updated_at=source_updated, observation_count=1, title=title,
++        title_normalized=normalized_key(title), company=source_name,
++        department=department, office=office, location_raw=location_raw,
++        city=location.city, province=location.province, country=location.country,
++        location_evidence=location.evidence, is_south_africa=location.is_south_africa,
++        workplace_type=workplace.label, role_level=role_level.label,
++        role_level_evidence=role_level.evidence,
++        is_technology_role=technology.is_technology_role,
++        technology_evidence=technology.evidence, is_early_career=early,
++        is_target_market=target, description_text=normalize_whitespace(description),
++        application_url=application_url, data_quality_issues=unique_strings(issues),
++    )
+diff --git a/src/transformation/wp_job_manager.py b/src/transformation/wp_job_manager.py
+new file mode 100644
+index 0000000..5609273
+--- /dev/null
++++ b/src/transformation/wp_job_manager.py
+@@ -0,0 +1,96 @@
++"""Parse WP Job Manager pages and create canonical jobs."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++from pathlib import Path
++from typing import Any, Mapping
++from urllib.parse import urlparse
++
++from bs4 import BeautifulSoup
++
++from src.transformation.classification import classify_location, classify_role_level, classify_technology_role, classify_workplace
++from src.transformation.cleaning import clean_display_text, normalize_whitespace, normalized_key, unique_strings
++from src.transformation.greenhouse import parse_datetime
++from src.transformation.schema import CanonicalJob
++
++_EARLY = {"internship", "graduate", "junior"}
++
++
++def _json_ld(soup: BeautifulSoup) -> Mapping[str, Any]:
++    for script in soup.select("script[type='application/ld+json']"):
++        try:
++            payload = json.loads(script.string or script.get_text())
++        except (json.JSONDecodeError, TypeError):
++            continue
++        candidates = payload if isinstance(payload, list) else [payload]
++        for item in candidates:
++            if isinstance(item, Mapping) and str(item.get("@type", "")).casefold() == "jobposting":
++                return item
++    return {}
++
++
++def _location_from_ld(value: Any) -> str:
++    locations = value if isinstance(value, list) else [value]
++    parts: list[str] = []
++    for entry in locations:
++        if not isinstance(entry, Mapping): continue
++        address = entry.get("address")
++        if isinstance(address, Mapping):
++            parts.extend(clean_display_text(address.get(k)) for k in ("addressLocality", "addressRegion", "addressCountry"))
++    return ", ".join(unique_strings(part for part in parts if part))
++
++
++def _stable_key(token: str, source_id: str, url: str, fallback: str) -> str:
++    identity = source_id or ("url-" + hashlib.sha256(url.encode()).hexdigest()[:24] if url else "content-" + hashlib.sha256(fallback.encode()).hexdigest()[:24])
++    return f"wp_job_manager:{token}:{identity}"
++
++
++def transform_wp_job_manager_job(job: Mapping[str, Any], metadata: Mapping[str, Any], raw_path: Path) -> CanonicalJob:
++    source_name = clean_display_text(metadata.get("source_name")); token = clean_display_text(metadata.get("source_token"))
++    collected_at = parse_datetime(metadata.get("collected_at"))
++    if collected_at is None: raise ValueError("Snapshot metadata contains an invalid collected_at value.")
++    url = clean_display_text(job.get("_detail_url") or job.get("application_url"))
++    soup = BeautifulSoup(str(job.get("_detail_html") or ""), "html.parser")
++    ld = _json_ld(soup)
++    title = clean_display_text(ld.get("title") or job.get("title"))
++    if not title:
++        heading = soup.select_one("h1, .job_listing-title, .entry-title")
++        title = clean_display_text(heading.get_text(" ", strip=True) if heading else "")
++    description_html = clean_display_text(ld.get("description"))
++    if description_html:
++        description = normalize_whitespace(BeautifulSoup(description_html, "html.parser").get_text(" ", strip=True))
++    else:
++        container = soup.select_one(".job_description, .job-listing-description, article, main") or soup
++        for noise in container.select("script,style,nav,form"):
++            noise.decompose()
++        description = normalize_whitespace(container.get_text(" ", strip=True))
++    location_raw = _location_from_ld(ld.get("jobLocation"))
++    if not location_raw:
++        node = soup.select_one(".location, .job-location, [class*='location']")
++        location_raw = clean_display_text(node.get_text(" ", strip=True) if node else "")
++    source_id = clean_display_text(job.get("source_job_id")) or urlparse(url).path.rstrip("/").split("/")[-1]
++    department = clean_display_text(ld.get("industry") or ld.get("occupationalCategory")) or None
++    location = classify_location(location_raw, description)
++    workplace = classify_workplace(title, location_raw, description, clean_display_text(ld.get("jobLocationType")))
++    role_level = classify_role_level(title, description, clean_display_text(ld.get("experienceRequirements")))
++    technology = classify_technology_role(title, department, description)
++    early = role_level.label in _EARLY; target = location.is_south_africa and technology.is_technology_role
++    issues=[]
++    for missing, value in (("missing_source_job_id",source_id),("missing_title",title),("missing_application_url",url),("missing_location",location_raw),("missing_description",description)):
++        if not value: issues.append(missing)
++    fallback="|".join((source_name, normalized_key(title), normalized_key(location_raw), description[:500]))
++    return CanonicalJob(
++        job_key=_stable_key(token,source_id,url,fallback), source_provider="wp_job_manager", source_name=source_name,
++        source_token=token, source_job_id=source_id, source_snapshot_sha256=clean_display_text(metadata.get("content_sha256")),
++        source_snapshot_path=str(raw_path), first_seen_at=collected_at, last_seen_at=collected_at,
++        source_updated_at=parse_datetime(ld.get("datePosted")), observation_count=1, title=title,
++        title_normalized=normalized_key(title), company=source_name, department=department, office=None,
++        location_raw=location_raw, city=location.city, province=location.province, country=location.country,
++        location_evidence=location.evidence, is_south_africa=location.is_south_africa,
++        workplace_type=workplace.label, role_level=role_level.label, role_level_evidence=role_level.evidence,
++        is_technology_role=technology.is_technology_role, technology_evidence=technology.evidence,
++        is_early_career=early, is_target_market=target, description_text=description,
++        application_url=url, data_quality_issues=unique_strings(issues),
++    )
+diff --git a/tests/test_ingestion_config.py b/tests/test_ingestion_config.py
+index c9e6d54..1c2dc5d 100644
+--- a/tests/test_ingestion_config.py
++++ b/tests/test_ingestion_config.py
+@@ -179,3 +179,18 @@ def test_successfactors_source_requires_https_url(tmp_path):
+ 
+     with pytest.raises(ValueError, match="absolute HTTPS"):
+         load_collection_sources(config_path)
++
++
++def test_load_collection_sources_includes_new_provider_settings(tmp_path):
++    from src.ingestion.config import load_collection_sources
++    config_path = tmp_path / "sources.json"
++    config_path.write_text(json.dumps({"sources": [
++        {"name":"Digi","provider":"workday","token":"digi","host":"https://wd.test","tenant":"t","site":"s"},
++        {"name":"ACI","provider":"oracle_hcm","token":"aci","host":"https://oracle.test","site":"CX"},
++        {"name":"BET","provider":"wp_job_manager","token":"bet","url":"https://bet.test/jobs","api_url":"https://bet.test/ajax"},
++    ]}), encoding="utf-8")
++    sources = load_collection_sources(config_path)
++    assert [source.provider for source in sources] == ["workday", "oracle_hcm", "wp_job_manager"]
++    assert sources[0].tenant == "t"
++    assert sources[1].site == "CX"
++    assert sources[2].api_url == "https://bet.test/ajax"
+diff --git a/tests/test_new_provider_clients.py b/tests/test_new_provider_clients.py
+new file mode 100644
+index 0000000..7c8e554
+--- /dev/null
++++ b/tests/test_new_provider_clients.py
+@@ -0,0 +1,84 @@
++import json
++
++import requests
++
++from src.ingestion.config import OracleHCMSource, WorkdaySource, WPJobManagerSource
++from src.ingestion.oracle_hcm import OracleHCMClient
++from src.ingestion.workday import WorkdayClient
++from src.ingestion.wp_job_manager import WPJobManagerClient
++
++
++class FakeResponse:
++    def __init__(self, url, payload, content_type="application/json"):
++        self.url = url
++        self.content = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
++        self.status_code = 200
++        self.headers = {"Content-Type": content_type}
++
++    def raise_for_status(self):
++        pass
++
++
++class QueueSession:
++    def __init__(self, responses):
++        self.responses = list(responses)
++        self.headers = {}
++        self.calls = []
++
++    def post(self, url, **kwargs):
++        self.calls.append(("POST", url, kwargs))
++        return self.responses.pop(0)
++
++    def get(self, url, **kwargs):
++        self.calls.append(("GET", url, kwargs))
++        return self.responses.pop(0)
++
++
++def test_workday_client_collects_listing_and_details():
++    session = QueueSession([
++        FakeResponse("https://wd.test/jobs", {"total": 2, "jobPostings": [
++            {"title": "Junior Engineer", "externalPath": "/job/a"},
++            {"title": "Data Analyst", "externalPath": "/job/b"},
++        ]}),
++        FakeResponse("https://wd.test/job/a", {"jobPostingInfo": {"jobReqId": "1"}}),
++        FakeResponse("https://wd.test/job/b", {"jobPostingInfo": {"jobReqId": "2"}}),
++    ])
++    source = WorkdaySource("DigiOutsource", "digioutsource", "https://wd.test", "tenant", "site", request_delay_seconds=0)
++    result = WorkdayClient(session=session, sleep=lambda _: None).fetch_source(source)
++    payload = json.loads(result.raw_bytes)
++    assert result.job_count == 2
++    assert len(payload["job_pages"]) == 2
++    assert session.calls[0][0] == "POST"
++
++
++def test_oracle_hcm_client_collects_listing_and_details():
++    session = QueueSession([
++        FakeResponse("https://oracle.test/list", {"items": [{"Id": "10", "Title": "Developer"}], "totalResults": 1, "hasMore": False}),
++        FakeResponse("https://oracle.test/detail", {"Id": "10", "Title": "Developer"}),
++    ])
++    source = OracleHCMSource("ACI Worldwide", "aci-worldwide", "https://oracle.test", "CX", request_delay_seconds=0)
++    result = OracleHCMClient(session=session, sleep=lambda _: None).fetch_source(source)
++    payload = json.loads(result.raw_bytes)
++    assert result.job_count == 1
++    assert payload["job_index"][0]["Id"] == "10"
++
++
++def test_wp_job_manager_client_collects_listing_and_details():
++    listing = {
++        "success": True,
++        "data": {
++            "html": '<a href="https://bet.test/jobs/software-engineer">Software Engineer</a>',
++            "max_num_pages": 1,
++            "found_jobs": True,
++        },
++    }
++    detail = b"<html><h1>Software Engineer</h1></html>"
++    session = QueueSession([
++        FakeResponse("https://bet.test/ajax", listing),
++        FakeResponse("https://bet.test/jobs/software-engineer", detail, "text/html"),
++    ])
++    source = WPJobManagerSource("BET Software", "betsoftware", "https://bet.test/jobs", "https://bet.test/ajax", request_delay_seconds=0)
++    result = WPJobManagerClient(session=session, sleep=lambda _: None).fetch_source(source)
++    payload = json.loads(result.raw_bytes)
++    assert result.job_count == 1
++    assert payload["job_index"][0]["source_job_id"] == "software-engineer"
+diff --git a/tests/test_new_provider_collection.py b/tests/test_new_provider_collection.py
+new file mode 100644
+index 0000000..58a35d8
+--- /dev/null
++++ b/tests/test_new_provider_collection.py
+@@ -0,0 +1,56 @@
++from datetime import datetime, timezone
++
++from src.ingestion.collect import (
++    collect_oracle_hcm_source,
++    collect_workday_source,
++    collect_wp_job_manager_source,
++)
++from src.ingestion.config import OracleHCMSource, WorkdaySource, WPJobManagerSource
++from src.ingestion.oracle_hcm import OracleHCMResponse
++from src.ingestion.snapshot import RawSnapshotStore
++from src.ingestion.workday import WorkdayResponse
++from src.ingestion.wp_job_manager import WPJobManagerResponse
++
++NOW = datetime(2026, 7, 23, tzinfo=timezone.utc)
++
++
++class StubClient:
++    def __init__(self, response):
++        self.response = response
++
++    def fetch_source(self, source):
++        return self.response
++
++
++def _response(response_type, token, provider):
++    return response_type(
++        source_token=token,
++        endpoint="https://example.test/jobs",
++        status_code=200,
++        content_type=f"application/vnd.test.{provider}+json",
++        raw_bytes=(f'{{"provider":"{provider}"}}\n').encode(),
++        job_count=2,
++        listing_page_count=1,
++        detail_page_count=2,
++    )
++
++
++def test_collect_workday_source_writes_snapshot(tmp_path):
++    source = WorkdaySource("Digi", "digi", "https://wd.test", "tenant", "site")
++    result = collect_workday_source(source, StubClient(_response(WorkdayResponse, "digi", "workday")), RawSnapshotStore(tmp_path), NOW)
++    assert result.status == "written"
++    assert result.source_provider == "workday"
++
++
++def test_collect_oracle_source_writes_snapshot(tmp_path):
++    source = OracleHCMSource("ACI", "aci", "https://oracle.test", "CX")
++    result = collect_oracle_hcm_source(source, StubClient(_response(OracleHCMResponse, "aci", "oracle_hcm")), RawSnapshotStore(tmp_path), NOW)
++    assert result.status == "written"
++    assert result.source_provider == "oracle_hcm"
++
++
++def test_collect_wp_source_writes_snapshot(tmp_path):
++    source = WPJobManagerSource("BET", "bet", "https://bet.test/jobs", "https://bet.test/ajax")
++    result = collect_wp_job_manager_source(source, StubClient(_response(WPJobManagerResponse, "bet", "wp_job_manager")), RawSnapshotStore(tmp_path), NOW)
++    assert result.status == "written"
++    assert result.source_provider == "wp_job_manager"
+diff --git a/tests/test_new_provider_transformations.py b/tests/test_new_provider_transformations.py
+new file mode 100644
+index 0000000..7aae3c2
+--- /dev/null
++++ b/tests/test_new_provider_transformations.py
+@@ -0,0 +1,53 @@
++from pathlib import Path
++
++from src.transformation.oracle_hcm import transform_oracle_hcm_job
++from src.transformation.workday import transform_workday_job
++from src.transformation.wp_job_manager import transform_wp_job_manager_job
++
++META = {
++    "source_name": "Example",
++    "source_token": "example",
++    "collected_at": "2026-07-23T12:00:00Z",
++    "content_sha256": "a" * 64,
++}
++
++
++def test_workday_transform_classifies_sa_technology_role():
++    job = {
++        "jobPostingInfo": {
++            "jobReqId": "JR1", "title": "Junior Network Engineer",
++            "location": "Cape Town, South Africa",
++            "jobDescription": "Support cloud infrastructure.",
++            "startDate": "2026-07-20",
++        },
++        "_detail_url": "https://example.test/job/JR1",
++    }
++    result = transform_workday_job(job, META, Path("raw.json"))
++    assert result.source_provider == "workday"
++    assert result.is_target_market is True
++    assert result.is_early_career is True
++
++
++def test_oracle_transform_classifies_sa_technology_role():
++    job = {
++        "Id": "10", "Title": "Software Engineer",
++        "PrimaryLocation": "Johannesburg, South Africa",
++        "ExternalDescriptionStr": "Develop Java applications.",
++        "_detail_url": "https://example.test/job/10",
++    }
++    result = transform_oracle_hcm_job(job, META, Path("raw.json"))
++    assert result.source_provider == "oracle_hcm"
++    assert result.is_target_market is True
++
++
++def test_wp_transform_prefers_jobposting_json_ld():
++    html = '''<html><script type="application/ld+json">{
++      "@type":"JobPosting", "title":"Graduate Software Developer",
++      "description":"Build Python services", "datePosted":"2026-07-20",
++      "jobLocation":{"address":{"addressLocality":"Durban","addressCountry":"South Africa"}}
++    }</script></html>'''
++    job = {"source_job_id": "graduate-developer", "_detail_html": html, "_detail_url": "https://example.test/jobs/graduate-developer"}
++    result = transform_wp_job_manager_job(job, META, Path("raw.json"))
++    assert result.source_provider == "wp_job_manager"
++    assert result.is_target_market is True
++    assert result.is_early_career is True
