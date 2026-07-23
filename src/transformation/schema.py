@@ -38,6 +38,7 @@ class CanonicalJob:
     role_level_evidence: tuple[str, ...]
     is_technology_role: bool
     technology_evidence: tuple[str, ...]
+    is_early_career: bool
     is_target_market: bool
     description_text: str
     application_url: str

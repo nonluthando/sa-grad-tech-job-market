@@ -12,8 +12,13 @@ from typing import Any, Iterable
 
 from src.transformation.cleaning import unique_strings
 from src.transformation.greenhouse import parse_datetime, transform_greenhouse_job
+from src.transformation.lever import transform_lever_job
 from src.transformation.schema import CanonicalJob
-from src.transformation.snapshots import GreenhouseSnapshot, load_greenhouse_snapshots
+from src.transformation.successfactors import transform_successfactors_job
+from src.transformation.workday import transform_workday_job
+from src.transformation.oracle_hcm import transform_oracle_hcm_job
+from src.transformation.wp_job_manager import transform_wp_job_manager_job
+from src.transformation.snapshots import SourceSnapshot, load_snapshots
 
 
 @dataclass(frozen=True)
@@ -63,7 +68,7 @@ def _count_values(jobs: Iterable[CanonicalJob], field_name: str) -> dict[str, in
 
 
 def _build_quality_report(
-    snapshots: list[GreenhouseSnapshot],
+    snapshots: list[SourceSnapshot],
     observations: list[CanonicalJob],
     jobs: list[CanonicalJob],
 ) -> dict[str, Any]:
@@ -74,6 +79,20 @@ def _build_quality_report(
         str(snapshot.metadata.get("source_name")) for snapshot in snapshots
     )
     company_counts = Counter(job.company for job in jobs)
+    provider_job_counts = Counter(job.source_provider for job in jobs)
+    target_market_jobs = [job for job in jobs if job.is_target_market]
+    early_career_target_market_jobs = [
+        job for job in target_market_jobs if job.is_early_career
+    ]
+    target_market_company_counts = Counter(
+        job.company for job in target_market_jobs
+    )
+    early_career_target_market_company_counts = Counter(
+        job.company for job in early_career_target_market_jobs
+    )
+    south_africa_technology_jobs = [
+        job for job in jobs if job.is_south_africa and job.is_technology_role
+    ]
 
     snapshot_times = [
         timestamp
@@ -92,10 +111,32 @@ def _build_quality_report(
         "duplicate_observations_removed": len(observations) - len(jobs),
         "south_africa_job_count": sum(job.is_south_africa for job in jobs),
         "technology_job_count": sum(job.is_technology_role for job in jobs),
-        "target_market_job_count": sum(job.is_target_market for job in jobs),
+        "south_africa_technology_job_count": len(south_africa_technology_jobs),
+        "target_market_definition": "south_africa_technology_roles",
+        "target_market_job_count": len(target_market_jobs),
+        "early_career_job_count": sum(job.is_early_career for job in jobs),
+        "early_career_target_market_job_count": len(
+            early_career_target_market_jobs
+        ),
         "role_level_counts": _count_values(jobs, "role_level"),
+        "target_market_role_level_counts": _count_values(
+            target_market_jobs, "role_level"
+        ),
+        "south_africa_technology_role_level_counts": _count_values(
+            south_africa_technology_jobs, "role_level"
+        ),
+        "role_level_evidence_count": sum(
+            bool(job.role_level_evidence) for job in jobs
+        ),
         "workplace_type_counts": _count_values(jobs, "workplace_type"),
         "company_counts": dict(sorted(company_counts.items())),
+        "provider_job_counts": dict(sorted(provider_job_counts.items())),
+        "target_market_company_counts": dict(
+            sorted(target_market_company_counts.items())
+        ),
+        "early_career_target_market_company_counts": dict(
+            sorted(early_career_target_market_company_counts.items())
+        ),
         "source_snapshot_counts": dict(sorted(source_snapshot_counts.items())),
         "data_quality_issue_counts": dict(sorted(issue_counts.items())),
     }
@@ -110,16 +151,33 @@ def _relative_snapshot_path(raw_path: Path, raw_root: Path) -> Path:
         return raw_path
 
 
+def _transform_snapshot_job(
+    snapshot: SourceSnapshot,
+    job: dict[str, Any] | Any,
+    raw_root: Path,
+) -> CanonicalJob:
+    raw_path = _relative_snapshot_path(snapshot.raw_path, raw_root)
+    if snapshot.provider == "greenhouse":
+        return transform_greenhouse_job(job, snapshot.metadata, raw_path)
+    if snapshot.provider == "lever":
+        return transform_lever_job(job, snapshot.metadata, raw_path)
+    if snapshot.provider == "successfactors":
+        return transform_successfactors_job(job, snapshot.metadata, raw_path)
+    if snapshot.provider == "workday":
+        return transform_workday_job(job, snapshot.metadata, raw_path)
+    if snapshot.provider == "oracle_hcm":
+        return transform_oracle_hcm_job(job, snapshot.metadata, raw_path)
+    if snapshot.provider == "wp_job_manager":
+        return transform_wp_job_manager_job(job, snapshot.metadata, raw_path)
+    raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
+
+
 def build_dataset(raw_root: Path) -> DatasetBuildResult:
     """Read saved snapshots and produce deterministic canonical job rows."""
 
-    snapshots = load_greenhouse_snapshots(raw_root)
+    snapshots = load_snapshots(raw_root)
     observations = [
-        transform_greenhouse_job(
-            job,
-            snapshot.metadata,
-            _relative_snapshot_path(snapshot.raw_path, raw_root),
-        )
+        _transform_snapshot_job(snapshot, job, raw_root)
         for snapshot in snapshots
         for job in snapshot.jobs
     ]
@@ -165,6 +223,7 @@ def _parquet_schema() -> Any:
             ("role_level_evidence", pa.list_(pa.string())),
             ("is_technology_role", pa.bool_()),
             ("technology_evidence", pa.list_(pa.string())),
+            ("is_early_career", pa.bool_()),
             ("is_target_market", pa.bool_()),
             ("description_text", pa.string()),
             ("application_url", pa.string()),

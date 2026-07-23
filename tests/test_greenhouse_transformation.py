@@ -37,6 +37,7 @@ def test_transform_greenhouse_job_builds_target_market_record() -> None:
     assert result.workplace_type == "hybrid"
     assert result.role_level == "junior"
     assert result.is_technology_role is True
+    assert result.is_early_career is True
     assert result.is_target_market is True
     assert result.data_quality_issues == ()
 
@@ -55,6 +56,7 @@ def test_transform_greenhouse_job_classifies_remote_graduate() -> None:
     assert result.workplace_type == "remote"
     assert result.role_level == "graduate"
     assert result.is_technology_role is True
+    assert result.is_early_career is True
     assert result.is_target_market is True
 
 
@@ -73,6 +75,7 @@ def test_transform_greenhouse_job_records_missing_fields_instead_of_dropping_job
     assert result.job_key.startswith("greenhouse:example:content-")
     assert result.source_job_id == ""
     assert result.application_url == ""
+    assert result.is_early_career is True
     assert result.is_target_market is True
     assert result.data_quality_issues == (
         "missing_source_job_id",

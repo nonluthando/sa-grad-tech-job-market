@@ -34,7 +34,16 @@ def print_summary(result: object, parquet_path: Path, quality_path: Path) -> Non
     print(f"Duplicate observations: {quality_report['duplicate_observations_removed']}")
     print(f"South African jobs:     {quality_report['south_africa_job_count']}")
     print(f"Technology jobs:        {quality_report['technology_job_count']}")
+    print(
+        f"SA technology jobs:     "
+        f"{quality_report['south_africa_technology_job_count']}"
+    )
     print(f"Target-market jobs:     {quality_report['target_market_job_count']}")
+    print(
+        f"Early-career target:    "
+        f"{quality_report['early_career_target_market_job_count']}"
+    )
+    print(f"Provider job counts:    {quality_report['provider_job_counts']}")
     print(f"\nDataset:        {parquet_path}")
     print(f"Quality report: {quality_path}")
 

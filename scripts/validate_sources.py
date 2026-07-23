@@ -165,7 +165,7 @@ def build_endpoint(provider: str, token: str, source: dict[str, Any] | None = No
         return greenhouse_endpoint(token)
     if provider == "lever":
         return lever_endpoint(token)
-    if provider == "html_listing_page" and source:
+    if provider in {"html_listing_page", "successfactors"} and source:
         return str(source["url"])
     raise ValueError(f"Unsupported provider: {provider}")
 
@@ -190,7 +190,7 @@ def assess_source(
     checked_at = datetime.now(timezone.utc).isoformat()
 
     try:
-        if provider == "html_listing_page":
+        if provider in {"html_listing_page", "successfactors"}:
             return assess_html_listing_page(
                 source=source,
                 endpoint=endpoint,

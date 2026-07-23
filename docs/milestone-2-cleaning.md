@@ -6,7 +6,7 @@ Complete.
 
 ## Goal
 
-Turn immutable Greenhouse snapshots into one deterministic, analysis-ready
+Turn immutable supported job-board snapshots into one deterministic, analysis-ready
 Parquet dataset without changing or deleting the raw source data.
 
 ## Command
@@ -15,7 +15,7 @@ Parquet dataset without changing or deleting the raw source data.
 python -m src.transformation.build
 ```
 
-The command reads all Greenhouse metadata sidecars beneath `data/raw`, verifies
+The command reads all supported Greenhouse and Lever metadata sidecars beneath `data/raw`, verifies
 each raw file, transforms every job observation, deduplicates repeated postings
 across snapshots and writes:
 
@@ -60,7 +60,7 @@ raw metadata + exact raw JSON
 ## Canonical record
 
 Each Parquet row represents the latest known observation of one stable
-Greenhouse posting and retains its history and lineage.
+source posting and retains its history and lineage.
 
 ### Identity and lineage
 
@@ -102,6 +102,7 @@ Greenhouse posting and retains its history and lineage.
 - `role_level_evidence`
 - `is_technology_role`
 - `technology_evidence`
+- `is_early_career`
 - `is_target_market`
 
 ### Data quality
@@ -113,7 +114,7 @@ and the issue is recorded.
 
 ## Text cleaning
 
-Greenhouse descriptions can contain HTML, HTML entities and inconsistent
+Source descriptions can contain HTML, HTML entities and inconsistent
 whitespace. The cleaner:
 
 1. decodes escaped entities;
@@ -181,18 +182,18 @@ Known false positives such as `Data Protection Officer`, `Data Capturer` and
 evidence, but ordinary non-technical titles are not classified from incidental
 technology words in their descriptions.
 
-A posting is marked `is_target_market = true` only when it is:
+Following the project scope expansion, a posting is marked
+`is_target_market = true` when it is both explicitly South African and
+classified as a technology role.
 
-1. explicitly South African;
-2. classified as a technology role; and
-3. classified as internship, graduate or junior.
-
-The full canonical dataset still retains jobs that do not meet those conditions.
-This prevents early filtering from hiding classification mistakes.
+`is_early_career = true` is stored separately when the role level is internship,
+graduate or junior. Analysts combine both flags for the early-career lens. The
+full canonical dataset still retains jobs outside the target market so that
+classification mistakes and source coverage remain visible.
 
 ## Deduplication decision
 
-The stable key uses the provider, board token and Greenhouse job ID. When an ID
+The stable key uses the provider, source token and provider job ID. When an ID
 is unavailable, the application URL is hashed; content-based identity is the
 last fallback.
 
@@ -211,7 +212,7 @@ titles at different employers are not evidence that two adverts are duplicates.
 
 - snapshot and observation counts;
 - canonical and duplicate counts;
-- South African, technology and target-market counts;
+- South African, technology, target-market and early-career counts;
 - company, role-level and workplace distributions; and
 - counts of recorded data-quality issues.
 
@@ -233,7 +234,7 @@ Tests cover:
 - HTML and entity cleaning;
 - location, workplace, level and technology rules;
 - known false positives;
-- canonical Greenhouse transformation;
+- canonical Greenhouse and Lever transformation;
 - missing-field quality flags;
 - raw snapshot integrity checks;
 - repeat-observation deduplication;

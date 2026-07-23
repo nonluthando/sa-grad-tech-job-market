@@ -67,3 +67,68 @@ def test_read_greenhouse_snapshot_rejects_modified_raw_file(tmp_path: Path) -> N
 def test_load_greenhouse_snapshots_requires_saved_data(tmp_path: Path) -> None:
     with pytest.raises(SnapshotReadError, match="No Greenhouse metadata"):
         load_greenhouse_snapshots(tmp_path)
+
+
+def test_read_lever_snapshot_verifies_list_payload(tmp_path: Path) -> None:
+    from src.transformation.snapshots import read_lever_snapshot
+
+    fixture = Path(__file__).parent / "fixtures" / "lever_jobs.json"
+    source_directory = tmp_path / "lever" / "example"
+    source_directory.mkdir(parents=True)
+    raw_bytes = fixture.read_bytes()
+    raw_path = source_directory / "snapshot.json"
+    raw_path.write_bytes(raw_bytes)
+    payload = json.loads(raw_bytes)
+    metadata_path = source_directory / "snapshot.metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "source": "lever",
+                "source_name": "Lever Example",
+                "source_token": "example",
+                "collected_at": "2026-07-23T12:00:00+00:00",
+                "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+                "source_job_count": len(payload),
+                "raw_file": raw_path.name,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = read_lever_snapshot(metadata_path)
+
+    assert snapshot.provider == "lever"
+    assert len(snapshot.jobs) == 3
+
+
+def test_load_snapshots_allows_mixed_providers(tmp_path: Path) -> None:
+    from src.transformation.snapshots import load_snapshots
+
+    greenhouse_fixture = Path(__file__).parent / "fixtures" / "greenhouse_jobs_m2.json"
+    write_snapshot(tmp_path, greenhouse_fixture)
+
+    lever_fixture = Path(__file__).parent / "fixtures" / "lever_jobs.json"
+    lever_directory = tmp_path / "lever" / "example-lever"
+    lever_directory.mkdir(parents=True)
+    raw_bytes = lever_fixture.read_bytes()
+    raw_path = lever_directory / "snapshot.json"
+    raw_path.write_bytes(raw_bytes)
+    metadata_path = lever_directory / "snapshot.metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "source": "lever",
+                "source_name": "Lever Example",
+                "source_token": "example-lever",
+                "collected_at": "2026-07-23T12:00:00+00:00",
+                "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+                "source_job_count": 3,
+                "raw_file": raw_path.name,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshots = load_snapshots(tmp_path)
+
+    assert [snapshot.provider for snapshot in snapshots] == ["greenhouse", "lever"]

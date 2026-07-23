@@ -113,7 +113,9 @@ def test_build_dataset_reports_deduplication_and_market_counts(tmp_path: Path) -
     assert report["duplicate_observations_removed"] == 2
     assert report["south_africa_job_count"] == 2
     assert report["technology_job_count"] == 2
+    assert report["target_market_definition"] == "south_africa_technology_roles"
     assert report["target_market_job_count"] == 2
+    assert report["early_career_target_market_job_count"] == 2
     assert report["role_level_counts"] == {
         "graduate": 1,
         "junior": 1,
@@ -150,4 +152,77 @@ def test_write_dataset_outputs_creates_real_parquet_and_quality_report(
     quality = json.loads(quality_path.read_text(encoding="utf-8"))
     assert table.num_rows == 3
     assert table.column_names[0] == "job_key"
+    assert "is_early_career" in table.column_names
     assert quality["canonical_job_count"] == 3
+
+
+def write_lever_snapshot(
+    raw_root: Path,
+    payload: list[dict[str, object]],
+    *,
+    timestamp: str,
+    collected_at: str,
+) -> None:
+    source_directory = raw_root / "lever" / "lever-example"
+    source_directory.mkdir(parents=True, exist_ok=True)
+    raw_bytes = (json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8")
+    raw_path = source_directory / f"{timestamp}.json"
+    raw_path.write_bytes(raw_bytes)
+    metadata_path = source_directory / f"{timestamp}.metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "source": "lever",
+                "source_name": "Lever Example",
+                "source_token": "lever-example",
+                "collected_at": collected_at,
+                "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+                "source_job_count": len(payload),
+                "raw_file": raw_path.name,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_build_dataset_combines_greenhouse_and_lever_snapshots(tmp_path: Path) -> None:
+    greenhouse_payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    lever_fixture = Path(__file__).parent / "fixtures" / "lever_jobs.json"
+    lever_payload = json.loads(lever_fixture.read_text(encoding="utf-8"))
+
+    write_snapshot(
+        tmp_path,
+        greenhouse_payload,
+        timestamp="greenhouse",
+        collected_at="2026-07-22T12:00:00Z",
+    )
+    write_lever_snapshot(
+        tmp_path,
+        lever_payload,
+        timestamp="lever",
+        collected_at="2026-07-23T12:00:00Z",
+    )
+
+    result = build_dataset(tmp_path)
+
+    assert len(result.jobs) == 6
+    assert {job.source_provider for job in result.jobs} == {"greenhouse", "lever"}
+    report = result.quality_report
+    assert report["raw_snapshot_count"] == 2
+    assert report["provider_job_counts"] == {"greenhouse": 3, "lever": 3}
+    assert report["south_africa_technology_job_count"] == 4
+    assert report["target_market_job_count"] == 4
+    assert report["target_market_job_count"] == report["south_africa_technology_job_count"]
+    assert report["early_career_target_market_job_count"] == 3
+    assert report["target_market_company_counts"] == {
+        "Example Tech": 2,
+        "Lever Example": 2,
+    }
+    assert report["early_career_target_market_company_counts"] == {
+        "Example Tech": 2,
+        "Lever Example": 1,
+    }
+    lever_job = next(job for job in result.jobs if job.source_job_id == "lever-1001")
+    assert lever_job.source_snapshot_path == "lever/lever-example/lever.json"
+    assert lever_job.is_early_career is True
+    assert lever_job.role_level_evidence

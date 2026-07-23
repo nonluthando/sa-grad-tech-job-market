@@ -71,46 +71,75 @@
     },
     {
       "name": "Discovery",
-      "provider": "html_listing_page",
+      "provider": "successfactors",
       "token": "discovery",
       "url": "https://careers.discovery.co.za/go/All-Jobs/4509301/",
-      "market_scope": "south_africa",
-      "job_link_pattern": "/job/",
-      "evidence_terms": [
-        "All Jobs",
-        "Results",
-        "Discovery"
-      ],
+      "page_size": 25,
+      "max_pages": 10,
+      "request_delay_seconds": 0.2,
       "enabled": true,
-      "priority": "experimental"
+      "priority": "secondary"
     },
     {
       "name": "Nedbank",
-      "provider": "html_listing_page",
-      "token": "nedbank-young-professionals",
-      "url": "https://jobs.nedbank.co.za/go/Young-Professional-Jobs/715601/",
-      "market_scope": "south_africa",
-      "job_link_pattern": "/job/",
-      "evidence_terms": [
-        "Young Professional Jobs",
-        "Results",
-        "Nedbank"
-      ],
+      "provider": "successfactors",
+      "token": "nedbank",
+      "url": "https://jobs.nedbank.co.za/go/All/2886801/",
+      "page_size": 25,
+      "max_pages": 10,
+      "request_delay_seconds": 0.2,
       "enabled": true,
-      "priority": "experimental"
+      "priority": "secondary"
     },
     {
       "name": "Electrum",
       "provider": "html_listing_page",
       "token": "electrum",
-      "url": "https://www.electrumsoftware.com/careers",
+      "url": "https://www.electrum.co.za/careers",
       "market_scope": "south_africa",
       "job_link_pattern": "(?:/careers/|/jobs/|job)",
       "evidence_terms": [
-        "Available positions",
-        "Career Opportunities",
-        "Electrum"
+        "Electrum Careers",
+        "Graduate Programme",
+        "Job listings"
       ],
+      "enabled": true,
+      "priority": "experimental"
+    },
+    {
+      "name": "DigiOutsource",
+      "provider": "workday",
+      "token": "digioutsource",
+      "host": "https://myhcm.wd3.myworkdayjobs.com",
+      "tenant": "myhcm",
+      "site": "digioutsource",
+      "page_size": 20,
+      "max_pages": 20,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "secondary"
+    },
+    {
+      "name": "ACI Worldwide",
+      "provider": "oracle_hcm",
+      "token": "aci-worldwide",
+      "host": "https://ebwg.fa.us2.oraclecloud.com",
+      "site": "CX",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "secondary"
+    },
+    {
+      "name": "BET Software",
+      "provider": "wp_job_manager",
+      "token": "betsoftware",
+      "url": "https://betsoftware.com/jobs",
+      "api_url": "https://betsoftware.com/wp-admin/admin-ajax.php",
+      "page_size": 100,
+      "max_pages": 10,
+      "request_delay_seconds": 0.1,
       "enabled": true,
       "priority": "experimental"
     }

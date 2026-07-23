@@ -31,8 +31,8 @@ Each source is evaluated on:
 | Greenhouse | Public Job Board API | No for GET | JSON | Takealot, Luno and Impact.com expose South African boards/roles | Employer-by-employer collection; no universal discovery endpoint | **Primary** |
 | Lever | Public Postings API | No | JSON | Mama Money and Yassir expose Cape Town/Johannesburg/South Africa roles | Employer-by-employer collection; fields vary by employer | **Secondary** |
 | Prosple | RSS when enabled; partner GraphQL access | Unknown for ZA RSS | RSS/GraphQL | South African directory exists | ZA RSS availability not yet confirmed | Deferred |
-| Discovery | SAP SuccessFactors careers page | No | HTML | South Africa-specific careers portal | Requires page parsing and pagination adapter | **Experimental** |
-| Nedbank | SAP SuccessFactors careers page | No | HTML | South Africa-specific portal and Young Professionals category | Category can be empty; requires page parsing | **Experimental** |
+| Discovery | SAP SuccessFactors careers page | No | HTML | South Africa-specific careers portal | Slower than JSON APIs; template-sensitive | **Production secondary** |
+| Nedbank | SAP SuccessFactors careers page | No | HTML | Broad South African careers portal | Slower than JSON APIs; template-sensitive | **Production secondary** |
 | Electrum | Public careers page | No | HTML | Cape Town roles | Custom markup; no confirmed public API | **Experimental** |
 | Adzuna | Registered API | API key | JSON | Coverage still needs measurement | Quotas, attribution and publication/licensing considerations | Deferred |
 
@@ -144,8 +144,9 @@ and the chosen source is recorded here with the observed counts and test timesta
 
 ## Expansion-source validation
 
-Discovery, Nedbank and Electrum are now present in `config/sources.json` as
-`html_listing_page` sources.
+Discovery and Nedbank have moved from experimental link validation into the
+production collector as `successfactors` sources. Electrum remains an
+`html_listing_page` validation source.
 
 This validation is intentionally weaker than API validation:
 
@@ -155,11 +156,27 @@ This validation is intentionally weaker than API validation:
 - records results without claiming that every detected link is a complete,
   unique or technology vacancy.
 
-They must not enter production ingestion until we inspect the returned markup,
-define a stable field mapping and add source-specific fixtures and tests.
+The production SuccessFactors adapter now provides pagination completeness
+checks, exact embedded page preservation, source-specific parsing and fixtures.
+Electrum must still meet those conditions before entering production ingestion.
 
 Discovery's public portal currently exposes paginated South African vacancies,
 including data and developer roles. Nedbank exposes a Young Professionals
 category plus broader searchable vacancies. Electrum exposes structured-looking
 position details on its Cape Town careers page. These are promising coverage
 sources, but they are not equivalent to public JSON APIs.
+
+## Milestone 2D provider assessment
+
+Three additional direct-employer platforms were selected for implementation:
+
+| Employer | Provider | Decision | Main consideration |
+|---|---|---|---|
+| DigiOutsource | Workday CXS | Production candidate | Structured public JSON with reported totals and detail endpoints |
+| ACI Worldwide | Oracle Candidate Experience | Production candidate | Structured public REST layer, but tenant field names require defensive mapping |
+| BET Software | WP Job Manager | Experimental | Direct employer lineage, but WordPress AJAX customisation can vary by site |
+
+These sources are preferred over a paid aggregator because the original employer,
+posting identifier, public URL and exact source response remain auditable. The
+trade-off is maintaining several small provider adapters instead of one external
+API dependency.

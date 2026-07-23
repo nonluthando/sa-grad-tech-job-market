@@ -67,7 +67,24 @@ _REMOTE_SOUTH_AFRICA_PATTERNS = (
     r"candidates?\s+(?:must\s+be\s+)?(?:located|based)\s+in\s+south\s+africa",
 )
 
-_ROLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+# Senior title evidence is deliberately authoritative. A role such as
+# "Graduate Programme Manager" must not be downgraded because the title also
+# contains the word "graduate".
+_SENIOR_TITLE_PATTERNS = (
+    r"\bsenior\b",
+    r"\bstaff\b",
+    r"\bprincipal\b",
+    r"\blead\b",
+    r"\bmanager\b",
+    r"\bdirector\b",
+    r"\bhead\s+of\b",
+    r"\barchitect\b",
+    r"\bvice\s+president\b",
+    r"\bvp\b",
+    r"\bchief\b",
+)
+
+_EARLY_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("internship", (r"\bintern(?:ship)?\b", r"\bvacation\s+work\b", r"\blearnership\b", r"\bapprentice(?:ship)?\b")),
     ("graduate", (r"\bgraduate\b", r"\bnew\s+grad\b", r"\bgrad\s+programme\b", r"\bgrad\s+program\b")),
     (
@@ -80,28 +97,41 @@ _ROLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
             r"\b(?:software|web|backend|front[- ]?end|full[- ]?stack)\s+developer\s+i\b",
         ),
     ),
-    (
-        "senior",
-        (
-            r"\bsenior\b",
-            r"\bstaff\b",
-            r"\bprincipal\b",
-            r"\blead\b",
-            r"\bmanager\b",
-            r"\bdirector\b",
-            r"\bhead\s+of\b",
-            r"\barchitect\b",
-            r"\bvice\s+president\b",
-            r"\bvp\b",
-            r"\bchief\b",
-        ),
-    ),
 )
 
 _DESCRIPTION_LEVEL_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("internship", (r"\bthis\s+internship\b", r"\binternship\s+programme\b")),
-    ("graduate", (r"\bgraduate\s+programme\b", r"\bgraduate\s+program\b", r"\bnew\s+graduate\b")),
-    ("junior", (r"\bentry[- ]level\s+(?:role|position|opportunity)\b", r"\b0\s*(?:-|to)\s*2\s+years?\b")),
+    (
+        "internship",
+        (
+            r"\bthis\s+internship\b",
+            r"\binternship\s+programme\b",
+            r"\binternship\s+program\b",
+        ),
+    ),
+    (
+        "graduate",
+        (
+            r"\bgraduate\s+programme\b",
+            r"\bgraduate\s+program\b",
+            r"\bnew\s+graduate\b",
+            r"\brecent\s+graduate\b",
+            r"\bfresh\s+graduate\b",
+        ),
+    ),
+    (
+        "junior",
+        (
+            r"\bentry[- ]level(?:\s+(?:role|position|opportunity|candidate))?\b",
+            r"\bearly[- ]career(?:\s+(?:role|position|opportunity|candidate))?\b",
+            r"\b0\s*(?:-|–|—|to)\s*[12]\s+years?(?:\s+of\s+(?:professional\s+)?experience)?\b",
+            r"\b1\s*(?:-|–|—|to)\s*2\s+years?(?:\s+of\s+(?:professional\s+)?experience)?\b",
+            r"\bup\s+to\s+2\s+years?(?:\s+of\s+(?:professional\s+)?experience)?\b",
+            r"\bless\s+than\s+2\s+years?(?:\s+of\s+(?:professional\s+)?experience)?\b",
+            r"\b(?:minimum\s+of\s+|at\s+least\s+)?1\s+year(?:\s+of\s+(?:professional\s+)?experience)\b",
+            r"\bno\s+(?:(?:prior|professional)\s+)*experience\s+(?:is\s+)?(?:required|necessary)\b",
+            r"\bno\s+prior\s+(?:work\s+)?experience\b",
+        ),
+    ),
 )
 
 _TECH_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -183,6 +213,22 @@ _WORKPLACE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("on_site", (r"\bon[- ]?site\b", r"\boffice[- ]based\b", r"\bin[- ]office\b")),
 )
 
+_EXPLICIT_WORKPLACE_LABELS = {
+    "hybrid": "hybrid",
+    "remote": "remote",
+    "on-site": "on_site",
+    "on site": "on_site",
+    "onsite": "on_site",
+    "unspecified": "unspecified",
+}
+
+_EXPLICIT_LEVEL_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("senior", _SENIOR_TITLE_PATTERNS),
+    ("internship", (r"\bintern(?:ship)?\b",)),
+    ("graduate", (r"\bgraduate\b", r"\bnew\s+grad\b")),
+    ("junior", (r"\bjunior\b", r"\bentry[- ]level\b", r"\bassociate\b")),
+)
+
 
 def _match_rules(text: str, patterns: Iterable[str]) -> tuple[str, ...]:
     return unique_strings(
@@ -190,6 +236,10 @@ def _match_rules(text: str, patterns: Iterable[str]) -> tuple[str, ...]:
         for pattern in patterns
         for match in re.finditer(pattern, text, flags=re.IGNORECASE)
     )
+
+
+def _tag_evidence(source: str, matches: Iterable[str]) -> tuple[str, ...]:
+    return unique_strings(f"{source}: {match}" for match in matches)
 
 
 def classify_location(location_raw: str, description_text: str = "") -> LocationClassification:
@@ -236,29 +286,76 @@ def classify_location(location_raw: str, description_text: str = "") -> Location
     )
 
 
-def classify_workplace(title: str, location_raw: str, description_text: str) -> LabelClassification:
-    """Classify workplace type, preferring explicit hybrid evidence."""
+def classify_workplace(
+    title: str,
+    location_raw: str,
+    description_text: str,
+    explicit_workplace_type: str | None = None,
+) -> LabelClassification:
+    """Classify workplace type, preferring an explicit source field."""
+
+    explicit = normalize_whitespace(explicit_workplace_type).casefold()
+    explicit_label = _EXPLICIT_WORKPLACE_LABELS.get(explicit)
+    if explicit_label and explicit_label != "unspecified":
+        return LabelClassification(
+            label=explicit_label,
+            evidence=(f"source: {explicit_workplace_type}",),
+        )
 
     combined_text = " ".join((title, location_raw, description_text))
     for label, patterns in _WORKPLACE_RULES:
         matches = _match_rules(combined_text, patterns)
         if matches:
-            return LabelClassification(label=label, evidence=matches)
+            return LabelClassification(
+                label=label,
+                evidence=_tag_evidence("text", matches),
+            )
     return LabelClassification(label="unspecified", evidence=())
 
 
-def classify_role_level(title: str, description_text: str) -> LabelClassification:
-    """Classify advertised seniority using title-first deterministic rules."""
+def classify_role_level(
+    title: str,
+    description_text: str,
+    explicit_level: str | None = None,
+) -> LabelClassification:
+    """Classify seniority using authoritative title-first rules.
 
-    for label, patterns in _ROLE_RULES:
+    Senior title terms always win. Early-career description evidence is only
+    consulted when the title and any explicit source level are inconclusive.
+    """
+
+    senior_matches = _match_rules(title, _SENIOR_TITLE_PATTERNS)
+    if senior_matches:
+        return LabelClassification(
+            label="senior",
+            evidence=_tag_evidence("title", senior_matches),
+        )
+
+    for label, patterns in _EARLY_TITLE_RULES:
         matches = _match_rules(title, patterns)
         if matches:
-            return LabelClassification(label=label, evidence=matches)
+            return LabelClassification(
+                label=label,
+                evidence=_tag_evidence("title", matches),
+            )
+
+    explicit_text = normalize_whitespace(explicit_level)
+    if explicit_text:
+        for label, patterns in _EXPLICIT_LEVEL_RULES:
+            matches = _match_rules(explicit_text, patterns)
+            if matches:
+                return LabelClassification(
+                    label=label,
+                    evidence=_tag_evidence("source_level", matches),
+                )
 
     for label, patterns in _DESCRIPTION_LEVEL_RULES:
         matches = _match_rules(description_text, patterns)
         if matches:
-            return LabelClassification(label=label, evidence=matches)
+            return LabelClassification(
+                label=label,
+                evidence=_tag_evidence("description", matches),
+            )
 
     return LabelClassification(label="unspecified", evidence=())
 

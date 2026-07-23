@@ -23,7 +23,7 @@ from src.transformation.cleaning import (
 from src.transformation.schema import CanonicalJob
 
 
-_TARGET_ROLE_LEVELS = {"internship", "graduate", "junior"}
+_EARLY_CAREER_ROLE_LEVELS = {"internship", "graduate", "junior"}
 
 
 def parse_datetime(value: Any) -> datetime | None:
@@ -96,11 +96,8 @@ def transform_greenhouse_job(
     role_level = classify_role_level(title, description_text)
     technology = classify_technology_role(title, department, description_text)
 
-    is_target_market = (
-        location.is_south_africa
-        and technology.is_technology_role
-        and role_level.label in _TARGET_ROLE_LEVELS
-    )
+    is_early_career = role_level.label in _EARLY_CAREER_ROLE_LEVELS
+    is_target_market = location.is_south_africa and technology.is_technology_role
 
     issues: list[str] = []
     if not source_job_id:
@@ -155,6 +152,7 @@ def transform_greenhouse_job(
         role_level_evidence=role_level.evidence,
         is_technology_role=technology.is_technology_role,
         technology_evidence=technology.evidence,
+        is_early_career=is_early_career,
         is_target_market=is_target_market,
         description_text=description_text,
         application_url=application_url,

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "lever-1001",
+    "text": "Software Engineer",
+    "categories": {
+      "location": "Cape Town",
+      "allLocations": ["Cape Town"],
+      "commitment": "Full-time",
+      "team": "Engineering",
+      "department": "Technology"
+    },
+    "country": "ZA",
+    "descriptionPlain": "This is an entry-level role for a recent graduate with 0-2 years of professional experience.",
+    "lists": [
+      {
+        "text": "What you will do",
+        "content": "<li>Build software products</li><li>Write automated tests</li>"
+      }
+    ],
+    "additionalPlain": "No prior professional experience is required.",
+    "hostedUrl": "https://jobs.lever.co/example/lever-1001",
+    "applyUrl": "https://jobs.lever.co/example/lever-1001/apply",
+    "workplaceType": "hybrid"
+  },
+  {
+    "id": "lever-1002",
+    "text": "Senior Software Engineer",
+    "categories": {
+      "location": "Johannesburg",
+      "allLocations": ["Johannesburg"],
+      "commitment": "Full-time",
+      "team": "Engineering",
+      "department": "Technology",
+      "level": "Entry Level"
+    },
+    "country": "ZA",
+    "descriptionPlain": "Recent graduates are welcome to read about our team, but this vacancy leads major architecture work.",
+    "lists": [],
+    "additionalPlain": "",
+    "hostedUrl": "https://jobs.lever.co/example/lever-1002",
+    "applyUrl": "https://jobs.lever.co/example/lever-1002/apply",
+    "workplaceType": "remote"
+  },
+  {
+    "id": "lever-1003",
+    "text": "Finance Analyst",
+    "categories": {
+      "location": "Cape Town",
+      "allLocations": ["Cape Town"],
+      "commitment": "Full-time",
+      "team": "Finance",
+      "department": "Finance"
+    },
+    "country": "ZA",
+    "descriptionPlain": "Analyse monthly financial performance.",
+    "lists": [],
+    "additionalPlain": "",
+    "hostedUrl": "https://jobs.lever.co/example/lever-1003",
+    "applyUrl": "https://jobs.lever.co/example/lever-1003/apply",
+    "workplaceType": "on-site"
+  }
+]
