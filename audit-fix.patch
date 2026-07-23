@@ -1,0 +1,39 @@
+--- a/scripts/audit_unspecified.py
++++ b/scripts/audit_unspecified.py
+@@ -94,6 +94,13 @@
+     minimums: list[int] = []
+     maximums: list[int] = []
+     matches: list[str] = []
++    occupied_spans: list[tuple[int, int]] = []
++
++    def overlaps_existing(start: int, end: int) -> bool:
++        return any(
++            start < existing_end and end > existing_start
++            for existing_start, existing_end in occupied_spans
++        )
+ 
+     for match in _RANGE_YEARS_PATTERN.finditer(description):
+         lower = int(match.group(1))
+@@ -101,6 +108,7 @@
+         minimums.append(min(lower, upper))
+         maximums.append(max(lower, upper))
+         matches.append(match.group(0))
++        occupied_spans.append(match.span())
+ 
+     for pattern in (
+         _AT_LEAST_YEARS_PATTERN,
+@@ -108,9 +116,14 @@
+         _PLAIN_YEARS_PATTERN,
+     ):
+         for match in pattern.finditer(description):
++            start, end = match.span()
++            if overlaps_existing(start, end):
++                continue
++
+             years = int(match.group(1))
+             minimums.append(years)
+             matches.append(match.group(0))
++            occupied_spans.append((start, end))
+ 
+     unique_matches = tuple(dict.fromkeys(matches))
+     return ExperienceEvidence(
