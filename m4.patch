@@ -1,0 +1,1184 @@
+diff --git a/docs/milestone-4-skills-extraction.md b/docs/milestone-4-skills-extraction.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e4000f79df311f23da54ac801404e4cec58c03f8
+--- /dev/null
++++ b/docs/milestone-4-skills-extraction.md
+@@ -0,0 +1,33 @@
++# Milestone 4 — Skills and requirements extraction
++
++Milestone 4 converts canonical job descriptions into reproducible market
++intelligence using a curated, explainable taxonomy.
++
++Run:
++
++```bash
++python -m src.skills.build
++```
++
++Outputs:
++
++```text
++data/processed/
++├── job_skills.parquet
++├── job_requirements.parquet
++├── skills_summary.parquet
++├── company_skills.parquet
++└── skills-quality-report.json
++```
++
++A skill is counted once per vacancy, even when mentioned repeatedly. Every
++job-skill row retains the exact text evidence that triggered the match.
++
++The extractor covers programming languages, frameworks, cloud platforms,
++databases, data and AI tools, DevOps, architecture, testing, analytics tools,
++degree fields, experience requirements and soft skills.
++
++The MVP deliberately uses deterministic rules rather than an LLM. This keeps
++the output cheap, reproducible and auditable. Optional versus required skills,
++negation and taxonomy gaps remain known limitations and should be reviewed
++through the quality report.
+diff --git a/src/skills/__init__.py b/src/skills/__init__.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..8c840fdf1b85d2dd29c5b296f871083b679c975c
+--- /dev/null
++++ b/src/skills/__init__.py
+@@ -0,0 +1,6 @@
++"""Deterministic skills and requirements extraction."""
++
++from src.skills.extractor import extract_job_enrichment
++from src.skills.models import ExtractedSkill, JobEnrichment
++
++__all__ = ["ExtractedSkill", "JobEnrichment", "extract_job_enrichment"]
+diff --git a/src/skills/__pycache__/__init__.cpython-313.pyc b/src/skills/__pycache__/__init__.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..6f7a49fc3ebfdfdc8a4519f93206190d417c1e52
+GIT binary patch
+literal 402
+zcmYk1%}T^D6or%i%*aRuQCxRhkVZk6h2qLV=zt)7fJ=XZW=vbX$$+|Z=>zx>K9bo8
+ziVJtbfNK*wGG55Z$<5)r$s&qI#Ma}WoPFE<-5vhQTbjkLHBTfbNOGEcQ<{0`#m@Uv
+zKMOF(LJVWVNFJP199)FS;C}yvYmSX*h0>ym)s>J^#YJ1k$ZzHXdBa<+Vt%W!sI=(X
+z^wUjCsM%TeVAhquTNKr$%O;-LnDl90=MHD0tScw0fRBMCVCclRa+VCu5TNcV0JE*I
+zO8Zx&%K;t!#?0owtEQ{DR4b4J6jA~_lZ8bRv&WiNv%1g)YYw0XLOB<*W){Qx1_Q7k
+r*8u7Domo4w(7EKt7+C<dOKn;C@+qY+Wc)$KujKG;bowyFb=&^|b%AtD
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/skills/__pycache__/build.cpython-313.pyc b/src/skills/__pycache__/build.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..8512febcb075bb4291fc2f84ee23c8984e2fd426
+GIT binary patch
+literal 11090
+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
+T_L~<nbX}UNgS8J;BQyTLu&ZZX
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/skills/__pycache__/extractor.cpython-313.pyc b/src/skills/__pycache__/extractor.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..900f4fdf44a2a1700e0ee4fb8d352f8b3ce626e9
+GIT binary patch
+literal 6903
+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
+R?90_|#{A8WDn@^!`!8^Ml<EKg
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/skills/__pycache__/models.cpython-313.pyc b/src/skills/__pycache__/models.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..24a8fa3d809c68f2d3224a2242bf22f13e10125b
+GIT binary patch
+literal 1319
+zcmah|&u`l{6sBZZ{uSE|x}Zsb7F@7pF)+wL(E?df?9^UdG&^Y6Wf?eHqFrVZm6FsN
+z8@=@~^wvwSyZ6s23=|$u9f}@uOW?zRp86;`&VCda0X=@?_w*hgzsE(p-9#{+`@^H(
+zU4-7*#l@(Wz*!^!UZN056gr{%z!|vG#THi{R0f{(Fgo;hQ0Rr#Z=6j8$lpd`?KZ@-
+z<90bAS^bw+9lRR<@$$#bUTb>u2b$yzXTu{FX@zseVmzE+{fJ@p3r`Y-*@>1k(mWG5
+zp%W&9Q=6yfm=+Zx)6_BwmW`Nd8YNVz?_uSSWHx0YTArzxD&@ji>;rg-4v}=ARyTBH
+z<x3R0(hDnx)zJG2*aB4x<ilRAKy~Sl8@;CK+%J#B;?N%Pv<^Q^gYN{x5fz!>5lza&
+z<CtkE3rgYwQ+$*S@o}a!7vsQGl$NGi)M)Av)oh%}$%n4aj}!JIa9`sf2!1kk_A8H}
+z4)zKiysDWxA%doi5Yr?i&Eh<<c#V+9IZc*Kmyi*cN+(<}kpW#JB+eoL!2IpbU}J+2
+zWp6MdRBOqHxn_zG*@1!<@F5fQQ=$9zX8Y+aQYu1*IZxugl2O0h=)*x+qJraztiex(
+zv3H_2!2E{(^!DGjI?o34&ib>5^Un1*-gSBH!tc`p{S5T~2vh}G{6dx*pn8ECfSN1R
+zTCr;@)Gkm5gzWaNnD!tW-WQTbk5VS|={jVc-U+qLBb`f7tt<~y5o5_7=Ug)Dw`xi7
+zfG$gM2FioB!F0P+@1O0l6w)t)8E=?niRs2{EEyxqu(4c&+@`(U9dVY#YTD#N<EQul
+z;+xHs3!dgFVJF8-a@!GP!l+ch(34LyEtQS*QZ#e*@*R;UR0?Q9RS10`yO6tpr7W9v
+zxqV^mrKmm_E9AYmYr8XVcfPST^S0(!cV^zs{KnqQ+gsXoJoE5;YwwM>SH`ko4th2D
+z8O*k2N4dROXfgX1O>6aJnUWstl>JlWwmo=x9#g+tcKf$-7YGMFH2`x~aUAClwErIM
+vyhop(`^as*_~Ny5?Ju|L+&DvE78T@fp4sL3l}ona^v)2Nf<1Qu6}dhF?QLax
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/skills/__pycache__/taxonomy.cpython-313.pyc b/src/skills/__pycache__/taxonomy.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..e1fd1be94717b09ca94ef87c31522080ed99cb51
+GIT binary patch
+literal 6222
+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
+a?qL7k-*;Y?YCvDB7TbT9s^y9jkpEwnFZZti
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/skills/build.py b/src/skills/build.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..c39ca268c8b1245b25af4dd85bd02cd3515fe630
+--- /dev/null
++++ b/src/skills/build.py
+@@ -0,0 +1,209 @@
++"""Build reusable skills and requirements datasets from canonical jobs."""
++
++from __future__ import annotations
++
++import argparse
++import json
++from collections import Counter, defaultdict
++from pathlib import Path
++from tempfile import NamedTemporaryFile
++from typing import Any
++
++from src.skills.extractor import extract_job_enrichment
++
++PROJECT_ROOT = Path(__file__).resolve().parents[2]
++DEFAULT_INPUT = PROJECT_ROOT / "data" / "processed" / "jobs.parquet"
++DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed"
++
++
++def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++    content = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
++    with NamedTemporaryFile(dir=path.parent, delete=False) as temp:
++        temp_path = Path(temp.name)
++        temp.write(content.encode("utf-8"))
++    temp_path.replace(path)
++
++
++def _write_parquet(path: Path, rows: list[dict[str, Any]]) -> None:
++    import pyarrow as pa
++    import pyarrow.parquet as pq
++
++    path.parent.mkdir(parents=True, exist_ok=True)
++    table = pa.Table.from_pylist(rows)
++    with NamedTemporaryFile(dir=path.parent, suffix=".parquet", delete=False) as temp:
++        temp_path = Path(temp.name)
++    try:
++        pq.write_table(table, temp_path, compression="zstd")
++        temp_path.replace(path)
++    finally:
++        temp_path.unlink(missing_ok=True)
++
++
++def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
++    import pyarrow.parquet as pq
++
++    jobs = pq.read_table(input_path).to_pylist()
++    skill_rows: list[dict[str, Any]] = []
++    requirement_rows: list[dict[str, Any]] = []
++    skill_counts: Counter[str] = Counter()
++    target_counts: Counter[str] = Counter()
++    early_counts: Counter[str] = Counter()
++    category_counts: Counter[str] = Counter()
++    warnings: Counter[str] = Counter()
++    company_counts: dict[tuple[str, str], int] = defaultdict(int)
++
++    jobs_with_skills = 0
++    target_with_skills = 0
++
++    for job in jobs:
++        enrichment = extract_job_enrichment(
++            str(job.get("title") or ""),
++            str(job.get("description_text") or ""),
++        )
++        warnings.update(enrichment.extraction_warnings)
++        is_target = job.get("is_target_market") is True
++        inferred = job.get("inferred_role_level")
++        is_early_target = is_target and (
++            job.get("is_early_career") is True
++            or inferred in {"internship", "graduate", "junior"}
++        )
++
++        if enrichment.skills:
++            jobs_with_skills += 1
++            if is_target:
++                target_with_skills += 1
++
++        for item in enrichment.skills:
++            skill_counts[item.skill] += 1
++            category_counts[item.category] += 1
++            company_counts[(str(job.get("company") or ""), item.skill)] += 1
++            if is_target:
++                target_counts[item.skill] += 1
++            if is_early_target:
++                early_counts[item.skill] += 1
++
++            skill_rows.append({
++                "job_key": job.get("job_key"),
++                "company": job.get("company"),
++                "title": job.get("title"),
++                "city": job.get("city"),
++                "province": job.get("province"),
++                "role_level": job.get("role_level"),
++                "inferred_role_level": inferred,
++                "is_target_market": is_target,
++                "is_early_career_target": is_early_target,
++                "skill": item.skill,
++                "category": item.category,
++                "evidence": list(item.evidence),
++                "application_url": job.get("application_url"),
++            })
++
++        requirement_rows.append({
++            "job_key": job.get("job_key"),
++            "company": job.get("company"),
++            "title": job.get("title"),
++            "is_target_market": is_target,
++            "is_early_career_target": is_early_target,
++            "degree_required": enrichment.degree_required,
++            "degree_fields": list(enrichment.degree_fields),
++            "minimum_experience_years": enrichment.minimum_experience_years,
++            "maximum_experience_years": enrichment.maximum_experience_years,
++            "soft_skills": list(enrichment.soft_skills),
++            "extraction_warnings": list(enrichment.extraction_warnings),
++            "application_url": job.get("application_url"),
++        })
++
++    target_jobs = [job for job in jobs if job.get("is_target_market") is True]
++    early_target_jobs = [
++        job for job in target_jobs
++        if job.get("is_early_career") is True
++        or job.get("inferred_role_level") in {"internship", "graduate", "junior"}
++    ]
++
++    summary_rows = []
++    for skill in sorted(skill_counts):
++        category = next(
++            row["category"] for row in skill_rows if row["skill"] == skill
++        )
++        summary_rows.append({
++            "skill": skill,
++            "category": category,
++            "all_job_count": skill_counts[skill],
++            "target_market_job_count": target_counts[skill],
++            "early_career_target_job_count": early_counts[skill],
++            "target_market_share": (
++                target_counts[skill] / len(target_jobs) if target_jobs else 0.0
++            ),
++        })
++
++    company_rows = [
++        {"company": company, "skill": skill, "job_count": count}
++        for (company, skill), count in sorted(company_counts.items())
++    ]
++
++    _write_parquet(output_dir / "job_skills.parquet", skill_rows)
++    _write_parquet(output_dir / "job_requirements.parquet", requirement_rows)
++    _write_parquet(output_dir / "skills_summary.parquet", summary_rows)
++    _write_parquet(output_dir / "company_skills.parquet", company_rows)
++
++    report = {
++        "canonical_job_count": len(jobs),
++        "target_market_job_count": len(target_jobs),
++        "early_career_target_job_count": len(early_target_jobs),
++        "job_skill_row_count": len(skill_rows),
++        "unique_skill_count": len(skill_counts),
++        "jobs_with_skills_count": jobs_with_skills,
++        "target_jobs_with_skills_count": target_with_skills,
++        "target_skill_coverage_rate": (
++            target_with_skills / len(target_jobs) if target_jobs else 0.0
++        ),
++        "category_mention_counts": dict(sorted(category_counts.items())),
++        "top_target_market_skills": [
++            {"skill": skill, "job_count": count}
++            for skill, count in target_counts.most_common(25)
++        ],
++        "top_early_career_target_skills": [
++            {"skill": skill, "job_count": count}
++            for skill, count in early_counts.most_common(25)
++        ],
++        "degree_required_target_job_count": sum(
++            row["is_target_market"] and row["degree_required"]
++            for row in requirement_rows
++        ),
++        "target_jobs_with_experience_requirement_count": sum(
++            row["is_target_market"]
++            and row["minimum_experience_years"] is not None
++            for row in requirement_rows
++        ),
++        "extraction_warning_counts": dict(sorted(warnings.items())),
++    }
++    _atomic_json(output_dir / "skills-quality-report.json", report)
++    return report
++
++
++def parse_args() -> argparse.Namespace:
++    parser = argparse.ArgumentParser(
++        description="Extract skills and requirements from canonical jobs."
++    )
++    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
++    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
++    return parser.parse_args()
++
++
++def main() -> int:
++    args = parse_args()
++    report = build(args.input, args.output_dir)
++    print("\nSkills extraction summary")
++    print("=" * 72)
++    print(f"Canonical jobs:          {report['canonical_job_count']}")
++    print(f"Target-market jobs:      {report['target_market_job_count']}")
++    print(f"Job-skill rows:          {report['job_skill_row_count']}")
++    print(f"Unique skills:           {report['unique_skill_count']}")
++    print(f"Target skill coverage:   {report['target_skill_coverage_rate']:.1%}")
++    print(f"\nOutput directory: {args.output_dir}")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/src/skills/extractor.py b/src/skills/extractor.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..358ee8f96bd24f9674db78c08a3ad13d17ef067f
+--- /dev/null
++++ b/src/skills/extractor.py
+@@ -0,0 +1,122 @@
++"""Extract skills, qualifications and experience from canonical jobs."""
++
++from __future__ import annotations
++
++import re
++from typing import Iterable
++
++from src.skills.models import ExtractedSkill, JobEnrichment
++from src.skills.taxonomy import (
++    DEGREE_FIELD_RULES,
++    DEGREE_OPTIONAL_PATTERNS,
++    DEGREE_REQUIRED_PATTERNS,
++    SKILL_RULES,
++    SOFT_SKILL_RULES,
++)
++
++_RANGE_YEARS_PATTERN = re.compile(
++    r"\b(\d+)\s*(?:-|–|—|to)\s*(\d+)\s*(?:years?|yrs?)"
++    r"(?:\s*(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?\b",
++    re.IGNORECASE,
++)
++_SINGLE_YEARS_PATTERN = re.compile(
++    r"\b(?:(?:at\s+least|minimum(?:\s+of)?|min\.?)\s+)?"
++    r"(\d+)\s*(?:\+|plus)?\s*(?:years?|yrs?)"
++    r"(?:['’]?\s*(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?\b",
++    re.IGNORECASE,
++)
++
++
++def _unique_strings(values: Iterable[str]) -> tuple[str, ...]:
++    seen: set[str] = set()
++    result: list[str] = []
++    for value in values:
++        key = value.casefold()
++        if key not in seen:
++            seen.add(key)
++            result.append(value)
++    return tuple(result)
++
++
++def _matches(text: str, patterns: Iterable[str]) -> tuple[str, ...]:
++    return _unique_strings(
++        match.group(0)
++        for pattern in patterns
++        for match in re.finditer(pattern, text, flags=re.IGNORECASE)
++    )
++
++
++def extract_skills(text: str) -> tuple[ExtractedSkill, ...]:
++    return tuple(
++        ExtractedSkill(skill=skill, category=category, evidence=evidence)
++        for skill, category, patterns in SKILL_RULES
++        if (evidence := _matches(text, patterns))
++    )
++
++
++def extract_soft_skills(text: str) -> tuple[str, ...]:
++    return tuple(
++        skill for skill, patterns in SOFT_SKILL_RULES if _matches(text, patterns)
++    )
++
++
++def extract_degree_requirements(text: str) -> tuple[bool, tuple[str, ...]]:
++    required_evidence = _matches(text, DEGREE_REQUIRED_PATTERNS)
++    optional_evidence = _matches(text, DEGREE_OPTIONAL_PATTERNS)
++    fields = tuple(
++        field for field, patterns in DEGREE_FIELD_RULES if _matches(text, patterns)
++    )
++    return bool(required_evidence) and not (
++        optional_evidence and not required_evidence
++    ), fields
++
++
++def extract_experience_years(text: str) -> tuple[int | None, int | None]:
++    minimums: list[int] = []
++    maximums: list[int] = []
++    occupied: list[tuple[int, int]] = []
++
++    def overlaps(start: int, end: int) -> bool:
++        return any(start < e and end > s for s, e in occupied)
++
++    for match in _RANGE_YEARS_PATTERN.finditer(text):
++        lower = min(int(match.group(1)), int(match.group(2)))
++        upper = max(int(match.group(1)), int(match.group(2)))
++        minimums.append(lower)
++        maximums.append(upper)
++        occupied.append(match.span())
++
++    for match in _SINGLE_YEARS_PATTERN.finditer(text):
++        if overlaps(*match.span()):
++            continue
++        minimums.append(int(match.group(1)))
++        occupied.append(match.span())
++
++    return (
++        min(minimums) if minimums else None,
++        max(maximums) if maximums else None,
++    )
++
++
++def extract_job_enrichment(title: str, description_text: str) -> JobEnrichment:
++    text = f"{title}\n{description_text}".strip()
++    warnings: list[str] = []
++    if not description_text.strip():
++        warnings.append("missing_description")
++
++    skills = extract_skills(text)
++    if not skills:
++        warnings.append("no_skills_detected")
++
++    degree_required, degree_fields = extract_degree_requirements(description_text)
++    minimum_years, maximum_years = extract_experience_years(description_text)
++
++    return JobEnrichment(
++        skills=skills,
++        degree_required=degree_required,
++        degree_fields=degree_fields,
++        minimum_experience_years=minimum_years,
++        maximum_experience_years=maximum_years,
++        soft_skills=extract_soft_skills(description_text),
++        extraction_warnings=_unique_strings(warnings),
++    )
+diff --git a/src/skills/models.py b/src/skills/models.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d768451e150a31ce82b7b2c27becf420175cf9c5
+--- /dev/null
++++ b/src/skills/models.py
+@@ -0,0 +1,27 @@
++"""Value objects used by the skills extraction layer."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++
++
++@dataclass(frozen=True)
++class ExtractedSkill:
++    """One canonical skill detected in a job posting."""
++
++    skill: str
++    category: str
++    evidence: tuple[str, ...]
++
++
++@dataclass(frozen=True)
++class JobEnrichment:
++    """Structured skills and requirements extracted from one job."""
++
++    skills: tuple[ExtractedSkill, ...]
++    degree_required: bool
++    degree_fields: tuple[str, ...]
++    minimum_experience_years: int | None
++    maximum_experience_years: int | None
++    soft_skills: tuple[str, ...]
++    extraction_warnings: tuple[str, ...]
+diff --git a/src/skills/taxonomy.py b/src/skills/taxonomy.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..1fb08bef25fd6e5da3e2d04880652ea2f43f8e10
+--- /dev/null
++++ b/src/skills/taxonomy.py
+@@ -0,0 +1,144 @@
++"""Explainable taxonomy of technology and workplace skills."""
++
++from __future__ import annotations
++
++SKILL_RULES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
++    ("Python", "programming_language", (r"(?<![\w.])python(?![\w.])",)),
++    ("Java", "programming_language", (r"(?<![\w.])java(?!script)(?![\w.])",)),
++    ("JavaScript", "programming_language", (r"\bjavascript\b", r"\bjava\s*script\b")),
++    ("TypeScript", "programming_language", (r"\btypescript\b", r"\btype\s*script\b")),
++    ("C#", "programming_language", (r"(?<!\w)c\s*#(?!\w)", r"\bcsharp\b")),
++    ("C++", "programming_language", (r"(?<!\w)c\s*\+\+(?!\w)",)),
++    ("C", "programming_language", (r"(?<![\w+#])c(?![\w+#])",)),
++    ("Go", "programming_language", (r"\bgolang\b", r"\bgo\s+programming\b")),
++    ("Kotlin", "programming_language", (r"\bkotlin\b",)),
++    ("Swift", "programming_language", (r"\bswift\b",)),
++    ("PHP", "programming_language", (r"\bphp\b",)),
++    ("Ruby", "programming_language", (r"\bruby\b",)),
++    ("Scala", "programming_language", (r"\bscala\b",)),
++    ("R", "programming_language", (r"\br\s+programming\b", r"\busing\s+r\b")),
++    ("SQL", "programming_language", (r"\bsql\b", r"\bstructured\s+query\s+language\b")),
++    ("Bash", "programming_language", (r"\bbash\b", r"\bshell\s+scripting\b")),
++
++    ("Spring Boot", "framework", (r"\bspring\s+boot\b",)),
++    ("Spring", "framework", (r"\bspring\s+framework\b",)),
++    (".NET", "framework", (r"(?<!\w)\.net(?!\w)", r"\bdotnet\b")),
++    ("ASP.NET", "framework", (r"\basp\.?net\b",)),
++    ("Django", "framework", (r"\bdjango\b",)),
++    ("Flask", "framework", (r"\bflask\b",)),
++    ("FastAPI", "framework", (r"\bfastapi\b", r"\bfast\s+api\b")),
++    ("Node.js", "framework", (r"\bnode\.?js\b", r"\bnodejs\b")),
++    ("Express.js", "framework", (r"\bexpress\.?js\b",)),
++    ("React", "framework", (r"\breact(?:\.?js)?\b",)),
++    ("Angular", "framework", (r"\bangular\b",)),
++    ("Vue.js", "framework", (r"\bvue(?:\.?js)?\b",)),
++    ("Next.js", "framework", (r"\bnext\.?js\b",)),
++    ("Laravel", "framework", (r"\blaravel\b",)),
++    ("Ruby on Rails", "framework", (r"\bruby\s+on\s+rails\b", r"\brails\b")),
++
++    ("Machine Learning", "data_ai", (r"\bmachine\s+learning\b", r"\bml\b")),
++    ("Artificial Intelligence", "data_ai", (r"\bartificial\s+intelligence\b", r"\bai\b")),
++    ("Generative AI", "data_ai", (r"\bgenerative\s+ai\b", r"\bgenai\b", r"\bgen\s+ai\b")),
++    ("Large Language Models", "data_ai", (r"\blarge\s+language\s+models?\b", r"\bllms?\b")),
++    ("Natural Language Processing", "data_ai", (r"\bnatural\s+language\s+processing\b", r"\bnlp\b")),
++    ("Computer Vision", "data_ai", (r"\bcomputer\s+vision\b",)),
++    ("Data Science", "data_ai", (r"\bdata\s+science\b",)),
++    ("Data Engineering", "data_ai", (r"\bdata\s+engineering\b",)),
++    ("ETL", "data_ai", (r"\betl\b", r"\bextract[, ]+transform[, ]+load\b")),
++    ("Apache Spark", "data_ai", (r"\bapache\s+spark\b", r"\bpyspark\b")),
++    ("Pandas", "data_ai", (r"\bpandas\b",)),
++    ("NumPy", "data_ai", (r"\bnumpy\b",)),
++    ("scikit-learn", "data_ai", (r"\bscikit[- ]learn\b", r"\bsklearn\b")),
++    ("TensorFlow", "data_ai", (r"\btensorflow\b",)),
++    ("PyTorch", "data_ai", (r"\bpytorch\b",)),
++    ("Databricks", "data_ai", (r"\bdatabricks\b",)),
++    ("Snowflake", "data_ai", (r"\bsnowflake\b",)),
++    ("dbt", "data_ai", (r"(?<!\w)dbt(?!\w)",)),
++
++    ("AWS", "cloud", (r"\baws\b", r"\bamazon\s+web\s+services\b")),
++    ("Azure", "cloud", (r"\bazure\b", r"\bmicrosoft\s+azure\b")),
++    ("Google Cloud", "cloud", (r"\bgoogle\s+cloud\b", r"\bgcp\b")),
++    ("Cloud Computing", "cloud", (r"\bcloud\s+computing\b",)),
++
++    ("PostgreSQL", "database", (r"\bpostgres(?:ql)?\b",)),
++    ("MySQL", "database", (r"\bmysql\b",)),
++    ("Microsoft SQL Server", "database", (r"\bsql\s+server\b", r"\bmssql\b")),
++    ("Oracle Database", "database", (r"\boracle\s+(?:database|db)\b",)),
++    ("MongoDB", "database", (r"\bmongodb\b",)),
++    ("Redis", "database", (r"\bredis\b",)),
++    ("DynamoDB", "database", (r"\bdynamodb\b",)),
++    ("Elasticsearch", "database", (r"\belasticsearch\b",)),
++    ("Cassandra", "database", (r"\bcassandra\b",)),
++    ("BigQuery", "database", (r"\bbigquery\b", r"\bbig\s+query\b")),
++
++    ("Git", "devops", (r"\bgit\b", r"\bgithub\b", r"\bgitlab\b")),
++    ("Docker", "devops", (r"\bdocker\b", r"\bcontainerisation\b", r"\bcontainerization\b")),
++    ("Kubernetes", "devops", (r"\bkubernetes\b", r"\bk8s\b")),
++    ("Terraform", "devops", (r"\bterraform\b",)),
++    ("Jenkins", "devops", (r"\bjenkins\b",)),
++    ("GitHub Actions", "devops", (r"\bgithub\s+actions\b",)),
++    ("CI/CD", "devops", (r"\bci\s*/\s*cd\b", r"\bcontinuous\s+integration\b")),
++    ("Linux", "devops", (r"\blinux\b",)),
++    ("Microservices", "architecture", (r"\bmicroservices?\b",)),
++    ("REST APIs", "architecture", (r"\brest(?:ful)?\s+apis?\b", r"\brest\s+services?\b")),
++    ("GraphQL", "architecture", (r"\bgraphql\b",)),
++    ("Kafka", "architecture", (r"\bapache\s+kafka\b", r"\bkafka\b")),
++    ("RabbitMQ", "architecture", (r"\brabbitmq\b",)),
++    ("Event-driven Architecture", "architecture", (r"\bevent[- ]driven\b",)),
++
++    ("Unit Testing", "testing", (r"\bunit\s+tests?\b", r"\bunit\s+testing\b")),
++    ("Test Automation", "testing", (r"\btest\s+automation\b", r"\bautomated\s+testing\b")),
++    ("Selenium", "testing", (r"\bselenium\b",)),
++    ("Cypress", "testing", (r"\bcypress\b",)),
++    ("Playwright", "testing", (r"\bplaywright\b",)),
++    ("JUnit", "testing", (r"\bjunit\b",)),
++    ("pytest", "testing", (r"\bpytest\b",)),
++    ("TDD", "testing", (r"\btdd\b", r"\btest[- ]driven\s+development\b")),
++
++    ("Power BI", "analytics_tool", (r"\bpower\s*bi\b",)),
++    ("Tableau", "analytics_tool", (r"\btableau\b",)),
++    ("Looker", "analytics_tool", (r"\blooker\b",)),
++    ("Excel", "analytics_tool", (r"\bmicrosoft\s+excel\b", r"\bexcel\b")),
++    ("SAS", "analytics_tool", (r"\bsas\b",)),
++    ("SAP", "enterprise_platform", (r"\bsap\b",)),
++    ("Salesforce", "enterprise_platform", (r"\bsalesforce\b",)),
++    ("ServiceNow", "enterprise_platform", (r"\bservicenow\b",)),
++)
++
++SOFT_SKILL_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
++    ("Communication", (r"\bcommunication\s+skills?\b", r"\bcommunicat(?:e|ion)\b")),
++    ("Collaboration", (r"\bcollaborat(?:e|ion|ive)\b", r"\bteamwork\b")),
++    ("Problem Solving", (r"\bproblem[- ]solving\b", r"\bsolve\s+complex\s+problems?\b")),
++    ("Analytical Thinking", (r"\banalytical\s+(?:skills?|thinking)\b",)),
++    ("Attention to Detail", (r"\battention\s+to\s+detail\b",)),
++    ("Adaptability", (r"\badaptab(?:le|ility)\b", r"\bfast[- ]paced\b")),
++    ("Leadership", (r"\bleadership\s+skills?\b",)),
++    ("Stakeholder Management", (r"\bstakeholder\s+management\b",)),
++    ("Time Management", (r"\btime\s+management\b",)),
++    ("Curiosity", (r"\bcurios(?:ity|ious)\b",)),
++)
++
++DEGREE_FIELD_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
++    ("Computer Science", (r"\bcomputer\s+science\b",)),
++    ("Information Technology", (r"\binformation\s+technology\b", r"\bit\s+degree\b")),
++    ("Software Engineering", (r"\bsoftware\s+engineering\b",)),
++    ("Information Systems", (r"\binformation\s+systems?\b",)),
++    ("Data Science", (r"\bdata\s+science\b",)),
++    ("Statistics", (r"\bstatistics?\b", r"\bstatistical\s+science\b")),
++    ("Mathematics", (r"\bmathematics?\b", r"\bmathematical\s+science\b")),
++    ("Engineering", (r"\bengineering\s+degree\b", r"\bdegree\s+in\s+engineering\b")),
++    ("Business", (r"\bbusiness\s+(?:degree|discipline|field)\b",)),
++    ("Finance", (r"\bfinance\s+(?:degree|discipline|field)\b",)),
++)
++
++DEGREE_REQUIRED_PATTERNS: tuple[str, ...] = (
++    r"\b(?:bachelor'?s?|bsc|b\.sc\.?|btech|b\.tech\.?|undergraduate)\s+(?:degree|qualification)\b",
++    r"\bdegree\s+(?:in|required|essential)\b",
++    r"\brelevant\s+(?:tertiary\s+)?qualification\b",
++    r"\bcomputer\s+science\s+degree\b",
++)
++
++DEGREE_OPTIONAL_PATTERNS: tuple[str, ...] = (
++    r"\bdegree\s+(?:is\s+)?(?:preferred|advantageous|a\s+plus)\b",
++    r"\bor\s+equivalent\s+(?:experience|practical\s+experience)\b",
++)
+diff --git a/tests/__pycache__/test_skills_build.cpython-313-pytest-9.0.2.pyc b/tests/__pycache__/test_skills_build.cpython-313-pytest-9.0.2.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..ab6e024e69df381a065a89293d02a4eef1105698
+GIT binary patch
+literal 3762
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/__pycache__/test_skills_build.cpython-313.pyc b/tests/__pycache__/test_skills_build.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..a0d5ca3d528964608374f488526a1d0a3f8342d3
+GIT binary patch
+literal 1746
+zcmZuxTTdHD6rNqL*M_xY8&g69f+<q!IQ6AOP(`S!ls2haXc1*WK_b#>Sr4$VH)h8H
+z`w8`>?OQ4}YJUQK>ksIUutOxQNh2XeeaM?z+V`GW+t5^<m1e&A=A1L<GJ7u4>0t!p
+zJ9TSMk0bO-Yz8CN2N!z)o+2IT(h^#fsDuTUmt-o#8e57jDpbMfk-Qq&8mRZy8Kf)o
+zQV;j_RGNtNlZ!)i7`XT&X-?MF8)#3V+KyaIycXg`i7P86+g%0_->TbAjVFSJNvVIx
+zlgtf_01mCb<;Z>tX5sV20<cffI`~`G5b`8Ia)e|(rYm|}SM`LRgl`DGVO`Tx6|E|H
+zvCYVgm{#RWcnN0ErZU*9ssnVjt`1${0a}j@Vqcf$`!+G!1h0ByV`RX3%DSSbp#(_3
+zwy=Rv4WzFlA_1HEUp5=DxrJY^Wc86e`fL&+j&Ix)@vf!^_gt;>eR!+CnsCpTpd;?m
+z5Jo$wm|t$D_WZ4|5}5R$P8c5wsBe)lBsCuMJ;D<Yj!ZXjNON?t?%6)Y_f2Nv2i}hD
+z5ki|opO^u`YyP3vOg$taBh<r!;_6-`zSeZtLxNWtY}fZnSpVva62A9P$EH`qD}Km!
+zC;_g5KQ^sh;`p=>;u-;xU>gkiZcqo4ShsBASp-vZP`4?mRq$;24sH;WhS=Z6<R~CC
+zlBhJtcNq)9g=&@b{H`$YstS=5HJ*S-jeXMK2@5QnUW3P(%^boN%VrIpgwP+`a1S4*
+zzC#R$JSGm$+uk;zaH;VxGHZthGwBXthHKJ&$Xf;&@W*KwmI>}to~@D4qISS+-!m9F
+z0ueI^9NRJ@rcS}MWqQ5`jAIDTEWhrt*W#7)>u(spI^`pfRj88@?%R&j*AOqY7;laU
+z8xen5&E~k^`dM>{$F5GsdXh$1cOintp#IIVero<}=|)e!d{8$XNLHDWz^AOT7y4c?
+z!R6q9YlqZk1k$nv8I=Q*$JZjLZByShf`(&<j0#`5N{#@BMU{$Qix1l#lsWpx`LJJS
+zVpFpzSHSs@tG%0ea@%%@XSyU5N;n#PuIhTMT7xH9b?5pn8&LzPin@o<{03hM8XSwW
+zo|q9i9S%f#w}({xF`~tU&tN)6o!r|$Ew^*Gj~4}6YUc{ai|6_APJXhJD|E6Goza=j
+z*i>h_(3!-YiRrE)rwiRAn*898>1<l<qHHR0eE+W*6i<A!{Ppq=cYeJ4{oS*Cp`9<B
+zD5v@IN%Og~@LPK1$--&+_VK6ZTCO!xXlu7l?wxAomQrqM<&NOqYip%nq*HCSrOdXp
+z*@%0$trbpYPqk7@DYdlHg{;1%ew*xGL%E4|_U2ip+|HEGGS$;ewUw;4GSxpbAaDUu
+zp<)V}Ec8{!-lC$Fay4j(#PDoLtxEqPMY-%%EoHl+<UWO?fQpVpr-WLj->C;rNLY<}
+z358aJqE!BjXi?yTkWYT-`n9@4KBBX*70*4az|@UNlJpXdze4HX(abqg&rtpu%0K!1
+YIhuNbMqi@IuKJGj{t5dV!4lc~2eL-)XaE2J
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/__pycache__/test_skills_extractor.cpython-313-pytest-9.0.2.pyc b/tests/__pycache__/test_skills_extractor.cpython-313-pytest-9.0.2.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..05a96624bcc7c19d913a26b8b0f7c7ac688b8d08
+GIT binary patch
+literal 9493
+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
+G#eV}UB2^Fo
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/__pycache__/test_skills_extractor.cpython-313.pyc b/tests/__pycache__/test_skills_extractor.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..945ecd5c0759b9e83eba44a464bbc57212f12781
+GIT binary patch
+literal 2910
+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
+Cl+=>|
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/test_skills_build.py b/tests/test_skills_build.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..5d493f2c7d830f05d59131e3f7d0f323b1dd7b4b
+--- /dev/null
++++ b/tests/test_skills_build.py
+@@ -0,0 +1,45 @@
++from pathlib import Path
++
++import pytest
++
++from src.skills.build import build
++
++pytest.importorskip("pyarrow")
++import pyarrow as pa
++import pyarrow.parquet as pq
++
++
++def test_build_writes_skills_outputs(tmp_path: Path):
++    input_path = tmp_path / "jobs.parquet"
++    output_dir = tmp_path / "processed"
++    jobs = [{
++        "job_key": "one",
++        "company": "Example",
++        "title": "Junior Data Engineer",
++        "city": "Cape Town",
++        "province": "Western Cape",
++        "role_level": "junior",
++        "inferred_role_level": "junior",
++        "is_target_market": True,
++        "is_early_career": True,
++        "description_text": (
++            "Use Python, SQL, AWS and PostgreSQL. "
++            "Bachelor's degree in Computer Science required. "
++            "1-2 years of experience."
++        ),
++        "application_url": "https://example.test/one",
++    }]
++    pq.write_table(pa.Table.from_pylist(jobs), input_path)
++    report = build(input_path, output_dir)
++
++    assert report["canonical_job_count"] == 1
++    assert report["target_market_job_count"] == 1
++    assert report["unique_skill_count"] >= 4
++    for filename in (
++        "job_skills.parquet",
++        "job_requirements.parquet",
++        "skills_summary.parquet",
++        "company_skills.parquet",
++        "skills-quality-report.json",
++    ):
++        assert (output_dir / filename).exists()
+diff --git a/tests/test_skills_extractor.py b/tests/test_skills_extractor.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..729b67917089fd0d1141d1ccf7e22adb53c4f0f4
+--- /dev/null
++++ b/tests/test_skills_extractor.py
+@@ -0,0 +1,62 @@
++from src.skills.extractor import (
++    extract_degree_requirements,
++    extract_experience_years,
++    extract_job_enrichment,
++    extract_skills,
++)
++
++
++def skill_names(text: str) -> set[str]:
++    return {skill.skill for skill in extract_skills(text)}
++
++
++def test_extracts_languages_frameworks_and_cloud():
++    names = skill_names(
++        "Build Java services with Spring Boot, PostgreSQL, Docker and AWS."
++    )
++    assert {"Java", "Spring Boot", "PostgreSQL", "Docker", "AWS"} <= names
++
++
++def test_java_does_not_false_match_javascript():
++    names = skill_names("Strong JavaScript and TypeScript experience.")
++    assert "JavaScript" in names
++    assert "TypeScript" in names
++    assert "Java" not in names
++
++
++def test_extracts_data_and_ai_skills():
++    names = skill_names(
++        "Python, SQL, machine learning, pandas, TensorFlow and Databricks."
++    )
++    assert {
++        "Python", "SQL", "Machine Learning", "Pandas", "TensorFlow", "Databricks"
++    } <= names
++
++
++def test_extracts_degree_requirement_and_fields():
++    required, fields = extract_degree_requirements(
++        "A bachelor's degree in Computer Science, Statistics or Mathematics is required."
++    )
++    assert required is True
++    assert {"Computer Science", "Statistics", "Mathematics"} <= set(fields)
++
++
++def test_extracts_experience_range_once():
++    minimum, maximum = extract_experience_years(
++        "You need 2-3 years of relevant experience."
++    )
++    assert minimum == 2
++    assert maximum == 3
++
++
++def test_extracts_plus_years():
++    minimum, maximum = extract_experience_years(
++        "At least 3+ years' experience is expected."
++    )
++    assert minimum == 3
++    assert maximum is None
++
++
++def test_job_enrichment_reports_missing_description():
++    result = extract_job_enrichment("Software Engineer", "")
++    assert "missing_description" in result.extraction_warnings
