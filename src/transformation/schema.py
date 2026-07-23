@@ -43,6 +43,24 @@ class CanonicalJob:
     description_text: str
     application_url: str
     data_quality_issues: tuple[str, ...]
+    inferred_role_level: str = "ambiguous"
+    role_level_score: int = 0
+    role_level_confidence: str = "low"
+    role_level_score_evidence: tuple[str, ...] = ()
+    is_talent_pool: bool = False
+
+    def __post_init__(self) -> None:
+        """Populate the scored inference without changing source transformers."""
+        from src.role_classification.classifier import classify_role
+
+        result = classify_role(self.title, self.description_text, self.role_level)
+        object.__setattr__(self, "inferred_role_level", result.level)
+        object.__setattr__(self, "role_level_score", result.score)
+        object.__setattr__(self, "role_level_confidence", result.confidence)
+        object.__setattr__(self, "role_level_score_evidence", tuple(
+            item.as_text() for item in result.evidence
+        ))
+        object.__setattr__(self, "is_talent_pool", result.is_talent_pool)
 
     def with_observation_window(
         self,
@@ -71,6 +89,7 @@ class CanonicalJob:
             "role_level_evidence",
             "technology_evidence",
             "data_quality_issues",
+            "role_level_score_evidence",
         ):
             record[field_name] = list(record[field_name])
         return record

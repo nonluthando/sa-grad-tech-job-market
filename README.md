@@ -94,6 +94,12 @@ market lens without discarding broader hiring evidence.
 pytest
 ```
 
+Audit the explainable role-level scoring:
+
+```bash
+python scripts/audit_role_classification.py
+```
+
 ### 4. Validate source candidates
 
 ```bash

@@ -128,6 +128,14 @@ def _build_quality_report(
         "role_level_evidence_count": sum(
             bool(job.role_level_evidence) for job in jobs
         ),
+        "inferred_role_level_counts": _count_values(jobs, "inferred_role_level"),
+        "target_market_inferred_role_level_counts": _count_values(
+            target_market_jobs, "inferred_role_level"
+        ),
+        "role_level_confidence_counts": _count_values(
+            jobs, "role_level_confidence"
+        ),
+        "talent_pool_job_count": sum(job.is_talent_pool for job in jobs),
         "workplace_type_counts": _count_values(jobs, "workplace_type"),
         "company_counts": dict(sorted(company_counts.items())),
         "provider_job_counts": dict(sorted(provider_job_counts.items())),
@@ -228,6 +236,11 @@ def _parquet_schema() -> Any:
             ("description_text", pa.string()),
             ("application_url", pa.string()),
             ("data_quality_issues", pa.list_(pa.string())),
+            ("inferred_role_level", pa.string()),
+            ("role_level_score", pa.int64()),
+            ("role_level_confidence", pa.string()),
+            ("role_level_score_evidence", pa.list_(pa.string())),
+            ("is_talent_pool", pa.bool_()),
         ]
     )
 
