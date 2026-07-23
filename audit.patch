@@ -1,0 +1,421 @@
+diff --git a/scripts/audit_unspecified.py b/scripts/audit_unspecified.py
+new file mode 100644
+index 0000000..c8f9acf
+--- /dev/null
++++ b/scripts/audit_unspecified.py
+@@ -0,0 +1,340 @@
++"""Audit target-market jobs whose role level is still unspecified."""
++
++from __future__ import annotations
++
++import argparse
++import csv
++import re
++from collections import Counter
++from dataclasses import dataclass
++from pathlib import Path
++from typing import Any, Iterable
++
++
++PROJECT_ROOT = Path(__file__).resolve().parents[1]
++DEFAULT_DATASET = PROJECT_ROOT / "data" / "processed" / "jobs.parquet"
++DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "analysis"
++
++_EARLY_TITLE_PATTERNS = (
++    r"\bassociate\b",
++    r"\bentry[- ]level\b",
++    r"\bgraduate\b",
++    r"\bjunior\b",
++    r"\bintern(?:ship)?\b",
++    r"\btrainee\b",
++    r"\blearnership\b",
++    r"\bapprentice(?:ship)?\b",
++)
++
++_MID_TITLE_PATTERNS = (
++    r"\bengineer\s+ii\b",
++    r"\bdeveloper\s+ii\b",
++    r"\banalyst\s+ii\b",
++    r"\bconsultant\b",
++    r"\bspecialist\b",
++)
++
++_SENIOR_TITLE_PATTERNS = (
++    r"\bengineer\s+iii\b",
++    r"\bdeveloper\s+iii\b",
++    r"\banalyst\s+iii\b",
++    r"\barchitect\b",
++    r"\bprincipal\b",
++    r"\bstaff\b",
++    r"\blead\b",
++    r"\bmanager\b",
++    r"\bdirector\b",
++    r"\bhead\s+of\b",
++)
++
++_RANGE_YEARS_PATTERN = re.compile(
++    r"\b(\d+)\s*(?:-|–|—|to)\s*(\d+)\s+years?(?:\s+of\s+experience)?\b",
++    re.IGNORECASE,
++)
++_AT_LEAST_YEARS_PATTERN = re.compile(
++    r"\b(?:at\s+least|minimum(?:\s+of)?|min\.?)\s+(\d+)\s+years?\b",
++    re.IGNORECASE,
++)
++_PLUS_YEARS_PATTERN = re.compile(
++    r"\b(\d+)\s*\+\s*years?(?:\s+of\s+experience)?\b",
++    re.IGNORECASE,
++)
++_PLAIN_YEARS_PATTERN = re.compile(
++    r"\b(\d+)\s+years?\s+of\s+(?:relevant\s+|professional\s+|work\s+)?experience\b",
++    re.IGNORECASE,
++)
++
++
++@dataclass(frozen=True)
++class ExperienceEvidence:
++    minimum_years: int | None
++    maximum_years: int | None
++    matches: tuple[str, ...]
++
++
++@dataclass(frozen=True)
++class AuditClassification:
++    likely_level: str
++    evidence: tuple[str, ...]
++
++
++def _matching_fragments(text: str, patterns: Iterable[str]) -> tuple[str, ...]:
++    matches: list[str] = []
++    for pattern in patterns:
++        for match in re.finditer(pattern, text, flags=re.IGNORECASE):
++            value = match.group(0).strip()
++            if value and value.lower() not in {item.lower() for item in matches}:
++                matches.append(value)
++    return tuple(matches)
++
++
++def extract_experience_evidence(description: str) -> ExperienceEvidence:
++    """Extract conservative years-of-experience evidence from a description."""
++
++    minimums: list[int] = []
++    maximums: list[int] = []
++    matches: list[str] = []
++
++    for match in _RANGE_YEARS_PATTERN.finditer(description):
++        lower = int(match.group(1))
++        upper = int(match.group(2))
++        minimums.append(min(lower, upper))
++        maximums.append(max(lower, upper))
++        matches.append(match.group(0))
++
++    for pattern in (
++        _AT_LEAST_YEARS_PATTERN,
++        _PLUS_YEARS_PATTERN,
++        _PLAIN_YEARS_PATTERN,
++    ):
++        for match in pattern.finditer(description):
++            years = int(match.group(1))
++            minimums.append(years)
++            matches.append(match.group(0))
++
++    unique_matches = tuple(dict.fromkeys(matches))
++    return ExperienceEvidence(
++        minimum_years=min(minimums) if minimums else None,
++        maximum_years=max(maximums) if maximums else None,
++        matches=unique_matches,
++    )
++
++
++def classify_unspecified_role(title: str, description: str) -> AuditClassification:
++    """
++    Assign a review bucket without modifying the production role-level label.
++
++    The audit classification is intentionally separate from the canonical
++    classifier. It helps identify patterns that deserve manual review.
++    """
++
++    evidence: list[str] = []
++
++    early_title_matches = _matching_fragments(title, _EARLY_TITLE_PATTERNS)
++    if early_title_matches:
++        evidence.extend(f"title: {match}" for match in early_title_matches)
++        return AuditClassification("likely_early_career", tuple(evidence))
++
++    senior_title_matches = _matching_fragments(title, _SENIOR_TITLE_PATTERNS)
++    if senior_title_matches:
++        evidence.extend(f"title: {match}" for match in senior_title_matches)
++        return AuditClassification("likely_senior", tuple(evidence))
++
++    mid_title_matches = _matching_fragments(title, _MID_TITLE_PATTERNS)
++    if mid_title_matches:
++        evidence.extend(f"title: {match}" for match in mid_title_matches)
++
++    experience = extract_experience_evidence(description)
++    evidence.extend(f"description: {match}" for match in experience.matches)
++
++    minimum_years = experience.minimum_years
++    maximum_years = experience.maximum_years
++
++    if maximum_years is not None and maximum_years <= 2:
++        return AuditClassification("likely_early_career", tuple(evidence))
++
++    if minimum_years is not None and minimum_years >= 5:
++        return AuditClassification("likely_senior", tuple(evidence))
++
++    if minimum_years is not None and minimum_years >= 3:
++        return AuditClassification("likely_mid_level", tuple(evidence))
++
++    if mid_title_matches:
++        return AuditClassification("likely_mid_level", tuple(evidence))
++
++    return AuditClassification("ambiguous", tuple(evidence))
++
++
++def build_audit_rows(jobs: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
++    rows: list[dict[str, Any]] = []
++
++    for job in jobs:
++        if job.get("is_target_market") is not True:
++            continue
++        if job.get("role_level") != "unspecified":
++            continue
++
++        title = str(job.get("title") or "")
++        description = str(job.get("description_text") or "")
++        classification = classify_unspecified_role(title, description)
++        experience = extract_experience_evidence(description)
++
++        rows.append(
++            {
++                "company": job.get("company"),
++                "title": title,
++                "city": job.get("city"),
++                "province": job.get("province"),
++                "workplace_type": job.get("workplace_type"),
++                "likely_level": classification.likely_level,
++                "minimum_experience_years": experience.minimum_years,
++                "maximum_experience_years": experience.maximum_years,
++                "audit_evidence": " | ".join(classification.evidence),
++                "application_url": job.get("application_url"),
++            }
++        )
++
++    return sorted(
++        rows,
++        key=lambda row: (
++            str(row["likely_level"]),
++            str(row["company"]),
++            str(row["title"]),
++        ),
++    )
++
++
++def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++    fieldnames = [
++        "company",
++        "title",
++        "city",
++        "province",
++        "workplace_type",
++        "likely_level",
++        "minimum_experience_years",
++        "maximum_experience_years",
++        "audit_evidence",
++        "application_url",
++    ]
++    with path.open("w", encoding="utf-8", newline="") as file:
++        writer = csv.DictWriter(file, fieldnames=fieldnames)
++        writer.writeheader()
++        writer.writerows(rows)
++
++
++def _markdown_table(headers: list[str], rows: list[list[str]]) -> str:
++    lines = [
++        "| " + " | ".join(headers) + " |",
++        "|" + "|".join("---" for _ in headers) + "|",
++    ]
++    for row in rows:
++        safe_values = [value.replace("|", "\\|").replace("\n", " ") for value in row]
++        lines.append("| " + " | ".join(safe_values) + " |")
++    return "\n".join(lines)
++
++
++def write_markdown(path: Path, rows: list[dict[str, Any]]) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++
++    level_counts = Counter(str(row["likely_level"]) for row in rows)
++    company_counts = Counter(str(row["company"]) for row in rows)
++
++    lines = [
++        "# Unspecified Role-Level Audit",
++        "",
++        "This report reviews South African technology roles whose canonical",
++        "`role_level` remains `unspecified`. Audit buckets are exploratory and",
++        "do not overwrite the production classification.",
++        "",
++        f"**Roles audited:** {len(rows)}",
++        "",
++        "## Likely level distribution",
++        "",
++        _markdown_table(
++            ["Likely level", "Count"],
++            [[level, str(count)] for level, count in sorted(level_counts.items())],
++        ),
++        "",
++        "## Employer distribution",
++        "",
++        _markdown_table(
++            ["Company", "Count"],
++            [[company, str(count)] for company, count in company_counts.most_common()],
++        ),
++        "",
++        "## Roles",
++        "",
++        _markdown_table(
++            ["Likely level", "Company", "Title", "Experience evidence"],
++            [
++                [
++                    str(row["likely_level"]),
++                    str(row["company"]),
++                    str(row["title"]),
++                    str(row["audit_evidence"] or "No explicit evidence"),
++                ]
++                for row in rows
++            ],
++        ),
++        "",
++        "## Interpretation guidance",
++        "",
++        "- `likely_early_career`: explicit early-career wording or no more than two years.",
++        "- `likely_mid_level`: title or description suggests roughly three to four years.",
++        "- `likely_senior`: title signal or at least five years of experience.",
++        "- `ambiguous`: no reliable title or experience evidence was detected.",
++        "",
++        "These labels are for review. They should only become production rules after",
++        "checking false positives and false negatives against the original postings.",
++        "",
++    ]
++    path.write_text("\n".join(lines), encoding="utf-8")
++
++
++def parse_args() -> argparse.Namespace:
++    parser = argparse.ArgumentParser(
++        description="Audit target-market jobs with unspecified role levels."
++    )
++    parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
++    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
++    return parser.parse_args()
++
++
++def main() -> int:
++    args = parse_args()
++
++    try:
++        import pyarrow.parquet as pq
++    except ImportError as error:
++        raise RuntimeError(
++            "The audit requires pyarrow. Run: pip install -r requirements.txt"
++        ) from error
++
++    jobs = pq.read_table(args.dataset).to_pylist()
++    rows = build_audit_rows(jobs)
++
++    csv_path = args.output_dir / "unspecified-role-audit.csv"
++    markdown_path = args.output_dir / "unspecified-role-audit.md"
++
++    write_csv(csv_path, rows)
++    write_markdown(markdown_path, rows)
++
++    counts = Counter(str(row["likely_level"]) for row in rows)
++
++    print("\nUnspecified role-level audit")
++    print("=" * 72)
++    print(f"Roles audited:         {len(rows)}")
++    print(f"Likely early-career:   {counts.get('likely_early_career', 0)}")
++    print(f"Likely mid-level:      {counts.get('likely_mid_level', 0)}")
++    print(f"Likely senior:         {counts.get('likely_senior', 0)}")
++    print(f"Ambiguous:             {counts.get('ambiguous', 0)}")
++    print(f"\nCSV:      {csv_path}")
++    print(f"Markdown: {markdown_path}")
++
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/tests/test_audit_unspecified.py b/tests/test_audit_unspecified.py
+new file mode 100644
+index 0000000..de7b92d
+--- /dev/null
++++ b/tests/test_audit_unspecified.py
+@@ -0,0 +1,69 @@
++from scripts.audit_unspecified import (
++    build_audit_rows,
++    classify_unspecified_role,
++    extract_experience_evidence,
++)
++
++
++def test_extracts_experience_range():
++    evidence = extract_experience_evidence(
++        "The successful candidate should have 1-2 years of experience."
++    )
++
++    assert evidence.minimum_years == 1
++    assert evidence.maximum_years == 2
++    assert evidence.matches == ("1-2 years of experience",)
++
++
++def test_classifies_two_year_requirement_as_likely_early_career():
++    result = classify_unspecified_role(
++        "Software Engineer",
++        "You should have 0 to 2 years of experience.",
++    )
++
++    assert result.likely_level == "likely_early_career"
++
++
++def test_classifies_five_year_requirement_as_likely_senior():
++    result = classify_unspecified_role(
++        "Data Engineer",
++        "A minimum of 5 years in data engineering is required.",
++    )
++
++    assert result.likely_level == "likely_senior"
++
++
++def test_build_audit_rows_only_keeps_target_market_unspecified_jobs():
++    jobs = [
++        {
++            "company": "Example",
++            "title": "QA Engineer",
++            "city": "Cape Town",
++            "province": "Western Cape",
++            "workplace_type": "hybrid",
++            "role_level": "unspecified",
++            "is_target_market": True,
++            "description_text": "1-2 years of experience.",
++            "application_url": "https://example.com/1",
++        },
++        {
++            "company": "Example",
++            "title": "Senior Engineer",
++            "role_level": "senior",
++            "is_target_market": True,
++            "description_text": "",
++        },
++        {
++            "company": "International",
++            "title": "Software Engineer",
++            "role_level": "unspecified",
++            "is_target_market": False,
++            "description_text": "",
++        },
++    ]
++
++    rows = build_audit_rows(jobs)
++
++    assert len(rows) == 1
++    assert rows[0]["title"] == "QA Engineer"
++    assert rows[0]["likely_level"] == "likely_early_career"
