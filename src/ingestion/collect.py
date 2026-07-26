@@ -284,9 +284,6 @@ def collect_configured_source(
                 request_delay_seconds=source.request_delay_seconds,
             ),
             successfactors_client,
-            workday_client,
-            oracle_hcm_client,
-            wp_job_manager_client,
             store,
             collected_at,
         )
