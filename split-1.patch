@@ -1,0 +1,171 @@
+diff --git a/src/skills/dimensions.py b/src/skills/dimensions.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..86b012f1cae50d596f5604308d482ddfc3f70332
+--- /dev/null
++++ b/src/skills/dimensions.py
+@@ -0,0 +1,73 @@
++"""Semantic dimensions layered over the legacy skill taxonomy."""
++
++from __future__ import annotations
++
++
++CATEGORY_DIMENSIONS: dict[str, tuple[str, str]] = {
++    "programming_language": ("language", "Programming"),
++    "framework": ("framework", "Application Development"),
++    "data_ai": ("domain_or_data_tool", "Data and AI"),
++    "cloud": ("cloud_platform", "Cloud"),
++    "database": ("database_or_storage", "Data Storage"),
++    "devops": ("devops_tool", "DevOps and Platform Engineering"),
++    "architecture": ("architecture_or_messaging", "Backend and Architecture"),
++    "testing": ("testing_tool_or_practice", "Quality Engineering"),
++    "analytics_tool": ("analytics_or_bi_tool", "Analytics and BI"),
++    "enterprise_platform": ("enterprise_platform", "Enterprise Technology"),
++}
++
++
++SKILL_DIMENSION_OVERRIDES: dict[str, tuple[str, str]] = {
++    "SQL": ("query_language", "Data Storage"),
++    "Bash": ("scripting_language", "DevOps and Platform Engineering"),
++    "Kotlin": ("language", "Mobile Development"),
++    "Swift": ("language", "Mobile Development"),
++    "React": ("frontend_framework", "Frontend Development"),
++    "Angular": ("frontend_framework", "Frontend Development"),
++    "Vue.js": ("frontend_framework", "Frontend Development"),
++    "Next.js": ("frontend_framework", "Frontend Development"),
++    "Machine Learning": ("domain", "AI and Machine Learning"),
++    "Artificial Intelligence": ("domain", "AI and Machine Learning"),
++    "Generative AI": ("domain", "AI and Machine Learning"),
++    "Large Language Models": ("domain", "AI and Machine Learning"),
++    "Natural Language Processing": ("domain", "AI and Machine Learning"),
++    "Computer Vision": ("domain", "AI and Machine Learning"),
++    "Data Science": ("domain", "Data and Analytics"),
++    "Data Engineering": ("domain", "Data Engineering"),
++    "ETL": ("data_practice", "Data Engineering"),
++    "Apache Spark": ("data_processing_platform", "Data Engineering"),
++    "Pandas": ("data_library", "Data and Analytics"),
++    "NumPy": ("data_library", "Data and Analytics"),
++    "scikit-learn": ("machine_learning_library", "AI and Machine Learning"),
++    "TensorFlow": ("machine_learning_framework", "AI and Machine Learning"),
++    "PyTorch": ("machine_learning_framework", "AI and Machine Learning"),
++    "Databricks": ("data_platform", "Data Engineering"),
++    "Snowflake": ("data_platform", "Data Engineering"),
++    "dbt": ("data_transformation_tool", "Data Engineering"),
++    "BigQuery": ("cloud_data_warehouse", "Data Engineering"),
++    "Git": ("version_control", "Software Delivery"),
++    "Kafka": ("messaging_platform", "Backend and Architecture"),
++    "RabbitMQ": ("messaging_platform", "Backend and Architecture"),
++    "REST APIs": ("backend_practice", "Backend and Architecture"),
++    "Microservices": ("architecture_pattern", "Backend and Architecture"),
++    "Event-driven Architecture": ("architecture_pattern", "Backend and Architecture"),
++    "Linux": ("operating_system", "DevOps and Platform Engineering"),
++    "CI/CD": ("delivery_practice", "Software Delivery"),
++    "Cloud Computing": ("domain", "Cloud"),
++}
++
++
++def classify_skill_dimensions(
++    skill: str,
++    legacy_category: str,
++) -> tuple[str, str]:
++    """Return `(technology_category, capability)` for an extracted item."""
++
++    override = SKILL_DIMENSION_OVERRIDES.get(skill)
++    if override is not None:
++        return override
++
++    return CATEGORY_DIMENSIONS.get(
++        legacy_category,
++        ("other", "Other"),
++    )
+diff --git a/src/skills/models.py b/src/skills/models.py
+index d768451e150a31ce82b7b2c27becf420175cf9c5..0b93b26c81817ce8f6cb91031405528ec2eb2a14 100644
+--- a/src/skills/models.py
++++ b/src/skills/models.py
+@@ -7,12 +7,36 @@ from dataclasses import dataclass
+ 
+ @dataclass(frozen=True)
+ class ExtractedSkill:
+-    """One canonical skill detected in a job posting."""
++    """One canonical technology or domain detected in a job posting."""
+ 
++    # Legacy fields remain available during the output migration.
+     skill: str
+     category: str
+     evidence: tuple[str, ...]
+ 
++    technology: str = ""
++    technology_category: str = ""
++    capability: str = ""
++
++    def __post_init__(self) -> None:
++        from src.skills.dimensions import classify_skill_dimensions
++
++        technology_category, capability = classify_skill_dimensions(
++            self.skill,
++            self.category,
++        )
++        object.__setattr__(self, "technology", self.technology or self.skill)
++        object.__setattr__(
++            self,
++            "technology_category",
++            self.technology_category or technology_category,
++        )
++        object.__setattr__(
++            self,
++            "capability",
++            self.capability or capability,
++        )
++
+ 
+ @dataclass(frozen=True)
+ class JobEnrichment:
+diff --git a/tests/test_skill_dimensions.py b/tests/test_skill_dimensions.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..8cf6e5c7669491e92b196e9d55d791577d79e66d
+--- /dev/null
++++ b/tests/test_skill_dimensions.py
+@@ -0,0 +1,44 @@
++from src.skills.models import ExtractedSkill
++
++
++def extracted(name: str, category: str) -> ExtractedSkill:
++    return ExtractedSkill(
++        skill=name,
++        category=category,
++        evidence=(name,),
++    )
++
++
++def test_legacy_fields_remain_available():
++    item = extracted("Python", "programming_language")
++
++    assert item.skill == "Python"
++    assert item.category == "programming_language"
++
++
++def test_programming_language_receives_new_dimensions():
++    item = extracted("Python", "programming_language")
++
++    assert item.technology == "Python"
++    assert item.technology_category == "language"
++    assert item.capability == "Programming"
++
++
++def test_domain_is_separated_from_concrete_technology():
++    item = extracted("Machine Learning", "data_ai")
++
++    assert item.technology_category == "domain"
++    assert item.capability == "AI and Machine Learning"
++
++
++def test_kotlin_is_grouped_under_mobile_capability():
++    item = extracted("Kotlin", "programming_language")
++
++    assert item.capability == "Mobile Development"
++
++
++def test_sql_is_not_reported_as_a_general_programming_language():
++    item = extracted("SQL", "programming_language")
++
++    assert item.technology_category == "query_language"
++    assert item.capability == "Data Storage"
