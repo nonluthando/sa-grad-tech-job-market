@@ -1,0 +1,225 @@
+diff --git a/src/skills/build.py b/src/skills/build.py
+index c39ca26..5555555 100644
+--- a/src/skills/build.py
++++ b/src/skills/build.py
+@@ -52,8 +52,14 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
+     target_counts: Counter[str] = Counter()
+     early_counts: Counter[str] = Counter()
+     category_counts: Counter[str] = Counter()
++    technology_category_counts: Counter[str] = Counter()
++    capability_counts: Counter[str] = Counter()
++    target_capability_counts: Counter[str] = Counter()
++    early_capability_counts: Counter[str] = Counter()
+     warnings: Counter[str] = Counter()
+     company_counts: dict[tuple[str, str], int] = defaultdict(int)
++    company_capability_counts: dict[tuple[str, str], int] = defaultdict(int)
+
+     jobs_with_skills = 0
+     target_with_skills = 0
+@@ -79,11 +85,18 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
+         for item in enrichment.skills:
+             skill_counts[item.skill] += 1
+             category_counts[item.category] += 1
++            technology_category_counts[item.technology_category] += 1
++            capability_counts[item.capability] += 1
+             company_counts[(str(job.get("company") or ""), item.skill)] += 1
++            company_capability_counts[
++                (str(job.get("company") or ""), item.capability)
++            ] += 1
+             if is_target:
+                 target_counts[item.skill] += 1
++                target_capability_counts[item.capability] += 1
+             if is_early_target:
+                 early_counts[item.skill] += 1
++                early_capability_counts[item.capability] += 1
+
+             skill_rows.append({
+                 "job_key": job.get("job_key"),
+@@ -98,6 +111,9 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
+                 "is_early_career_target": is_early_target,
+                 "skill": item.skill,
+                 "category": item.category,
++                "technology": item.technology,
++                "technology_category": item.technology_category,
++                "capability": item.capability,
+                 "evidence": list(item.evidence),
+                 "application_url": job.get("application_url"),
+             })
+@@ -126,11 +142,17 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
+     summary_rows = []
+     for skill in sorted(skill_counts):
+         category = next(
+             row["category"] for row in skill_rows if row["skill"] == skill
+         )
++        technology_category = next(
++            row["technology_category"]
++            for row in skill_rows
++            if row["skill"] == skill
++        )
++        capability = next(
++            row["capability"] for row in skill_rows if row["skill"] == skill
++        )
+         summary_rows.append({
+             "skill": skill,
+             "category": category,
++            "technology": skill,
++            "technology_category": technology_category,
++            "capability": capability,
+             "all_job_count": skill_counts[skill],
+             "target_market_job_count": target_counts[skill],
+             "early_career_target_job_count": early_counts[skill],
+@@ -139,15 +161,59 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
+             ),
+         })
+
++    capability_rows = []
++    for capability in sorted(capability_counts):
++        target_count = target_capability_counts[capability]
++        capability_rows.append({
++            "capability": capability,
++            "all_job_mention_count": capability_counts[capability],
++            "target_market_mention_count": target_count,
++            "early_career_target_mention_count": early_capability_counts[capability],
++            "target_market_mention_share": (
++                target_count / len(target_jobs) if target_jobs else 0.0
++            ),
++        })
++
++    technology_category_rows = [
++        {
++            "technology_category": category,
++            "all_job_mention_count": count,
++        }
++        for category, count in sorted(technology_category_counts.items())
++    ]
++
+     company_rows = [
+-        {"company": company, "skill": skill, "job_count": count}
++        {
++            "company": company,
++            "skill": skill,
++            "technology": skill,
++            "job_count": count,
++        }
+         for (company, skill), count in sorted(company_counts.items())
+     ]
+
++    company_capability_rows = [
++        {
++            "company": company,
++            "capability": capability,
++            "mention_count": count,
++        }
++        for (company, capability), count
++        in sorted(company_capability_counts.items())
++    ]
++
+     _write_parquet(output_dir / "job_skills.parquet", skill_rows)
+     _write_parquet(output_dir / "job_requirements.parquet", requirement_rows)
+     _write_parquet(output_dir / "skills_summary.parquet", summary_rows)
+     _write_parquet(output_dir / "company_skills.parquet", company_rows)
++    _write_parquet(output_dir / "capability_summary.parquet", capability_rows)
++    _write_parquet(
++        output_dir / "technology_category_summary.parquet",
++        technology_category_rows,
++    )
++    _write_parquet(
++        output_dir / "company_capabilities.parquet",
++        company_capability_rows,
++    )
+
+     report = {
+@@ -161,6 +227,10 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
+             target_with_skills / len(target_jobs) if target_jobs else 0.0
+         ),
+         "category_mention_counts": dict(sorted(category_counts.items())),
++        "technology_category_mention_counts": dict(
++            sorted(technology_category_counts.items())
++        ),
++        "capability_mention_counts": dict(sorted(capability_counts.items())),
+         "top_target_market_skills": [
+             {"skill": skill, "job_count": count}
+             for skill, count in target_counts.most_common(25)
+@@ -169,6 +239,14 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
+             {"skill": skill, "job_count": count}
+             for skill, count in early_counts.most_common(25)
+         ],
++        "top_target_market_capabilities": [
++            {"capability": capability, "mention_count": count}
++            for capability, count in target_capability_counts.most_common()
++        ],
++        "top_early_career_target_capabilities": [
++            {"capability": capability, "mention_count": count}
++            for capability, count in early_capability_counts.most_common()
++        ],
+         "degree_required_target_job_count": sum(
+             row["is_target_market"] and row["degree_required"]
+             for row in requirement_rows
+diff --git a/tests/test_skills_build.py b/tests/test_skills_build.py
+index 1234567..7654321 100644
+--- a/tests/test_skills_build.py
++++ b/tests/test_skills_build.py
+@@ -40,10 +40,38 @@ def test_build_writes_skills_outputs(tmp_path: Path):
+     assert report["target_market_job_count"] == 1
+     assert report["unique_skill_count"] >= 4
+     for filename in (
+         "job_skills.parquet",
+         "job_requirements.parquet",
+         "skills_summary.parquet",
+         "company_skills.parquet",
++        "capability_summary.parquet",
++        "technology_category_summary.parquet",
++        "company_capabilities.parquet",
+         "skills-quality-report.json",
+     ):
+         assert (output_dir / filename).exists()
++
++    job_skill_rows = pq.read_table(
++        output_dir / "job_skills.parquet"
++    ).to_pylist()
++    python_row = next(
++        row for row in job_skill_rows if row["skill"] == "Python"
++    )
++
++    assert python_row["technology"] == "Python"
++    assert python_row["technology_category"] == "language"
++    assert python_row["capability"] == "Programming"
++
++    summary_rows = pq.read_table(
++        output_dir / "skills_summary.parquet"
++    ).to_pylist()
++    sql_row = next(row for row in summary_rows if row["skill"] == "SQL")
++
++    assert sql_row["technology"] == "SQL"
++    assert sql_row["technology_category"] == "query_language"
++    assert sql_row["capability"] == "Data Storage"
++
++    capability_rows = pq.read_table(
++        output_dir / "capability_summary.parquet"
++    ).to_pylist()
++    capabilities = {row["capability"] for row in capability_rows}
++
++    assert "Programming" in capabilities
++    assert "Cloud" in capabilities
+diff --git a/docs/milestone-4-skills-extraction.md b/docs/milestone-4-skills-extraction.md
+index 1111111..2222222 100644
+--- a/docs/milestone-4-skills-extraction.md
++++ b/docs/milestone-4-skills-extraction.md
+@@ -9,10 +9,13 @@ Outputs:
+ data/processed/
+ ├── job_skills.parquet
+ ├── job_requirements.parquet
+ ├── skills_summary.parquet
+ ├── company_skills.parquet
++├── capability_summary.parquet
++├── technology_category_summary.parquet
++├── company_capabilities.parquet
+ └── skills-quality-report.json
+ ```
+
+ A skill is counted once per vacancy, even when mentioned repeatedly. Every
+ job-skill row retains the exact text evidence that triggered the match.
++
++The legacy `skill` and `category` columns remain available. New outputs add
++`technology`, `technology_category` and `capability`, allowing dashboards to
++separate concrete tools from broader domains and work capabilities.
