@@ -1,81 +1,154 @@
-# South African Tech Job Market Intelligence
+# South African Technology Job Market Analysis
 
-An end-to-end analytics engineering project that collects public job postings,
-builds a reliable job-market dataset, and publishes evidence about technology
-hiring in South Africa. Graduate and junior opportunities remain a dedicated
-early-career lens within the broader market.
+## Overview
 
-## Current status
+The South African Technology Job Market Analysis project is an end-to-end analytics engineering pipeline that collects public technology vacancies directly from employer career websites.
 
-**Milestone 2D implemented: fintech and gaming source adapters**
+The project extracts, standardises and enriches job-posting data so that it can be used to analyse:
 
-The project can now:
+- Hiring trends
+- In-demand technical skills
+- Programming languages and frameworks
+- Cloud platforms and development tools
+- Career and experience levels
+- Employment types
+- Technical domains
+- Geographic distribution
+- Early-career opportunities
 
-- collect exact raw Greenhouse snapshots from Takealot Group, Luno and Impact.com;
-- collect exact raw Lever snapshots from Mama Money and Yassir;
-- collect paginated SAP SuccessFactors listings and job-detail pages from Discovery and Nedbank;
-- collect Workday CXS listings and details from DigiOutsource;
-- collect Oracle Candidate Experience requisitions from ACI Worldwide;
-- collect WP Job Manager listing and detail pages from BET Software;
-- verify raw-file integrity from metadata and SHA-256 hashes;
-- clean HTML job descriptions into analysis-ready text;
-- normalise South African locations and selected international countries;
-- classify workplace type, role level and technology relevance;
-- retain source-tagged evidence behind role-level classifications;
-- use explicit Lever workplace and level fields when available;
-- identify the target South African technology market;
-- flag explicitly early-career roles as a separate analytical lens;
-- deduplicate stable postings across collection snapshots;
-- preserve first-seen, last-seen and observation history;
-- write a schema-controlled Parquet dataset; and
-- produce a data-quality report.
+Instead of relying mainly on traditional job boards, the project collects vacancies from employer career portals. This provides an employer-direct view of the South African technology labour market and reduces duplicate observations through conservative deduplication.
 
-The latest verified Milestone 2C build contained 407 canonical jobs across seven
-employers, including 71 South African technology roles and four explicitly
-early-career roles. Milestone 2D adds three provider adapters; their live counts
-will be recorded only after each collector passes a complete Codespaces run.
+Graduate, internship and junior roles are retained as a dedicated early-career analytical lens within the broader technology market.
 
-## Setup
+## Project Objectives
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+The project aims to:
 
-Codespaces uses Bash. In Windows PowerShell outside Codespaces, activate with:
+- Collect vacancies from major South African technology employers
+- Support multiple recruitment platforms and provider structures
+- Preserve reproducible raw job-posting snapshots
+- Standardise inconsistent job data into a common schema
+- Extract technical skills and capabilities from job descriptions
+- Classify vacancies by role, seniority, domain and employment type
+- Track repeated vacancies across collection runs
+- Produce analysis-ready datasets
+- Support dashboards and labour-market research
 
-```powershell
-.venv\Scripts\Activate.ps1
-```
+## Supported Recruitment Platforms
 
-## Run the pipeline
+The current pipeline includes collectors for:
 
-### 1. Collect raw job-board snapshots
+- Greenhouse
+- Lever
+- Workday
+- SAP SuccessFactors
+- Oracle HCM
+- WordPress Job Manager
 
-```bash
-python -m src.ingestion.collect
-```
+The provider-adapter architecture is designed so that additional recruitment platforms and custom employer APIs can be added without rewriting the full pipeline.
 
-Collect one configured source:
+## Current Capabilities
 
-```bash
-python -m src.ingestion.collect --source-token takealotgroup
-python -m src.ingestion.collect --source-token discovery
-python -m src.ingestion.collect --source-token digioutsource
-```
+### Multi-Provider Data Collection
 
-Page-based collectors follow every result page and then download each job detail.
-They are intentionally slower than the compact Greenhouse and Lever feeds, and
-all enforce completeness limits to avoid silently truncated datasets.
+The ingestion layer collects vacancies from recruitment platforms with different:
 
-### 2. Build the canonical dataset
+- API structures
+- Pagination models
+- Job-detail endpoints
+- Location formats
+- Metadata fields
+- Response formats
+- Failure behaviours
 
-```bash
-python -m src.transformation.build
-```
+Each provider has a dedicated adapter responsible for retrieving vacancies and converting provider-specific responses into a consistent internal representation.
 
-Outputs:
+### Raw Snapshot Preservation
+
+Raw provider responses are retained before transformation.
+
+The pipeline stores:
+
+- Raw JSON or HTML snapshots
+- Source metadata
+- Collection timestamps
+- Integrity information
+- SHA-256 hashes
+
+Raw files remain unchanged after collection, allowing transformations to be reproduced and audited.
+
+### Data Cleaning and Standardisation
+
+The transformation pipeline:
+
+- Cleans raw job descriptions
+- Removes HTML formatting
+- Standardises text values
+- Normalises locations
+- Parses workplace information
+- Standardises employment metadata
+- Handles missing and ambiguous values
+- Produces a common structure across providers
+
+### Deduplication and Observation History
+
+Stable provider identifiers are used to identify repeated vacancies across collection runs.
+
+The pipeline preserves:
+
+- First-seen dates
+- Last-seen dates
+- Observation history
+- Source identifiers
+- Collection evidence
+
+Deduplication is intentionally conservative to avoid incorrectly combining unrelated vacancies.
+
+### Skills Extraction
+
+The project automatically extracts and normalises skills mentioned in job descriptions.
+
+Current skill categories include:
+
+- Programming languages
+- Frameworks and libraries
+- Databases
+- Cloud platforms
+- Development tools
+- Technical capabilities
+- Soft skills
+
+Normalisation allows employers using different terminology to be compared more consistently.
+
+For example, related terms and naming variations can be mapped to a common analytical label instead of being treated as completely separate skills.
+
+### Vacancy Classification
+
+The pipeline classifies vacancies by:
+
+- Career level
+- Functional role
+- Technical domain
+- Employment type
+- Workplace type
+- Technology relevance
+- Early-career suitability
+
+Classification evidence is retained where possible so that labels remain explainable rather than operating as unsupported black-box predictions.
+
+### Requirements Filtering
+
+The project distinguishes and structures requirements found in vacancy descriptions, supporting later analysis of:
+
+- Minimum requirements
+- Preferred requirements
+- Experience expectations
+- Education requirements
+- Technical capability requirements
+
+### Dataset Generation
+
+The pipeline produces a schema-controlled analytical dataset:
 
 ```text
 data/processed/
@@ -83,53 +156,59 @@ data/processed/
 └── quality-report.json
 ```
 
-`jobs.parquet` retains every standardised job. `is_target_market` identifies
-South African technology roles, while `is_early_career` identifies internship,
-graduate and junior roles. Combining both flags produces the early-career
-market lens without discarding broader hiring evidence.
+`jobs.parquet` contains the standardised and enriched vacancy records.
 
-### 3. Run tests
+`quality-report.json` records data-quality information such as missing values, classification coverage and transformation outcomes.
 
-```bash
-pytest
-```
+Parquet is used as the main analytical format because it:
 
-Audit the explainable role-level scoring:
+- Preserves column data types
+- Supports efficient storage
+- Loads faster than CSV for repeated analysis
+- Works well with Python analytics tools
+- Provides a stable contract for dashboards and later analysis
 
-```bash
-python scripts/audit_role_classification.py
-```
-
-### 4. Validate source candidates
-
-```bash
-python scripts/validate_sources.py
-```
-
-## Pipeline architecture
+## Pipeline Architecture
 
 ```text
-config/sources.json
-        |
-        v
-Greenhouse + Lever + SuccessFactors + Workday + Oracle + WP collectors
-        |
-        +--> exact raw JSON or HTML bundle + metadata + SHA-256
-                         |
-                         v
-             snapshot integrity checks
-                         |
-                         v
-            cleaning and classifications
-                         |
-                         v
-              stable-key deduplication
-                         |
-                         +--> data/processed/jobs.parquet
-                         +--> data/processed/quality-report.json
+Employer career websites
+           |
+           v
+Provider-specific collectors
+           |
+           v
+Raw JSON or HTML snapshots
+           |
+           +--> metadata
+           +--> timestamps
+           +--> SHA-256 integrity hashes
+           |
+           v
+Snapshot validation
+           |
+           v
+Cleaning and standardisation
+           |
+           v
+Skills and requirements extraction
+           |
+           v
+Vacancy classification
+           |
+           v
+Stable-key deduplication
+           |
+           v
+Observation-history tracking
+           |
+           +--> jobs.parquet
+           +--> quality-report.json
+           |
+           v
+Market analysis and dashboards
 ```
 
-## Repository structure
+## Repository Structure
 
 ```text
 .
@@ -140,76 +219,313 @@ Greenhouse + Lever + SuccessFactors + Workday + Oracle + WP collectors
 │   ├── processed/
 │   └── source-test-results/
 ├── docs/
-│   ├── data-source-assessment.md
-│   ├── milestone-1-raw-ingestion.md
-│   ├── milestone-2-cleaning.md
-│   ├── milestone-2b-quality-and-coverage.md
-│   ├── milestone-2c-successfactors-sources.md
-│   ├── milestone-2d-fintech-gaming-sources.md
-│   └── project-scope.md
 ├── scripts/
-│   └── validate_sources.py
 ├── src/
 │   ├── ingestion/
 │   └── transformation/
-│       ├── build.py
-│       ├── classification.py
-│       ├── cleaning.py
-│       ├── dataset.py
-│       ├── greenhouse.py
-│       ├── lever.py
-│       ├── successfactors.py
-│       ├── workday.py
-│       ├── oracle_hcm.py
-│       ├── wp_job_manager.py
-│       ├── schema.py
-│       └── snapshots.py
-└── tests/
+├── tests/
+├── requirements.txt
+└── README.md
 ```
 
-## Important design decisions
+### `config/`
 
-- **Raw data remains immutable.** Transformations never edit source snapshots.
-- **No early destructive filtering.** The canonical dataset keeps all jobs and
-  exposes classification flags.
-- **Classifications are explainable.** Evidence is stored with each label.
-- **Unknown is preferable to guessing.** Missing or ambiguous values remain
-  unspecified and are visible in the quality report.
-- **Deduplication is conservative.** Repeated provider job IDs are merged across
-  snapshots; fuzzy cross-company matching is deferred.
-- **Parquet is the analytical contract.** Milestone 3 and later work will read
-  the canonical file rather than reimplement raw parsing.
-- **Early career is a lens, not a destructive filter.** The main analysis covers
-  all South African technology roles and reports graduate and junior evidence
-  separately.
+Contains source definitions and provider configuration.
 
-## MVP roadmap
+### `data/raw/`
 
-| Milestone | Outcome | Status |
+Contains immutable provider snapshots and associated metadata.
+
+### `data/processed/`
+
+Contains the canonical analytical dataset and data-quality reports.
+
+### `src/ingestion/`
+
+Contains provider-specific collection logic.
+
+### `src/transformation/`
+
+Contains cleaning, normalisation, extraction, classification, schema and dataset-building logic.
+
+### `scripts/`
+
+Contains validation, auditing and supporting utilities.
+
+### `docs/`
+
+Contains milestone reports, technical decisions, source assessments and implementation documentation.
+
+## Setup
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+On macOS or Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+On Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install the dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Running the Pipeline
+
+### 1. Collect Raw Job-Posting Data
+
+Run all configured sources:
+
+```bash
+python -m src.ingestion.collect
+```
+
+Run a specific configured source:
+
+```bash
+python -m src.ingestion.collect --source-token takealotgroup
+```
+
+Additional examples:
+
+```bash
+python -m src.ingestion.collect --source-token discovery
+python -m src.ingestion.collect --source-token digioutsource
+```
+
+Collectors with page-based career sites follow result pages and retrieve individual vacancy details where required.
+
+Completeness checks are used to reduce the risk of silently producing truncated datasets.
+
+### 2. Build the Canonical Dataset
+
+```bash
+python -m src.transformation.build
+```
+
+This stage:
+
+- Reads preserved raw snapshots
+- Validates source integrity
+- Cleans vacancy descriptions
+- Standardises fields
+- Extracts skills and requirements
+- Applies classifications
+- Deduplicates repeated observations
+- Updates vacancy history
+- Writes the processed dataset
+- Produces a data-quality report
+
+### 3. Validate Sources
+
+```bash
+python scripts/validate_sources.py
+```
+
+### 4. Run the Test Suite
+
+```bash
+pytest
+```
+
+## Important Design Decisions
+
+### Raw Data Remains Immutable
+
+Transformations never edit source snapshots.
+
+This makes the pipeline reproducible and allows cleaning or classification logic to be improved without recollecting all historical data.
+
+### No Early Destructive Filtering
+
+The canonical dataset retains broader vacancy evidence.
+
+Fields such as technology relevance and early-career suitability are represented as analytical flags rather than permanently removing records.
+
+### Early Career Is an Analytical Lens
+
+Graduate, internship and junior roles are reported separately, but they remain part of the broader South African technology market dataset.
+
+### Unknown Is Better Than Guessing
+
+Missing or ambiguous values remain unknown when there is insufficient evidence.
+
+The project avoids creating false precision simply to increase classification coverage.
+
+### Classifications Should Be Explainable
+
+Classification rules retain evidence where practical so that labels can be reviewed and audited.
+
+### Deduplication Is Conservative
+
+Stable provider job identifiers are preferred.
+
+Fuzzy matching is not used aggressively because similar job titles may still represent different vacancies.
+
+### Parquet Is the Analytical Contract
+
+Later analysis and dashboard components read the canonical Parquet dataset rather than repeating raw provider parsing.
+
+### Provider Logic Is Isolated
+
+Provider-specific behaviour is kept inside dedicated adapters.
+
+This prevents changes to one recruitment platform from unnecessarily affecting the rest of the pipeline.
+
+## Current Development Focus
+
+Current work is focused primarily on improving provider reliability.
+
+Recent improvements include:
+
+- Better SuccessFactors retry handling for transient failures
+- More resilient Workday pagination
+- Updated Oracle HCM vacancy-detail retrieval
+- Fallback mechanisms for WordPress-based career portals
+- Expanded automated tests for provider failures and incomplete responses
+- Improved technology and capability dimensions
+- Requirements filtering and classification improvements
+
+These changes are intended to improve collection success across employers using recruitment systems with different reliability and response behaviours.
+
+## Current Project Status
+
+The core data engineering pipeline is operational.
+
+Completed or substantially implemented functionality includes:
+
+- Multi-provider vacancy ingestion
+- Raw snapshot preservation
+- Data cleaning and standardisation
+- Location and metadata normalisation
+- Vacancy deduplication
+- Observation-history tracking
+- Skills extraction
+- Requirements filtering
+- Vacancy classification
+- Dataset generation
+- Data-quality reporting
+
+The remaining work focuses mainly on reliability, validation and presentation.
+
+**Estimated overall completion: 85–90%.**
+
+## Roadmap
+
+| Phase | Outcome | Status |
 |---|---|---|
-| 0. Source validation | Select viable public sources | Complete |
-| 1. Raw ingestion | Preserve reproducible Greenhouse snapshots | Complete |
-| 2. Cleaning and standardisation | Produce one canonical jobs dataset | Complete |
-| 2B. Quality and source coverage | Add Lever and strengthen level evidence | Complete |
-| 2C. Direct-employer expansion | Add Discovery and Nedbank SuccessFactors sites | Complete |
-| 2D. Fintech and gaming coverage | Add DigiOutsource, ACI Worldwide and BET Software adapters | Implemented; live validation next |
-| 3. Baseline market analysis | Answer core market questions | Next |
-| 4. Skills extraction | Derive technologies and requirements | Planned |
-| 5. Dashboard | Publish the interactive MVP | Planned |
+| Source assessment | Identify suitable employer career sources | Complete |
+| Raw ingestion | Collect and preserve provider snapshots | Complete |
+| Cleaning and standardisation | Produce one consistent vacancy schema | Complete |
+| Deduplication and history | Track vacancies across collection runs | Complete |
+| Vacancy classification | Classify roles, levels, domains and employment types | Complete |
+| Skills extraction | Extract and normalise technologies and capabilities | Complete |
+| Requirements filtering | Structure minimum and preferred requirements | Complete |
+| Provider hardening | Improve retries, pagination, fallbacks and compatibility | In progress |
+| Dataset refresh | Re-run affected sources and publish updated datasets | Next |
+| Market analysis | Analyse hiring, skills, levels and locations | Next |
+| Interactive dashboard | Publish visual labour-market insights | Planned |
+| Employer expansion | Add more South African technology employers | Ongoing |
 
-## Documentation
+## Planned Analysis
 
-- [Data-source assessment](docs/data-source-assessment.md)
-- [Milestone 1: raw ingestion](docs/milestone-1-raw-ingestion.md)
-- [Milestone 2: cleaning and standardisation](docs/milestone-2-cleaning.md)
-- [Milestone 2B: quality and source coverage](docs/milestone-2b-quality-and-coverage.md)
-- [Milestone 2C: SuccessFactors source expansion](docs/milestone-2c-successfactors-sources.md)
-- [Milestone 2D: fintech and gaming sources](docs/milestone-2d-fintech-gaming-sources.md)
-- [Project scope decision](docs/project-scope.md)
+The analytical stage is intended to answer questions such as:
 
-## Responsible-use scope
+- Which programming languages are most frequently requested?
+- Which frameworks and cloud platforms appear most often?
+- Which technical roles have the highest vacancy counts?
+- Which employers advertise the most early-career opportunities?
+- How are technology vacancies distributed geographically?
+- Which skills commonly appear together?
+- How do minimum requirements differ by career level?
+- Which roles are most accessible to graduates?
+- How frequently are remote and hybrid roles advertised?
+- Which technical domains are growing across collection periods?
 
-The project collects only publicly advertised job information. It does not
-submit applications, collect applicant data, bypass authentication, infer
-protected personal attributes, or scrape platforms whose terms or access
-controls make the intended collection inappropriate.
+## Dashboard Plans
+
+The planned interactive dashboard will include views for:
+
+- Technology demand
+- Skills frequency
+- Employer comparisons
+- Career-level distribution
+- Role and domain distribution
+- Location trends
+- Workplace-type distribution
+- Early-career opportunities
+- Requirement patterns
+- Vacancy activity over time
+
+## Limitations
+
+The dataset represents vacancies collected from configured employer career portals and should not be interpreted as a complete census of every technology vacancy in South Africa.
+
+Coverage depends on:
+
+- Employers included in the source configuration
+- Public availability of vacancy information
+- Recruitment-platform reliability
+- Collection dates
+- Provider response completeness
+- The accuracy of rule-based extraction and classification
+
+Vacancy descriptions also differ substantially in detail, which affects skills and requirements extraction.
+
+## Responsible Use
+
+The project collects only publicly advertised vacancy information.
+
+It does not:
+
+- Submit job applications
+- Collect applicant information
+- Access authenticated candidate accounts
+- Bypass platform access controls
+- Infer protected personal attributes
+- Collect private recruitment data
+- Scrape sources whose access restrictions make collection inappropriate
+
+## Technology Stack
+
+- Python
+- pandas
+- PyArrow
+- Parquet
+- Requests and HTTP clients
+- HTML parsing
+- JSON APIs
+- Provider-specific recruitment APIs
+- pytest
+- Git and GitHub
+
+## Portfolio Context
+
+This project demonstrates practical experience in:
+
+- Python development
+- Analytics engineering
+- Data ingestion
+- API integration
+- Data cleaning
+- Schema design
+- Data-quality validation
+- Rule-based classification
+- Information extraction
+- Error handling
+- Retry and fallback strategies
+- Automated testing
+- Modular software architecture
+- Labour-market analytics
