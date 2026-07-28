@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+import json
+from pathlib import Path
 
 from src.ingestion.collect import collect_source
 from src.ingestion.config import GreenhouseSource
@@ -19,7 +21,11 @@ class StubClient:
 
 
 def test_collect_source_returns_written_result(tmp_path):
-    source = GreenhouseSource(name="Example", token="example")
+    source = GreenhouseSource(
+        name="Example",
+        token="example",
+        employer_id="example-employer",
+    )
     result = collect_source(
         source=source,
         client=StubClient(),
@@ -31,6 +37,10 @@ def test_collect_source_returns_written_result(tmp_path):
     assert result.source_token == "example"
     assert result.job_count == 0
     assert result.error is None
+    metadata = json.loads(
+        Path(result.metadata_path).read_text(encoding="utf-8")
+    )
+    assert metadata["employer_id"] == "example-employer"
 
 
 def test_collect_lever_source_returns_written_result(tmp_path):

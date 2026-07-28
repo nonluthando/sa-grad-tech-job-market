@@ -16,6 +16,77 @@ from src.transformation.greenhouse import transform_greenhouse_job
 FIXTURE = Path(__file__).parent / "fixtures" / "greenhouse_jobs_m2.json"
 
 
+def write_employer_configs(
+    config_root: Path,
+    *,
+    include_lever: bool = False,
+) -> tuple[Path, Path]:
+    config_root.mkdir(parents=True, exist_ok=True)
+    sources = [
+        {
+            "name": "Example Tech",
+            "provider": "greenhouse",
+            "token": "example",
+            "employer_id": "example-tech",
+            "enabled": True,
+        }
+    ]
+    employers = [
+        {
+            "id": "example-tech",
+            "name": "Example Tech",
+            "parent_company": "Example Holdings",
+            "brands": [],
+            "industry": "Product, software and e-commerce",
+            "head_office_city": "Cape Town",
+            "country": "South Africa",
+            "listed_company": False,
+            "remote_scope": "south_africa",
+            "graduate_programme": "yes",
+            "priority": "tier_1",
+            "collection_status": "active",
+        }
+    ]
+    if include_lever:
+        sources.append(
+            {
+                "name": "Lever Example",
+                "provider": "lever",
+                "token": "lever-example",
+                "employer_id": "lever-example",
+                "enabled": True,
+            }
+        )
+        employers.append(
+            {
+                "id": "lever-example",
+                "name": "Lever Example",
+                "parent_company": None,
+                "brands": [],
+                "industry": "Fintech and payments",
+                "head_office_city": "Johannesburg",
+                "country": "South Africa",
+                "listed_company": False,
+                "remote_scope": "africa",
+                "graduate_programme": "unknown",
+                "priority": "tier_2",
+                "collection_status": "active",
+            }
+        )
+
+    sources_path = config_root / "sources.json"
+    employers_path = config_root / "employers.json"
+    sources_path.write_text(
+        json.dumps({"sources": sources}),
+        encoding="utf-8",
+    )
+    employers_path.write_text(
+        json.dumps({"schema_version": 1, "employers": employers}),
+        encoding="utf-8",
+    )
+    return sources_path, employers_path
+
+
 def write_snapshot(
     raw_root: Path,
     payload: dict[str, object],
@@ -101,7 +172,12 @@ def test_build_dataset_reports_deduplication_and_market_counts(tmp_path: Path) -
         collected_at="2026-07-23T12:00:00Z",
     )
 
-    result = build_dataset(tmp_path)
+    sources_path, employers_path = write_employer_configs(tmp_path / "config")
+    result = build_dataset(
+        tmp_path,
+        sources_config_path=sources_path,
+        employer_registry_path=employers_path,
+    )
 
     assert len(result.jobs) == 3
     report = result.quality_report
@@ -122,7 +198,15 @@ def test_build_dataset_reports_deduplication_and_market_counts(tmp_path: Path) -
         "senior": 1,
     }
     latest_job = next(job for job in result.jobs if job.source_job_id == "1001")
-  #  assert latest_job.source_snapshot_path == "greenhouse/example/second.json"
+    assert latest_job.source_snapshot_path == "greenhouse/example/second.json"
+    assert latest_job.employer_id == "example-tech"
+    assert latest_job.employer_name == "Example Tech"
+    assert latest_job.parent_company == "Example Holdings"
+    assert latest_job.industry == "Product, software and e-commerce"
+    assert report["employer_counts"] == {"Example Tech": 3}
+    assert report["industry_counts"] == {
+        "Product, software and e-commerce": 3
+    }
 
 
 @pytest.mark.skipif(
@@ -141,7 +225,12 @@ def test_write_dataset_outputs_creates_real_parquet_and_quality_report(
         timestamp="snapshot",
         collected_at="2026-07-22T12:00:00Z",
     )
-    result = build_dataset(tmp_path / "raw")
+    sources_path, employers_path = write_employer_configs(tmp_path / "config")
+    result = build_dataset(
+        tmp_path / "raw",
+        sources_config_path=sources_path,
+        employer_registry_path=employers_path,
+    )
 
     parquet_path, quality_path = write_dataset_outputs(
         result,
@@ -153,6 +242,8 @@ def test_write_dataset_outputs_creates_real_parquet_and_quality_report(
     assert table.num_rows == 3
     assert table.column_names[0] == "job_key"
     assert "is_early_career" in table.column_names
+    assert "employer_id" in table.column_names
+    assert "industry" in table.column_names
     assert quality["canonical_job_count"] == 3
 
 
@@ -203,7 +294,15 @@ def test_build_dataset_combines_greenhouse_and_lever_snapshots(tmp_path: Path) -
         collected_at="2026-07-23T12:00:00Z",
     )
 
-    result = build_dataset(tmp_path)
+    sources_path, employers_path = write_employer_configs(
+        tmp_path / "config",
+        include_lever=True,
+    )
+    result = build_dataset(
+        tmp_path,
+        sources_config_path=sources_path,
+        employer_registry_path=employers_path,
+    )
 
     assert len(result.jobs) == 6
     assert {job.source_provider for job in result.jobs} == {"greenhouse", "lever"}
@@ -223,6 +322,30 @@ def test_build_dataset_combines_greenhouse_and_lever_snapshots(tmp_path: Path) -
         "Lever Example": 1,
     }
     lever_job = next(job for job in result.jobs if job.source_job_id == "lever-1001")
-   # assert lever_job.source_snapshot_path == "lever/lever-example/lever.json"
+    assert lever_job.source_snapshot_path == "lever/lever-example/lever.json"
+    assert lever_job.employer_id == "lever-example"
+    assert lever_job.industry == "Fintech and payments"
     assert lever_job.is_early_career is True
     assert lever_job.role_level_evidence
+
+
+def test_build_dataset_rejects_snapshot_employer_mismatch(tmp_path: Path) -> None:
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    write_snapshot(
+        tmp_path,
+        payload,
+        timestamp="snapshot",
+        collected_at="2026-07-22T12:00:00Z",
+    )
+    metadata_path = next(tmp_path.glob("greenhouse/example/*.metadata.json"))
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["employer_id"] = "wrong-employer"
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+    sources_path, employers_path = write_employer_configs(tmp_path / "config")
+
+    with pytest.raises(ValueError, match="does not match source configuration"):
+        build_dataset(
+            tmp_path,
+            sources_config_path=sources_path,
+            employer_registry_path=employers_path,
+        )

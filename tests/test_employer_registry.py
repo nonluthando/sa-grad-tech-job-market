@@ -7,6 +7,7 @@ from src.configuration.employers import (
     employer_index,
     iter_employers,
     load_employer_registry,
+    validate_collectable_sources,
     validate_employer_registry,
     validate_source_links,
 )
@@ -106,3 +107,43 @@ def test_source_link_validation_rejects_unknown_employer():
 
     with pytest.raises(ValueError, match="missing employer registry links"):
         validate_source_links(sources_payload, employer_payload)
+
+
+def test_collectable_source_validation_rejects_candidate_employer():
+    employer_payload = {
+        "schema_version": 1,
+        "employers": [
+            {
+                "id": "candidate",
+                "name": "Candidate Employer",
+                "parent_company": None,
+                "brands": [],
+                "industry": "Software",
+                "head_office_city": None,
+                "country": "South Africa",
+                "listed_company": False,
+                "remote_scope": "south_africa",
+                "graduate_programme": "unknown",
+                "priority": "tier_2",
+                "collection_status": "candidate",
+            }
+        ],
+    }
+    sources_payload = {
+        "sources": [
+            {
+                "name": "Candidate Employer",
+                "provider": "greenhouse",
+                "token": "candidate",
+                "employer_id": "candidate",
+                "enabled": True,
+            }
+        ]
+    }
+
+    with pytest.raises(ValueError, match="require active employers"):
+        validate_collectable_sources(
+            sources_payload,
+            employer_payload,
+            supported_providers=("greenhouse",),
+        )

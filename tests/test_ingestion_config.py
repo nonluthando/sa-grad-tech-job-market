@@ -15,12 +15,14 @@ def test_load_greenhouse_sources_filters_other_providers(tmp_path):
                         "name": "Example",
                         "provider": "greenhouse",
                         "token": "example",
+                        "employer_id": "example",
                         "enabled": True,
                     },
                     {
                         "name": "Other",
                         "provider": "lever",
                         "token": "other",
+                        "employer_id": "other",
                         "enabled": True,
                     },
                 ]
@@ -32,6 +34,7 @@ def test_load_greenhouse_sources_filters_other_providers(tmp_path):
     sources = load_greenhouse_sources(config_path)
 
     assert [source.token for source in sources] == ["example"]
+    assert sources[0].employer_id == "example"
 
 
 def test_load_greenhouse_sources_rejects_unknown_requested_token(tmp_path):
@@ -44,6 +47,7 @@ def test_load_greenhouse_sources_rejects_unknown_requested_token(tmp_path):
                         "name": "Example",
                         "provider": "greenhouse",
                         "token": "example",
+                        "employer_id": "example",
                     }
                 ]
             }
@@ -67,18 +71,21 @@ def test_load_collection_sources_includes_greenhouse_and_lever(tmp_path):
                         "name": "Greenhouse Example",
                         "provider": "greenhouse",
                         "token": "greenhouse-example",
+                        "employer_id": "greenhouse-example",
                         "enabled": True,
                     },
                     {
                         "name": "Lever Example",
                         "provider": "lever",
                         "token": "LeverExample",
+                        "employer_id": "lever-example",
                         "enabled": True,
                     },
                     {
                         "name": "HTML Example",
                         "provider": "html_listing_page",
                         "token": "html-example",
+                        "employer_id": "html-example",
                         "enabled": True,
                     },
                 ]
@@ -89,6 +96,10 @@ def test_load_collection_sources_includes_greenhouse_and_lever(tmp_path):
 
     sources = load_collection_sources(config_path)
 
+    assert [source.employer_id for source in sources] == [
+        "greenhouse-example",
+        "lever-example",
+    ]
     assert [(source.provider, source.token) for source in sources] == [
         ("greenhouse", "greenhouse-example"),
         ("lever", "LeverExample"),
@@ -107,11 +118,13 @@ def test_collection_token_filter_is_resolved_across_providers(tmp_path):
                         "name": "Greenhouse Example",
                         "provider": "greenhouse",
                         "token": "greenhouse-example",
+                        "employer_id": "greenhouse-example",
                     },
                     {
                         "name": "Lever Example",
                         "provider": "lever",
                         "token": "LeverExample",
+                        "employer_id": "lever-example",
                     },
                 ]
             }
@@ -137,6 +150,7 @@ def test_load_collection_sources_includes_successfactors_settings(tmp_path):
                         "name": "Example Bank",
                         "provider": "successfactors",
                         "token": "example-bank",
+                        "employer_id": "example-bank",
                         "url": "https://jobs.example.test/go/All/123/",
                         "page_size": 20,
                         "max_pages": 7,
@@ -151,6 +165,7 @@ def test_load_collection_sources_includes_successfactors_settings(tmp_path):
     source = load_collection_sources(config_path)[0]
 
     assert source.provider == "successfactors"
+    assert source.employer_id == "example-bank"
     assert source.listing_url == "https://jobs.example.test/go/All/123/"
     assert source.page_size == 20
     assert source.max_pages == 7
@@ -169,6 +184,7 @@ def test_successfactors_source_requires_https_url(tmp_path):
                         "name": "Example Bank",
                         "provider": "successfactors",
                         "token": "example-bank",
+                        "employer_id": "example-bank",
                         "url": "http://jobs.example.test/go/All/123/",
                     }
                 ]
@@ -183,14 +199,71 @@ def test_successfactors_source_requires_https_url(tmp_path):
 
 def test_load_collection_sources_includes_new_provider_settings(tmp_path):
     from src.ingestion.config import load_collection_sources
+
     config_path = tmp_path / "sources.json"
-    config_path.write_text(json.dumps({"sources": [
-        {"name":"Digi","provider":"workday","token":"digi","host":"https://wd.test","tenant":"t","site":"s"},
-        {"name":"ACI","provider":"oracle_hcm","token":"aci","host":"https://oracle.test","site":"CX"},
-        {"name":"BET","provider":"wp_job_manager","token":"bet","url":"https://bet.test/jobs","api_url":"https://bet.test/ajax"},
-    ]}), encoding="utf-8")
+    config_path.write_text(
+        json.dumps(
+            {
+                "sources": [
+                    {
+                        "name": "Digi",
+                        "provider": "workday",
+                        "token": "digi",
+                        "employer_id": "digi",
+                        "host": "https://wd.test",
+                        "tenant": "t",
+                        "site": "s",
+                    },
+                    {
+                        "name": "ACI",
+                        "provider": "oracle_hcm",
+                        "token": "aci",
+                        "employer_id": "aci",
+                        "host": "https://oracle.test",
+                        "site": "CX",
+                    },
+                    {
+                        "name": "BET",
+                        "provider": "wp_job_manager",
+                        "token": "bet",
+                        "employer_id": "bet",
+                        "url": "https://bet.test/jobs",
+                        "api_url": "https://bet.test/ajax",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
     sources = load_collection_sources(config_path)
-    assert [source.provider for source in sources] == ["workday", "oracle_hcm", "wp_job_manager"]
+    assert [source.provider for source in sources] == [
+        "workday",
+        "oracle_hcm",
+        "wp_job_manager",
+    ]
     assert sources[0].tenant == "t"
     assert sources[1].site == "CX"
     assert sources[2].api_url == "https://bet.test/ajax"
+
+
+def test_load_collection_sources_requires_employer_id(tmp_path):
+    from src.ingestion.config import load_collection_sources
+
+    config_path = tmp_path / "sources.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "sources": [
+                    {
+                        "name": "Example",
+                        "provider": "greenhouse",
+                        "token": "example",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="employer_id"):
+        load_collection_sources(config_path)
