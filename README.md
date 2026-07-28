@@ -153,12 +153,20 @@ The pipeline produces a schema-controlled analytical dataset:
 ```text
 data/processed/
 ├── jobs.parquet
-└── quality-report.json
+├── job_skills.parquet
+├── job_requirements.parquet
+├── dashboard_jobs.parquet
+├── dashboard_skills.parquet
+├── quality-report.json
+├── skills-quality-report.json
+└── dashboard-quality-report.json
 ```
 
-`jobs.parquet` contains the standardised and enriched vacancy records.
+`jobs.parquet` remains the canonical, one-row-per-vacancy source of truth.
 
-`quality-report.json` records data-quality information such as missing values, classification coverage and transformation outcomes.
+`job_skills.parquet` and `job_requirements.parquet` retain explainable extraction evidence. `dashboard_jobs.parquet` and `dashboard_skills.parquet` are validated data marts designed for Streamlit and DuckDB.
+
+The three quality reports cover canonical transformation, skills extraction and dashboard-contract validation.
 
 Parquet is used as the main analytical format because it:
 
@@ -222,7 +230,9 @@ Market analysis and dashboards
 ├── scripts/
 ├── src/
 │   ├── ingestion/
-│   └── transformation/
+│   ├── transformation/
+│   ├── skills/
+│   └── analytics/
 ├── tests/
 ├── requirements.txt
 └── README.md
@@ -321,20 +331,41 @@ This stage:
 - Validates source integrity
 - Cleans vacancy descriptions
 - Standardises fields
-- Extracts skills and requirements
 - Applies classifications
 - Deduplicates repeated observations
 - Updates vacancy history
-- Writes the processed dataset
+- Writes the canonical dataset
 - Produces a data-quality report
 
-### 3. Validate Sources
+### 3. Extract Skills and Requirements
+
+```bash
+python -m src.skills.build
+```
+
+This creates explainable job-skill and job-requirement datasets from the canonical jobs table.
+
+### 4. Build Dashboard Data Marts
+
+```bash
+python -m src.analytics.build
+```
+
+This stage validates job keys and joins, then writes compact dashboard datasets with employer, role, location, workplace, skills and requirement dimensions.
+
+All commands can also be run through uv, for example:
+
+```bash
+uv run python -m src.analytics.build
+```
+
+### 5. Validate Sources
 
 ```bash
 python scripts/validate_sources.py
 ```
 
-### 4. Run the Test Suite
+### 6. Run the Test Suite
 
 ```bash
 pytest
@@ -435,8 +466,9 @@ The remaining work focuses mainly on reliability, validation and presentation.
 | Requirements filtering | Structure minimum and preferred requirements | Complete |
 | Provider hardening | Improve retries, pagination, fallbacks and compatibility | In progress |
 | Dataset refresh | Re-run affected sources and publish updated datasets | Next |
+| Dashboard data marts | Validate and publish dashboard-ready Parquet tables | Complete |
 | Market analysis | Analyse hiring, skills, levels and locations | Next |
-| Interactive dashboard | Publish visual labour-market insights | Planned |
+| Interactive dashboard | Publish visual labour-market insights | Next |
 | Employer expansion | Add more South African technology employers | Ongoing |
 
 ## Planned Analysis
