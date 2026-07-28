@@ -1,0 +1,942 @@
+diff --git a/config/employers.json b/config/employers.json
+new file mode 100644
+index 0000000..009823b
+--- /dev/null
++++ b/config/employers.json
+@@ -0,0 +1,524 @@
++{
++  "schema_version": 1,
++  "notes": [
++    "collection_status=active means a source is already configured in config/sources.json.",
++    "collection_status=candidate means metadata is registered but no collector is enabled yet.",
++    "Remote vacancies must still explicitly allow South Africa, Africa, EMEA or global employment."
++  ],
++  "employers": [
++    {
++      "id": "takealot-group",
++      "name": "Takealot Group",
++      "parent_company": null,
++      "brands": [
++        "Takealot",
++        "Mr D"
++      ],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "unknown",
++      "priority": "tier_1",
++      "collection_status": "active"
++    },
++    {
++      "id": "luno",
++      "name": "Luno",
++      "parent_company": "Digital Currency Group",
++      "brands": [],
++      "industry": "Fintech and payments",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "emea",
++      "graduate_programme": "unknown",
++      "priority": "tier_1",
++      "collection_status": "active"
++    },
++    {
++      "id": "impact-com",
++      "name": "impact.com",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "multi_country",
++      "graduate_programme": "unknown",
++      "priority": "tier_2",
++      "collection_status": "active"
++    },
++    {
++      "id": "mama-money",
++      "name": "Mama Money",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Fintech and payments",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "unknown",
++      "priority": "tier_2",
++      "collection_status": "active"
++    },
++    {
++      "id": "yassir",
++      "name": "Yassir",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": null,
++      "country": "Algeria",
++      "listed_company": false,
++      "remote_scope": "africa",
++      "graduate_programme": "unknown",
++      "priority": "tier_3",
++      "collection_status": "active"
++    },
++    {
++      "id": "discovery",
++      "name": "Discovery",
++      "parent_company": "Discovery Limited",
++      "brands": [
++        "Discovery Bank"
++      ],
++      "industry": "Banks, insurance and financial services",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "active"
++    },
++    {
++      "id": "nedbank",
++      "name": "Nedbank",
++      "parent_company": "Nedbank Group",
++      "brands": [],
++      "industry": "Banks, insurance and financial services",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "active"
++    },
++    {
++      "id": "electrum",
++      "name": "Electrum",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Fintech and payments",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "active"
++    },
++    {
++      "id": "digioutsource",
++      "name": "DigiOutsource",
++      "parent_company": "Super Group",
++      "brands": [],
++      "industry": "Software consultancies and engineering firms",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "unknown",
++      "priority": "tier_2",
++      "collection_status": "active"
++    },
++    {
++      "id": "aci-worldwide",
++      "name": "ACI Worldwide",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Fintech and payments",
++      "head_office_city": null,
++      "country": "United States",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "unknown",
++      "priority": "tier_2",
++      "collection_status": "active"
++    },
++    {
++      "id": "bet-software",
++      "name": "BET Software",
++      "parent_company": "Hollywoodbets",
++      "brands": [],
++      "industry": "Software consultancies and engineering firms",
++      "head_office_city": "Durban",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "active"
++    },
++    {
++      "id": "amazon-aws",
++      "name": "Amazon / AWS",
++      "parent_company": "Amazon",
++      "brands": [
++        "AWS"
++      ],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "standard-bank",
++      "name": "Standard Bank",
++      "parent_company": "Standard Bank Group",
++      "brands": [],
++      "industry": "Banks, insurance and financial services",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "firstrand",
++      "name": "FirstRand",
++      "parent_company": "FirstRand Limited",
++      "brands": [
++        "FNB",
++        "RMB",
++        "WesBank"
++      ],
++      "industry": "Banks, insurance and financial services",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "absa",
++      "name": "Absa",
++      "parent_company": "Absa Group",
++      "brands": [],
++      "industry": "Banks, insurance and financial services",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "capitec",
++      "name": "Capitec",
++      "parent_company": "Capitec Bank Holdings",
++      "brands": [],
++      "industry": "Banks, insurance and financial services",
++      "head_office_city": "Stellenbosch",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "investec",
++      "name": "Investec",
++      "parent_company": "Investec Limited",
++      "brands": [],
++      "industry": "Banks, insurance and financial services",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "bbd",
++      "name": "BBD",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Software consultancies and engineering firms",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "entelect",
++      "name": "Entelect",
++      "parent_company": "Reunert",
++      "brands": [],
++      "industry": "Software consultancies and engineering firms",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "dariel",
++      "name": "Dariel",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Software consultancies and engineering firms",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "dvt",
++      "name": "DVT",
++      "parent_company": "Dynamic Technologies",
++      "brands": [],
++      "industry": "Software consultancies and engineering firms",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "shopritex",
++      "name": "ShopriteX",
++      "parent_company": "Shoprite Holdings",
++      "brands": [
++        "ShopriteX"
++      ],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "tfg",
++      "name": "TFG",
++      "parent_company": "The Foschini Group",
++      "brands": [
++        "Bash",
++        "TFG Labs"
++      ],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "yoco",
++      "name": "Yoco",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Fintech and payments",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "south_africa",
++      "graduate_programme": "unknown",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "mukuru",
++      "name": "Mukuru",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Fintech and payments",
++      "head_office_city": "Cape Town",
++      "country": "South Africa",
++      "listed_company": false,
++      "remote_scope": "africa",
++      "graduate_programme": "unknown",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "canonical",
++      "name": "Canonical",
++      "parent_company": null,
++      "brands": [
++        "Ubuntu"
++      ],
++      "industry": "Foreign and remote-first",
++      "head_office_city": null,
++      "country": "United Kingdom",
++      "listed_company": false,
++      "remote_scope": "global",
++      "graduate_programme": "yes",
++      "priority": "tier_1",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "microsoft",
++      "name": "Microsoft",
++      "parent_company": "Microsoft Corporation",
++      "brands": [],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "oracle",
++      "name": "Oracle",
++      "parent_company": "Oracle Corporation",
++      "brands": [],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "ibm",
++      "name": "IBM",
++      "parent_company": "International Business Machines Corporation",
++      "brands": [
++        "IBM Consulting"
++      ],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "red-hat",
++      "name": "Red Hat",
++      "parent_company": "IBM",
++      "brands": [],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": null,
++      "country": "United States",
++      "listed_company": false,
++      "remote_scope": "emea",
++      "graduate_programme": "unknown",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "sap",
++      "name": "SAP",
++      "parent_company": "SAP SE",
++      "brands": [],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "accenture",
++      "name": "Accenture",
++      "parent_company": "Accenture plc",
++      "brands": [
++        "Accenture Cloud First"
++      ],
++      "industry": "Large consultancies and professional-services firms",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "vodacom",
++      "name": "Vodacom",
++      "parent_company": "Vodacom Group",
++      "brands": [],
++      "industry": "Telecoms, cloud and infrastructure",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "mtn",
++      "name": "MTN",
++      "parent_company": "MTN Group",
++      "brands": [],
++      "industry": "Telecoms, cloud and infrastructure",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "africa",
++      "graduate_programme": "yes",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    },
++    {
++      "id": "ntt-data",
++      "name": "NTT DATA",
++      "parent_company": "NTT DATA Group",
++      "brands": [
++        "Dimension Data"
++      ],
++      "industry": "Telecoms, cloud and infrastructure",
++      "head_office_city": "Johannesburg",
++      "country": "South Africa",
++      "listed_company": true,
++      "remote_scope": "south_africa",
++      "graduate_programme": "yes",
++      "priority": "tier_2",
++      "collection_status": "candidate"
++    }
++  ]
++}
+diff --git a/config/sources.json b/config/sources.json
+index c6a9cc9..3c43f88 100644
+--- a/config/sources.json
++++ b/config/sources.json
+@@ -39,35 +39,40 @@
+       "provider": "greenhouse",
+       "token": "takealotgroup",
+       "enabled": true,
+-      "priority": "primary"
++      "priority": "primary",
++      "employer_id": "takealot-group"
+     },
+     {
+       "name": "Luno",
+       "provider": "greenhouse",
+       "token": "luno",
+       "enabled": true,
+-      "priority": "primary"
++      "priority": "primary",
++      "employer_id": "luno"
+     },
+     {
+       "name": "Impact.com",
+       "provider": "greenhouse",
+       "token": "impact",
+       "enabled": true,
+-      "priority": "primary"
++      "priority": "primary",
++      "employer_id": "impact-com"
+     },
+     {
+       "name": "Mama Money",
+       "provider": "lever",
+       "token": "mamamoney",
+       "enabled": true,
+-      "priority": "secondary"
++      "priority": "secondary",
++      "employer_id": "mama-money"
+     },
+     {
+       "name": "Yassir",
+       "provider": "lever",
+       "token": "Yassir",
+       "enabled": true,
+-      "priority": "secondary"
++      "priority": "secondary",
++      "employer_id": "yassir"
+     },
+     {
+       "name": "Discovery",
+@@ -78,7 +83,8 @@
+       "max_pages": 10,
+       "request_delay_seconds": 0.2,
+       "enabled": true,
+-      "priority": "secondary"
++      "priority": "secondary",
++      "employer_id": "discovery"
+     },
+     {
+       "name": "Nedbank",
+@@ -89,7 +95,8 @@
+       "max_pages": 10,
+       "request_delay_seconds": 0.2,
+       "enabled": true,
+-      "priority": "secondary"
++      "priority": "secondary",
++      "employer_id": "nedbank"
+     },
+     {
+       "name": "Electrum",
+@@ -104,7 +111,8 @@
+         "Job listings"
+       ],
+       "enabled": true,
+-      "priority": "experimental"
++      "priority": "experimental",
++      "employer_id": "electrum"
+     },
+     {
+       "name": "DigiOutsource",
+@@ -117,7 +125,8 @@
+       "max_pages": 20,
+       "request_delay_seconds": 0.1,
+       "enabled": true,
+-      "priority": "secondary"
++      "priority": "secondary",
++      "employer_id": "digioutsource"
+     },
+     {
+       "name": "ACI Worldwide",
+@@ -129,7 +138,8 @@
+       "max_pages": 20,
+       "request_delay_seconds": 0.1,
+       "enabled": true,
+-      "priority": "secondary"
++      "priority": "secondary",
++      "employer_id": "aci-worldwide"
+     },
+     {
+       "name": "BET Software",
+@@ -141,7 +151,8 @@
+       "max_pages": 10,
+       "request_delay_seconds": 0.1,
+       "enabled": true,
+-      "priority": "experimental"
++      "priority": "experimental",
++      "employer_id": "bet-software"
+     }
+   ]
+ }
+diff --git a/docs/employer-registry.md b/docs/employer-registry.md
+new file mode 100644
+index 0000000..b786918
+--- /dev/null
++++ b/docs/employer-registry.md
+@@ -0,0 +1,22 @@
++# Employer Registry
++
++`config/employers.json` stores employer-level metadata separately from
++provider-specific collection settings in `config/sources.json`.
++
++## Status meanings
++
++- `active`: a collector is configured and enabled or available for the employer.
++- `candidate`: the employer is approved for research, but no collector is enabled.
++- `paused`: a previously configured source is intentionally disabled.
++- `retired`: the employer is no longer part of the intended coverage.
++
++Candidate entries do not trigger collection. Before promoting one to `active`:
++
++1. Verify the official careers URL.
++2. Identify the recruitment platform and public endpoint.
++3. Confirm that vacancy terms allow public collection.
++4. Add a source entry containing the registry `employer_id`.
++5. Run source validation and the full test suite.
++
++Parent companies and brands are metadata for analysis. They do not merge vacancy
++records during ingestion or deduplication.
+diff --git a/src/configuration/__init__.py b/src/configuration/__init__.py
+new file mode 100644
+index 0000000..9445996
+--- /dev/null
++++ b/src/configuration/__init__.py
+@@ -0,0 +1 @@
++"""Configuration helpers for the job-market pipeline."""
+diff --git a/src/configuration/employers.py b/src/configuration/employers.py
+new file mode 100644
+index 0000000..31914d5
+--- /dev/null
++++ b/src/configuration/employers.py
+@@ -0,0 +1,149 @@
++"""Employer registry loading and validation.
++
++The registry separates employer metadata from provider-specific collection
++configuration. Candidate employers can be researched without enabling a
++collector, while active sources reference a stable employer_id.
++"""
++
++from __future__ import annotations
++
++import json
++from pathlib import Path
++from typing import Any, Iterable
++
++
++VALID_PRIORITIES = {"tier_1", "tier_2", "tier_3"}
++VALID_COLLECTION_STATUSES = {"active", "candidate", "paused", "retired"}
++VALID_REMOTE_SCOPES = {
++    "south_africa",
++    "africa",
++    "emea",
++    "global",
++    "multi_country",
++    "unknown",
++}
++REQUIRED_FIELDS = {
++    "id",
++    "name",
++    "parent_company",
++    "brands",
++    "industry",
++    "head_office_city",
++    "country",
++    "listed_company",
++    "remote_scope",
++    "graduate_programme",
++    "priority",
++    "collection_status",
++}
++
++
++def load_employer_registry(path: str | Path = "config/employers.json") -> dict[str, Any]:
++    """Load and validate the employer registry."""
++
++    registry_path = Path(path)
++    payload = json.loads(registry_path.read_text(encoding="utf-8"))
++    validate_employer_registry(payload)
++    return payload
++
++
++def employer_index(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
++    """Return employers keyed by their stable registry ID."""
++
++    return {employer["id"]: employer for employer in payload["employers"]}
++
++
++def validate_employer_registry(payload: dict[str, Any]) -> None:
++    """Raise ValueError when registry structure or values are invalid."""
++
++    if payload.get("schema_version") != 1:
++        raise ValueError("config/employers.json must use schema_version 1")
++
++    employers = payload.get("employers")
++    if not isinstance(employers, list) or not employers:
++        raise ValueError("Employer registry must contain a non-empty employers list")
++
++    seen_ids: set[str] = set()
++    seen_names: set[str] = set()
++
++    for position, employer in enumerate(employers):
++        if not isinstance(employer, dict):
++            raise ValueError(f"Employer at index {position} must be an object")
++
++        missing = REQUIRED_FIELDS.difference(employer)
++        if missing:
++            missing_fields = ", ".join(sorted(missing))
++            raise ValueError(
++                f"Employer at index {position} is missing fields: {missing_fields}"
++            )
++
++        employer_id = employer["id"]
++        if not isinstance(employer_id, str) or not employer_id.strip():
++            raise ValueError(f"Employer at index {position} has an invalid id")
++        if employer_id in seen_ids:
++            raise ValueError(f"Duplicate employer id: {employer_id}")
++        seen_ids.add(employer_id)
++
++        normalised_name = employer["name"].strip().casefold()
++        if normalised_name in seen_names:
++            raise ValueError(f"Duplicate employer name: {employer['name']}")
++        seen_names.add(normalised_name)
++
++        if employer["priority"] not in VALID_PRIORITIES:
++            raise ValueError(
++                f"Employer {employer_id} has invalid priority: {employer['priority']}"
++            )
++        if employer["collection_status"] not in VALID_COLLECTION_STATUSES:
++            raise ValueError(
++                f"Employer {employer_id} has invalid collection_status: "
++                f"{employer['collection_status']}"
++            )
++        if employer["remote_scope"] not in VALID_REMOTE_SCOPES:
++            raise ValueError(
++                f"Employer {employer_id} has invalid remote_scope: "
++                f"{employer['remote_scope']}"
++            )
++        if not isinstance(employer["brands"], list):
++            raise ValueError(f"Employer {employer_id} brands must be a list")
++        if not isinstance(employer["listed_company"], bool):
++            raise ValueError(
++                f"Employer {employer_id} listed_company must be a boolean"
++            )
++
++
++def validate_source_links(
++    sources_payload: dict[str, Any],
++    employer_payload: dict[str, Any],
++) -> None:
++    """Ensure every configured source references a registered employer."""
++
++    known_ids = set(employer_index(employer_payload))
++    missing_links: list[str] = []
++
++    for source in sources_payload.get("sources", []):
++        employer_id = source.get("employer_id")
++        if not employer_id or employer_id not in known_ids:
++            missing_links.append(source.get("token") or source.get("name") or "<unknown>")
++
++    if missing_links:
++        joined = ", ".join(sorted(missing_links))
++        raise ValueError(f"Sources with missing employer registry links: {joined}")
++
++
++def iter_employers(
++    payload: dict[str, Any],
++    *,
++    priority: str | None = None,
++    collection_status: str | None = None,
++) -> Iterable[dict[str, Any]]:
++    """Yield employers matching optional registry filters."""
++
++    for employer in payload["employers"]:
++        if priority is not None and employer["priority"] != priority:
++            continue
++        if (
++            collection_status is not None
++            and employer["collection_status"] != collection_status
++        ):
++            continue
++        yield employer
+diff --git a/tests/test_employer_registry.py b/tests/test_employer_registry.py
+new file mode 100644
+index 0000000..3d03df9
+--- /dev/null
++++ b/tests/test_employer_registry.py
+@@ -0,0 +1,106 @@
++import json
++from pathlib import Path
++
++import pytest
++
++from src.configuration.employers import (
++    employer_index,
++    iter_employers,
++    load_employer_registry,
++    validate_employer_registry,
++    validate_source_links,
++)
++
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def test_repository_employer_registry_is_valid():
++    payload = load_employer_registry(ROOT / "config" / "employers.json")
++
++    assert payload["schema_version"] == 1
++    assert len(payload["employers"]) >= 30
++    assert "amazon-aws" in employer_index(payload)
++
++
++def test_every_configured_source_links_to_registered_employer():
++    employer_payload = load_employer_registry(ROOT / "config" / "employers.json")
++    sources_payload = json.loads(
++        (ROOT / "config" / "sources.json").read_text(encoding="utf-8")
++    )
++
++    validate_source_links(sources_payload, employer_payload)
++
++
++def test_active_registry_entries_match_configured_sources():
++    employer_payload = load_employer_registry(ROOT / "config" / "employers.json")
++    sources_payload = json.loads(
++        (ROOT / "config" / "sources.json").read_text(encoding="utf-8")
++    )
++
++    configured_ids = {
++        source["employer_id"] for source in sources_payload["sources"]
++    }
++    active_ids = {
++        employer["id"]
++        for employer in iter_employers(
++            employer_payload, collection_status="active"
++        )
++    }
++
++    assert active_ids == configured_ids
++
++
++def test_registry_rejects_duplicate_ids():
++    payload = {
++        "schema_version": 1,
++        "employers": [
++            {
++                "id": "duplicate",
++                "name": "Employer One",
++                "parent_company": None,
++                "brands": [],
++                "industry": "Software",
++                "head_office_city": None,
++                "country": "South Africa",
++                "listed_company": False,
++                "remote_scope": "south_africa",
++                "graduate_programme": "unknown",
++                "priority": "tier_1",
++                "collection_status": "candidate",
++            },
++            {
++                "id": "duplicate",
++                "name": "Employer Two",
++                "parent_company": None,
++                "brands": [],
++                "industry": "Software",
++                "head_office_city": None,
++                "country": "South Africa",
++                "listed_company": False,
++                "remote_scope": "south_africa",
++                "graduate_programme": "unknown",
++                "priority": "tier_2",
++                "collection_status": "candidate",
++            },
++        ],
++    }
++
++    with pytest.raises(ValueError, match="Duplicate employer id"):
++        validate_employer_registry(payload)
++
++
++def test_source_link_validation_rejects_unknown_employer():
++    employer_payload = load_employer_registry(ROOT / "config" / "employers.json")
++    sources_payload = {
++        "sources": [
++            {
++                "name": "Unknown",
++                "token": "unknown",
++                "employer_id": "not-registered",
++            }
++        ]
++    }
++
++    with pytest.raises(ValueError, match="missing employer registry links"):
++        validate_source_links(sources_payload, employer_payload)
