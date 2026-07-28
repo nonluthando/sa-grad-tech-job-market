@@ -51,6 +51,7 @@ class RawSnapshotStore:
         source_name: str,
         response: GreenhouseResponse,
         collected_at: datetime | None = None,
+        employer_id: str | None = None,
     ) -> SnapshotWriteResult:
         return self._write_snapshot(
             provider="greenhouse",
@@ -62,6 +63,7 @@ class RawSnapshotStore:
             raw_bytes=response.raw_bytes,
             job_count=response.job_count,
             collected_at=collected_at,
+            employer_id=employer_id,
         )
 
     def write_lever_snapshot(
@@ -69,6 +71,7 @@ class RawSnapshotStore:
         source_name: str,
         response: LeverResponse,
         collected_at: datetime | None = None,
+        employer_id: str | None = None,
     ) -> SnapshotWriteResult:
         return self._write_snapshot(
             provider="lever",
@@ -80,6 +83,7 @@ class RawSnapshotStore:
             raw_bytes=response.raw_bytes,
             job_count=response.job_count,
             collected_at=collected_at,
+            employer_id=employer_id,
         )
 
     def write_successfactors_snapshot(
@@ -87,6 +91,7 @@ class RawSnapshotStore:
         source_name: str,
         response: SuccessFactorsResponse,
         collected_at: datetime | None = None,
+        employer_id: str | None = None,
     ) -> SnapshotWriteResult:
         return self._write_snapshot(
             provider="successfactors",
@@ -98,6 +103,7 @@ class RawSnapshotStore:
             raw_bytes=response.raw_bytes,
             job_count=response.job_count,
             collected_at=collected_at,
+            employer_id=employer_id,
             extra_metadata={
                 "listing_page_count": response.listing_page_count,
                 "detail_page_count": response.detail_page_count,
@@ -109,6 +115,7 @@ class RawSnapshotStore:
         source_name: str,
         response: WorkdayResponse,
         collected_at: datetime | None = None,
+        employer_id: str | None = None,
     ) -> SnapshotWriteResult:
         return self._write_snapshot(
             provider="workday",
@@ -120,6 +127,7 @@ class RawSnapshotStore:
             raw_bytes=response.raw_bytes,
             job_count=response.job_count,
             collected_at=collected_at,
+            employer_id=employer_id,
             extra_metadata={
                 "listing_page_count": response.listing_page_count,
                 "detail_page_count": response.detail_page_count,
@@ -131,6 +139,7 @@ class RawSnapshotStore:
         source_name: str,
         response: OracleHCMResponse,
         collected_at: datetime | None = None,
+        employer_id: str | None = None,
     ) -> SnapshotWriteResult:
         return self._write_snapshot(
             provider="oracle_hcm",
@@ -142,6 +151,7 @@ class RawSnapshotStore:
             raw_bytes=response.raw_bytes,
             job_count=response.job_count,
             collected_at=collected_at,
+            employer_id=employer_id,
             extra_metadata={
                 "listing_page_count": response.listing_page_count,
                 "detail_page_count": response.detail_page_count,
@@ -153,6 +163,7 @@ class RawSnapshotStore:
         source_name: str,
         response: WPJobManagerResponse,
         collected_at: datetime | None = None,
+        employer_id: str | None = None,
     ) -> SnapshotWriteResult:
         return self._write_snapshot(
             provider="wp_job_manager",
@@ -164,6 +175,7 @@ class RawSnapshotStore:
             raw_bytes=response.raw_bytes,
             job_count=response.job_count,
             collected_at=collected_at,
+            employer_id=employer_id,
             extra_metadata={
                 "listing_page_count": response.listing_page_count,
                 "detail_page_count": response.detail_page_count,
@@ -182,6 +194,7 @@ class RawSnapshotStore:
         raw_bytes: bytes,
         job_count: int,
         collected_at: datetime | None,
+        employer_id: str | None,
         extra_metadata: dict[str, object] | None = None,
     ) -> SnapshotWriteResult:
         collection_time = collected_at or utc_now()
@@ -218,6 +231,8 @@ class RawSnapshotStore:
             "source_job_count": job_count,
             "raw_file": raw_path.name,
         }
+        if employer_id:
+            metadata["employer_id"] = employer_id
         if extra_metadata:
             metadata.update(extra_metadata)
         self._atomic_write_text(

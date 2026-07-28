@@ -26,6 +26,7 @@ class ConfiguredSource:
     name: str
     provider: str
     token: str
+    employer_id: str
     listing_url: str | None = None
     api_url: str | None = None
     host: str | None = None
@@ -42,6 +43,7 @@ class GreenhouseSource:
 
     name: str
     token: str
+    employer_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -50,6 +52,7 @@ class LeverSource:
 
     name: str
     token: str
+    employer_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -62,6 +65,7 @@ class SuccessFactorsSource:
     page_size: int = 25
     max_pages: int = 10
     request_delay_seconds: float = 0.2
+    employer_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -76,6 +80,7 @@ class WorkdaySource:
     page_size: int = 20
     max_pages: int = 20
     request_delay_seconds: float = 0.1
+    employer_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -89,6 +94,7 @@ class OracleHCMSource:
     page_size: int = 25
     max_pages: int = 20
     request_delay_seconds: float = 0.1
+    employer_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -102,6 +108,7 @@ class WPJobManagerSource:
     page_size: int = 100
     max_pages: int = 10
     request_delay_seconds: float = 0.1
+    employer_id: str = ""
 
 
 def _read_raw_sources(config_path: Path) -> list[dict[str, Any]]:
@@ -236,8 +243,8 @@ def _load_provider_sources(
     *,
     provider: str,
     requested_tokens: set[str] | None,
-) -> list[tuple[str, str]]:
-    sources: list[tuple[str, str]] = []
+) -> list[tuple[str, str, str]]:
+    sources: list[tuple[str, str, str]] = []
     seen_tokens: set[str] = set()
 
     for raw_source in _read_raw_sources(config_path):
@@ -248,17 +255,20 @@ def _load_provider_sources(
 
         name = str(raw_source.get("name") or "").strip()
         token = str(raw_source.get("token") or "").strip()
-        if not name or not token:
-            raise ValueError(f"Enabled {provider} sources require name and token.")
+        employer_id = str(raw_source.get("employer_id") or "").strip()
+        if not name or not token or not employer_id:
+            raise ValueError(
+                f"Enabled {provider} sources require name, token and employer_id."
+            )
         if token in seen_tokens:
             raise ValueError(f"Duplicate {provider} source token: {token}")
 
         seen_tokens.add(token)
         if requested_tokens is None or token in requested_tokens:
-            sources.append((name, token))
+            sources.append((name, token, employer_id))
 
     if requested_tokens:
-        configured_tokens = {token for _, token in sources}
+        configured_tokens = {token for _, token, _ in sources}
         missing_tokens = requested_tokens - configured_tokens
         if missing_tokens:
             missing = ", ".join(sorted(missing_tokens))
@@ -279,8 +289,8 @@ def load_greenhouse_sources(
     """Return enabled Greenhouse sources, optionally filtered by board token."""
 
     return [
-        GreenhouseSource(name=name, token=token)
-        for name, token in _load_provider_sources(
+        GreenhouseSource(name=name, token=token, employer_id=employer_id)
+        for name, token, employer_id in _load_provider_sources(
             config_path,
             provider="greenhouse",
             requested_tokens=requested_tokens,
@@ -295,8 +305,8 @@ def load_lever_sources(
     """Return enabled Lever sources, optionally filtered by site token."""
 
     return [
-        LeverSource(name=name, token=token)
-        for name, token in _load_provider_sources(
+        LeverSource(name=name, token=token, employer_id=employer_id)
+        for name, token, employer_id in _load_provider_sources(
             config_path,
             provider="lever",
             requested_tokens=requested_tokens,
@@ -318,6 +328,7 @@ def load_successfactors_sources(
             page_size=source.page_size,
             max_pages=source.max_pages,
             request_delay_seconds=source.request_delay_seconds,
+            employer_id=source.employer_id,
         )
         for source in load_collection_sources(
             config_path,
@@ -352,8 +363,11 @@ def load_collection_sources(
 
         name = str(raw_source.get("name") or "").strip()
         token = str(raw_source.get("token") or "").strip()
-        if not name or not token:
-            raise ValueError(f"Enabled {provider} sources require name and token.")
+        employer_id = str(raw_source.get("employer_id") or "").strip()
+        if not name or not token or not employer_id:
+            raise ValueError(
+                f"Enabled {provider} sources require name, token and employer_id."
+            )
 
         source_key = (provider, token)
         if source_key in seen_source_keys:
@@ -371,6 +385,7 @@ def load_collection_sources(
                     name=name,
                     provider=provider,
                     token=token,
+                    employer_id=employer_id,
                     listing_url=listing_url,
                     page_size=page_size,
                     max_pages=max_pages,
@@ -386,6 +401,7 @@ def load_collection_sources(
                     name=name,
                     provider=provider,
                     token=token,
+                    employer_id=employer_id,
                     host=host,
                     tenant=tenant,
                     site=site,
@@ -403,6 +419,7 @@ def load_collection_sources(
                     name=name,
                     provider=provider,
                     token=token,
+                    employer_id=employer_id,
                     host=host,
                     site=site,
                     page_size=page_size,
@@ -419,6 +436,7 @@ def load_collection_sources(
                     name=name,
                     provider=provider,
                     token=token,
+                    employer_id=employer_id,
                     listing_url=listing_url,
                     api_url=api_url,
                     page_size=page_size,
@@ -428,7 +446,12 @@ def load_collection_sources(
             )
         else:
             sources.append(
-                ConfiguredSource(name=name, provider=provider, token=token)
+                ConfiguredSource(
+                    name=name,
+                    provider=provider,
+                    token=token,
+                    employer_id=employer_id,
+                )
             )
 
     if requested_tokens:

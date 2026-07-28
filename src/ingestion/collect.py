@@ -12,6 +12,10 @@ from typing import Protocol
 
 import requests
 
+from src.configuration.employers import (
+    load_employer_registry,
+    validate_collectable_sources,
+)
 from src.ingestion.config import (
     ConfiguredSource,
     GreenhouseSource,
@@ -20,6 +24,7 @@ from src.ingestion.config import (
     WorkdaySource,
     OracleHCMSource,
     WPJobManagerSource,
+    SUPPORTED_COLLECTION_PROVIDERS,
     load_collection_sources,
 )
 from src.ingestion.greenhouse import GreenhouseClient
@@ -33,6 +38,7 @@ from src.ingestion.wp_job_manager import WPJobManagerClient
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = PROJECT_ROOT / "config" / "sources.json"
+DEFAULT_EMPLOYERS_CONFIG = PROJECT_ROOT / "config" / "employers.json"
 DEFAULT_RAW_ROOT = PROJECT_ROOT / "data" / "raw"
 
 
@@ -102,6 +108,7 @@ def collect_source(
             source_name=source.name,
             response=response,
             collected_at=collected_at,
+            employer_id=source.employer_id or None,
         )
         return CollectionResult(
             source_name=source.name,
@@ -131,6 +138,7 @@ def collect_lever_source(
             source_name=source.name,
             response=response,
             collected_at=collected_at,
+            employer_id=source.employer_id or None,
         )
         return CollectionResult(
             source_name=source.name,
@@ -160,6 +168,7 @@ def collect_successfactors_source(
             source_name=source.name,
             response=response,
             collected_at=collected_at,
+            employer_id=source.employer_id or None,
         )
         return CollectionResult(
             source_name=source.name,
@@ -187,7 +196,10 @@ def collect_workday_source(
     try:
         response = client.fetch_source(source)
         snapshot = store.write_workday_snapshot(
-            source_name=source.name, response=response, collected_at=collected_at
+            source_name=source.name,
+            response=response,
+            collected_at=collected_at,
+            employer_id=source.employer_id or None,
         )
         return CollectionResult(
             source_name=source.name, source_provider="workday",
@@ -210,7 +222,10 @@ def collect_oracle_hcm_source(
     try:
         response = client.fetch_source(source)
         snapshot = store.write_oracle_hcm_snapshot(
-            source_name=source.name, response=response, collected_at=collected_at
+            source_name=source.name,
+            response=response,
+            collected_at=collected_at,
+            employer_id=source.employer_id or None,
         )
         return CollectionResult(
             source_name=source.name, source_provider="oracle_hcm",
@@ -233,7 +248,10 @@ def collect_wp_job_manager_source(
     try:
         response = client.fetch_source(source)
         snapshot = store.write_wp_job_manager_snapshot(
-            source_name=source.name, response=response, collected_at=collected_at
+            source_name=source.name,
+            response=response,
+            collected_at=collected_at,
+            employer_id=source.employer_id or None,
         )
         return CollectionResult(
             source_name=source.name, source_provider="wp_job_manager",
@@ -257,14 +275,22 @@ def collect_configured_source(
 ) -> CollectionResult:
     if source.provider == "greenhouse":
         return collect_source(
-            GreenhouseSource(name=source.name, token=source.token),
+            GreenhouseSource(
+                name=source.name,
+                token=source.token,
+                employer_id=source.employer_id,
+            ),
             greenhouse_client,
             store,
             collected_at,
         )
     if source.provider == "lever":
         return collect_lever_source(
-            LeverSource(name=source.name, token=source.token),
+            LeverSource(
+                name=source.name,
+                token=source.token,
+                employer_id=source.employer_id,
+            ),
             lever_client,
             store,
             collected_at,
@@ -282,6 +308,7 @@ def collect_configured_source(
                 page_size=source.page_size,
                 max_pages=source.max_pages,
                 request_delay_seconds=source.request_delay_seconds,
+                employer_id=source.employer_id,
             ),
             successfactors_client,
             store,
@@ -295,6 +322,7 @@ def collect_configured_source(
                 name=source.name, token=source.token, host=source.host,
                 tenant=source.tenant, site=source.site, page_size=source.page_size,
                 max_pages=source.max_pages, request_delay_seconds=source.request_delay_seconds,
+                employer_id=source.employer_id,
             ), workday_client, store, collected_at,
         )
     if source.provider == "oracle_hcm":
@@ -305,6 +333,7 @@ def collect_configured_source(
                 name=source.name, token=source.token, host=source.host, site=source.site,
                 page_size=source.page_size, max_pages=source.max_pages,
                 request_delay_seconds=source.request_delay_seconds,
+                employer_id=source.employer_id,
             ), oracle_hcm_client, store, collected_at,
         )
     if source.provider == "wp_job_manager":
@@ -315,6 +344,7 @@ def collect_configured_source(
                 name=source.name, token=source.token, listing_url=source.listing_url,
                 api_url=source.api_url, page_size=source.page_size,
                 max_pages=source.max_pages, request_delay_seconds=source.request_delay_seconds,
+                employer_id=source.employer_id,
             ), wp_job_manager_client, store, collected_at,
         )
     raise ValueError(f"Unsupported collection provider: {source.provider}")
@@ -371,6 +401,11 @@ def parse_args() -> argparse.Namespace:
         )
     )
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument(
+        "--employers-config",
+        type=Path,
+        default=DEFAULT_EMPLOYERS_CONFIG,
+    )
     parser.add_argument("--raw-root", type=Path, default=DEFAULT_RAW_ROOT)
     parser.add_argument(
         "--source-token",
@@ -388,6 +423,13 @@ def main() -> int:
     requested_tokens = set(args.source_tokens) if args.source_tokens else None
 
     try:
+        sources_payload = json.loads(args.config.read_text(encoding="utf-8"))
+        employer_payload = load_employer_registry(args.employers_config)
+        validate_collectable_sources(
+            sources_payload,
+            employer_payload,
+            supported_providers=SUPPORTED_COLLECTION_PROVIDERS,
+        )
         sources = load_collection_sources(args.config, requested_tokens)
         greenhouse_client = GreenhouseClient(timeout_seconds=args.timeout)
         lever_client = LeverClient(
