@@ -7,13 +7,15 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any
+from typing import Any, Mapping, Sequence
 
 from src.skills.extractor import extract_job_enrichment
+from src.skills.lineage import job_text_sha256
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_INPUT = PROJECT_ROOT / "data" / "processed" / "jobs.parquet"
 DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed"
+EARLY_CAREER_LEVELS = {"internship", "graduate", "junior"}
 
 
 def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
@@ -40,34 +42,52 @@ def _write_parquet(path: Path, rows: list[dict[str, Any]]) -> None:
         temp_path.unlink(missing_ok=True)
 
 
-def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
-    import pyarrow.parquet as pq
+def _employer_name(job: Mapping[str, Any]) -> str:
+    return str(job.get("employer_name") or job.get("company") or "").strip()
 
-    jobs = pq.read_table(input_path).to_pylist()
+
+def build_rows(
+    jobs: Sequence[Mapping[str, Any]],
+) -> tuple[
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    dict[str, Any],
+]:
+    """Extract reusable rows from canonical jobs without performing file I/O."""
+
     skill_rows: list[dict[str, Any]] = []
     requirement_rows: list[dict[str, Any]] = []
     skill_counts: Counter[str] = Counter()
     target_counts: Counter[str] = Counter()
     early_counts: Counter[str] = Counter()
-    category_counts: Counter[str] = Counter()
+    legacy_category_counts: Counter[str] = Counter()
+    technology_category_counts: Counter[str] = Counter()
+    capability_counts: Counter[str] = Counter()
     warnings: Counter[str] = Counter()
-    company_counts: dict[tuple[str, str], int] = defaultdict(int)
+    company_counts: dict[tuple[str, str, str], int] = defaultdict(int)
 
     jobs_with_skills = 0
     target_with_skills = 0
 
     for job in jobs:
+        text_sha256 = job_text_sha256(job)
         enrichment = extract_job_enrichment(
             str(job.get("title") or ""),
             str(job.get("description_text") or ""),
         )
         warnings.update(enrichment.extraction_warnings)
         is_target = job.get("is_target_market") is True
-        inferred = job.get("inferred_role_level")
+        inferred = str(job.get("inferred_role_level") or "")
         is_early_target = is_target and (
             job.get("is_early_career") is True
-            or inferred in {"internship", "graduate", "junior"}
+            or inferred in EARLY_CAREER_LEVELS
         )
+        employer_id = str(job.get("employer_id") or "").strip()
+        employer_name = _employer_name(job)
+        parent_company = job.get("parent_company")
+        industry = str(job.get("industry") or "unspecified")
 
         if enrichment.skills:
             jobs_with_skills += 1
@@ -75,34 +95,55 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
                 target_with_skills += 1
 
         for item in enrichment.skills:
-            skill_counts[item.skill] += 1
-            category_counts[item.category] += 1
-            company_counts[(str(job.get("company") or ""), item.skill)] += 1
+            skill_counts[item.technology] += 1
+            legacy_category_counts[item.category] += 1
+            technology_category_counts[item.technology_category] += 1
+            capability_counts[item.capability] += 1
+            company_counts[(employer_id, employer_name, item.technology)] += 1
             if is_target:
-                target_counts[item.skill] += 1
+                target_counts[item.technology] += 1
             if is_early_target:
-                early_counts[item.skill] += 1
+                early_counts[item.technology] += 1
 
             skill_rows.append({
                 "job_key": job.get("job_key"),
+                "job_text_sha256": text_sha256,
                 "company": job.get("company"),
+                "employer_id": employer_id,
+                "employer_name": employer_name,
+                "parent_company": parent_company,
+                "industry": industry,
                 "title": job.get("title"),
                 "city": job.get("city"),
                 "province": job.get("province"),
+                "workplace_type": job.get("workplace_type"),
                 "role_level": job.get("role_level"),
                 "inferred_role_level": inferred,
                 "is_target_market": is_target,
                 "is_early_career_target": is_early_target,
                 "skill": item.skill,
                 "category": item.category,
+                "technology": item.technology,
+                "technology_category": item.technology_category,
+                "capability": item.capability,
                 "evidence": list(item.evidence),
                 "application_url": job.get("application_url"),
             })
 
         requirement_rows.append({
             "job_key": job.get("job_key"),
+            "job_text_sha256": text_sha256,
             "company": job.get("company"),
+            "employer_id": employer_id,
+            "employer_name": employer_name,
+            "parent_company": parent_company,
+            "industry": industry,
             "title": job.get("title"),
+            "city": job.get("city"),
+            "province": job.get("province"),
+            "workplace_type": job.get("workplace_type"),
+            "role_level": job.get("role_level"),
+            "inferred_role_level": inferred,
             "is_target_market": is_target,
             "is_early_career_target": is_early_target,
             "degree_required": enrichment.degree_required,
@@ -118,34 +159,42 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
     early_target_jobs = [
         job for job in target_jobs
         if job.get("is_early_career") is True
-        or job.get("inferred_role_level") in {"internship", "graduate", "junior"}
+        or job.get("inferred_role_level") in EARLY_CAREER_LEVELS
     ]
 
+    first_skill_row = {
+        row["technology"]: row
+        for row in skill_rows
+    }
     summary_rows = []
-    for skill in sorted(skill_counts):
-        category = next(
-            row["category"] for row in skill_rows if row["skill"] == skill
-        )
+    for technology in sorted(skill_counts):
+        example = first_skill_row[technology]
         summary_rows.append({
-            "skill": skill,
-            "category": category,
-            "all_job_count": skill_counts[skill],
-            "target_market_job_count": target_counts[skill],
-            "early_career_target_job_count": early_counts[skill],
+            "skill": example["skill"],
+            "category": example["category"],
+            "technology": technology,
+            "technology_category": example["technology_category"],
+            "capability": example["capability"],
+            "all_job_count": skill_counts[technology],
+            "target_market_job_count": target_counts[technology],
+            "early_career_target_job_count": early_counts[technology],
             "target_market_share": (
-                target_counts[skill] / len(target_jobs) if target_jobs else 0.0
+                target_counts[technology] / len(target_jobs) if target_jobs else 0.0
             ),
         })
 
     company_rows = [
-        {"company": company, "skill": skill, "job_count": count}
-        for (company, skill), count in sorted(company_counts.items())
+        {
+            "employer_id": employer_id,
+            "employer_name": employer_name,
+            "company": employer_name,
+            "technology": technology,
+            "skill": technology,
+            "job_count": count,
+        }
+        for (employer_id, employer_name, technology), count
+        in sorted(company_counts.items())
     ]
-
-    _write_parquet(output_dir / "job_skills.parquet", skill_rows)
-    _write_parquet(output_dir / "job_requirements.parquet", requirement_rows)
-    _write_parquet(output_dir / "skills_summary.parquet", summary_rows)
-    _write_parquet(output_dir / "company_skills.parquet", company_rows)
 
     report = {
         "canonical_job_count": len(jobs),
@@ -158,14 +207,19 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
         "target_skill_coverage_rate": (
             target_with_skills / len(target_jobs) if target_jobs else 0.0
         ),
-        "category_mention_counts": dict(sorted(category_counts.items())),
+        "technology_category_mention_counts": dict(
+            sorted(technology_category_counts.items())
+        ),
+        "capability_mention_counts": dict(sorted(capability_counts.items())),
+        # Retained for consumers of the pre-6.2 report contract.
+        "category_mention_counts": dict(sorted(legacy_category_counts.items())),
         "top_target_market_skills": [
-            {"skill": skill, "job_count": count}
-            for skill, count in target_counts.most_common(25)
+            {"skill": technology, "job_count": count}
+            for technology, count in target_counts.most_common(25)
         ],
         "top_early_career_target_skills": [
-            {"skill": skill, "job_count": count}
-            for skill, count in early_counts.most_common(25)
+            {"skill": technology, "job_count": count}
+            for technology, count in early_counts.most_common(25)
         ],
         "degree_required_target_job_count": sum(
             row["is_target_market"] and row["degree_required"]
@@ -178,6 +232,31 @@ def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
         ),
         "extraction_warning_counts": dict(sorted(warnings.items())),
     }
+    return (
+        skill_rows,
+        requirement_rows,
+        summary_rows,
+        company_rows,
+        report,
+    )
+
+
+def build(input_path: Path, output_dir: Path) -> dict[str, Any]:
+    import pyarrow.parquet as pq
+
+    jobs = pq.read_table(input_path).to_pylist()
+    (
+        skill_rows,
+        requirement_rows,
+        summary_rows,
+        company_rows,
+        report,
+    ) = build_rows(jobs)
+
+    _write_parquet(output_dir / "job_skills.parquet", skill_rows)
+    _write_parquet(output_dir / "job_requirements.parquet", requirement_rows)
+    _write_parquet(output_dir / "skills_summary.parquet", summary_rows)
+    _write_parquet(output_dir / "company_skills.parquet", company_rows)
     _atomic_json(output_dir / "skills-quality-report.json", report)
     return report
 
