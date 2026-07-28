@@ -1,0 +1,1457 @@
+diff --git a/config/employers.json b/config/employers.json
+index 028827f..009823b 100644
+--- a/config/employers.json
++++ b/config/employers.json
+@@ -138,7 +138,6 @@
+       "collection_status": "active"
+     },
+     {
+-      "employer_id": "aci-worldwide",
+       "id": "aci-worldwide",
+       "name": "ACI Worldwide",
+       "parent_company": null,
+diff --git a/config/sources.json b/config/sources.json
+index 7b99cb2..90aee5d 100644
+--- a/config/sources.json
++++ b/config/sources.json
+@@ -132,7 +132,6 @@
+       "name": "ACI Worldwide",
+       "provider": "oracle_hcm",
+       "token": "aci-worldwide",
+-      "employee_id": "aci-worldwide",
+       "host": "https://ebwg.fa.us2.oraclecloud.com",
+       "site": "CX",
+       "page_size": 25,
+@@ -146,7 +145,6 @@
+       "name": "BET Software",
+       "provider": "wp_job_manager",
+       "token": "betsoftware",
+-      "employee_id": "betsoftware",
+       "url": "https://betsoftware.com/jobs",
+       "api_url": "https://betsoftware.com/wp-admin/admin-ajax.php",
+       "page_size": 100,
+diff --git a/docs/employer-registry.md b/docs/employer-registry.md
+index b786918..76b4254 100644
+--- a/docs/employer-registry.md
++++ b/docs/employer-registry.md
+@@ -20,3 +20,33 @@ Candidate entries do not trigger collection. Before promoting one to `active`:
+ 
+ Parent companies and brands are metadata for analysis. They do not merge vacancy
+ records during ingestion or deduplication.
++
++## Pipeline integration
++
++Every enabled supported source must include an `employer_id` that exactly matches
++an employer registry `id`. Production collection rejects sources linked to
++`candidate`, `paused` or `retired` employers.
++
++New raw snapshot metadata includes the stable `employer_id`. Historical snapshots
++without that field remain supported: transformation resolves the employer from
++the provider and source token in `config/sources.json`. If a snapshot contains an
++`employer_id`, it must agree with the current source configuration.
++
++The canonical Parquet dataset includes:
++
++- `employer_id`
++- `employer_name`
++- `parent_company`
++- `industry`
++- `employer_priority`
++- `graduate_programme`
++- `employer_remote_scope`
++
++The quality report also includes employer, parent-company and industry counts.
++
++Run the integration checks with:
++
++```powershell
++uv run pytest tests/test_employer_registry.py tests/test_transformation_dataset.py -v
++uv run pytest
++```
+diff --git a/src/configuration/employers.py b/src/configuration/employers.py
+index 31914d5..0d552f2 100644
+--- a/src/configuration/employers.py
++++ b/src/configuration/employers.py
+@@ -1,8 +1,8 @@
+-"""Employer registry loading and validation.
++"""Employer registry loading, validation and source resolution.
+ 
+-The registry separates employer metadata from provider-specific collection
+-configuration. Candidate employers can be researched without enabling a
+-collector, while active sources reference a stable employer_id.
++The registry separates stable employer metadata from provider-specific
++collection settings. Configured sources reference employers by ``employer_id``
++so collection and transformation can share one canonical company identity.
+ """
+ 
+ from __future__ import annotations
+@@ -54,7 +54,7 @@ def employer_index(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+ 
+ 
+ def validate_employer_registry(payload: dict[str, Any]) -> None:
+-    """Raise ValueError when registry structure or values are invalid."""
++    """Raise ``ValueError`` when registry structure or values are invalid."""
+ 
+     if payload.get("schema_version") != 1:
+         raise ValueError("config/employers.json must use schema_version 1")
+@@ -80,11 +80,18 @@ def validate_employer_registry(payload: dict[str, Any]) -> None:
+         employer_id = employer["id"]
+         if not isinstance(employer_id, str) or not employer_id.strip():
+             raise ValueError(f"Employer at index {position} has an invalid id")
++        if employer_id != employer_id.strip() or employer_id != employer_id.lower():
++            raise ValueError(
++                f"Employer id must be trimmed lowercase text: {employer_id!r}"
++            )
+         if employer_id in seen_ids:
+             raise ValueError(f"Duplicate employer id: {employer_id}")
+         seen_ids.add(employer_id)
+ 
+-        normalised_name = employer["name"].strip().casefold()
++        name = employer["name"]
++        if not isinstance(name, str) or not name.strip():
++            raise ValueError(f"Employer {employer_id} has an invalid name")
++        normalised_name = name.strip().casefold()
+         if normalised_name in seen_names:
+             raise ValueError(f"Duplicate employer name: {employer['name']}")
+         seen_names.add(normalised_name)
+@@ -120,9 +127,15 @@ def validate_source_links(
+     known_ids = set(employer_index(employer_payload))
+     missing_links: list[str] = []
+ 
+-    for source in sources_payload.get("sources", []):
++    sources = sources_payload.get("sources")
++    if not isinstance(sources, list):
++        raise ValueError("Source configuration must contain a sources list")
++
++    for source in sources:
++        if not isinstance(source, dict):
++            raise ValueError("Every configured source must be an object")
+         employer_id = source.get("employer_id")
+-        if not employer_id or employer_id not in known_ids:
++        if not isinstance(employer_id, str) or employer_id not in known_ids:
+             missing_links.append(source.get("token") or source.get("name") or "<unknown>")
+ 
+     if missing_links:
+@@ -130,6 +143,62 @@ def validate_source_links(
+         raise ValueError(f"Sources with missing employer registry links: {joined}")
+ 
+ 
++def validate_collectable_sources(
++    sources_payload: dict[str, Any],
++    employer_payload: dict[str, Any],
++    *,
++    supported_providers: Iterable[str],
++) -> None:
++    """Reject enabled production sources whose employers are not active.
++
++    Candidate, paused and retired employers remain useful registry records, but
++    they may not be collected until their status is explicitly changed to
++    ``active``.
++    """
++
++    validate_source_links(sources_payload, employer_payload)
++    employers = employer_index(employer_payload)
++    supported = set(supported_providers)
++    blocked: list[str] = []
++
++    for source in sources_payload["sources"]:
++        if not source.get("enabled", True):
++            continue
++        if source.get("provider") not in supported:
++            continue
++
++        employer_id = source["employer_id"]
++        status = employers[employer_id]["collection_status"]
++        if status != "active":
++            token = source.get("token") or source.get("name") or "<unknown>"
++            blocked.append(f"{token} ({employer_id}: {status})")
++
++    if blocked:
++        joined = ", ".join(sorted(blocked))
++        raise ValueError(f"Enabled sources require active employers: {joined}")
++
++
++def source_employer_index(
++    sources_payload: dict[str, Any],
++) -> dict[tuple[str, str], str]:
++    """Return ``(provider, token)`` source keys mapped to employer IDs."""
++
++    index: dict[tuple[str, str], str] = {}
++    for source in sources_payload.get("sources", []):
++        provider = str(source.get("provider") or "").strip()
++        token = str(source.get("token") or "").strip()
++        employer_id = str(source.get("employer_id") or "").strip()
++        if not provider or not token or not employer_id:
++            continue
++
++        key = (provider, token)
++        if key in index:
++            raise ValueError(f"Duplicate configured source: {provider}:{token}")
++        index[key] = employer_id
++
++    return index
++
++
+ def iter_employers(
+     payload: dict[str, Any],
+     *,
+diff --git a/src/ingestion/collect.py b/src/ingestion/collect.py
+index 7afa090..17ae330 100644
+--- a/src/ingestion/collect.py
++++ b/src/ingestion/collect.py
+@@ -12,6 +12,10 @@ from typing import Protocol
+ 
+ import requests
+ 
++from src.configuration.employers import (
++    load_employer_registry,
++    validate_collectable_sources,
++)
+ from src.ingestion.config import (
+     ConfiguredSource,
+     GreenhouseSource,
+@@ -20,6 +24,7 @@ from src.ingestion.config import (
+     WorkdaySource,
+     OracleHCMSource,
+     WPJobManagerSource,
++    SUPPORTED_COLLECTION_PROVIDERS,
+     load_collection_sources,
+ )
+ from src.ingestion.greenhouse import GreenhouseClient
+@@ -33,6 +38,7 @@ from src.ingestion.wp_job_manager import WPJobManagerClient
+ 
+ PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ DEFAULT_CONFIG = PROJECT_ROOT / "config" / "sources.json"
++DEFAULT_EMPLOYERS_CONFIG = PROJECT_ROOT / "config" / "employers.json"
+ DEFAULT_RAW_ROOT = PROJECT_ROOT / "data" / "raw"
+ 
+ 
+@@ -102,6 +108,7 @@ def collect_source(
+             source_name=source.name,
+             response=response,
+             collected_at=collected_at,
++            employer_id=source.employer_id or None,
+         )
+         return CollectionResult(
+             source_name=source.name,
+@@ -131,6 +138,7 @@ def collect_lever_source(
+             source_name=source.name,
+             response=response,
+             collected_at=collected_at,
++            employer_id=source.employer_id or None,
+         )
+         return CollectionResult(
+             source_name=source.name,
+@@ -160,6 +168,7 @@ def collect_successfactors_source(
+             source_name=source.name,
+             response=response,
+             collected_at=collected_at,
++            employer_id=source.employer_id or None,
+         )
+         return CollectionResult(
+             source_name=source.name,
+@@ -187,7 +196,10 @@ def collect_workday_source(
+     try:
+         response = client.fetch_source(source)
+         snapshot = store.write_workday_snapshot(
+-            source_name=source.name, response=response, collected_at=collected_at
++            source_name=source.name,
++            response=response,
++            collected_at=collected_at,
++            employer_id=source.employer_id or None,
+         )
+         return CollectionResult(
+             source_name=source.name, source_provider="workday",
+@@ -210,7 +222,10 @@ def collect_oracle_hcm_source(
+     try:
+         response = client.fetch_source(source)
+         snapshot = store.write_oracle_hcm_snapshot(
+-            source_name=source.name, response=response, collected_at=collected_at
++            source_name=source.name,
++            response=response,
++            collected_at=collected_at,
++            employer_id=source.employer_id or None,
+         )
+         return CollectionResult(
+             source_name=source.name, source_provider="oracle_hcm",
+@@ -233,7 +248,10 @@ def collect_wp_job_manager_source(
+     try:
+         response = client.fetch_source(source)
+         snapshot = store.write_wp_job_manager_snapshot(
+-            source_name=source.name, response=response, collected_at=collected_at
++            source_name=source.name,
++            response=response,
++            collected_at=collected_at,
++            employer_id=source.employer_id or None,
+         )
+         return CollectionResult(
+             source_name=source.name, source_provider="wp_job_manager",
+@@ -257,14 +275,22 @@ def collect_configured_source(
+ ) -> CollectionResult:
+     if source.provider == "greenhouse":
+         return collect_source(
+-            GreenhouseSource(name=source.name, token=source.token),
++            GreenhouseSource(
++                name=source.name,
++                token=source.token,
++                employer_id=source.employer_id,
++            ),
+             greenhouse_client,
+             store,
+             collected_at,
+         )
+     if source.provider == "lever":
+         return collect_lever_source(
+-            LeverSource(name=source.name, token=source.token),
++            LeverSource(
++                name=source.name,
++                token=source.token,
++                employer_id=source.employer_id,
++            ),
+             lever_client,
+             store,
+             collected_at,
+@@ -282,6 +308,7 @@ def collect_configured_source(
+                 page_size=source.page_size,
+                 max_pages=source.max_pages,
+                 request_delay_seconds=source.request_delay_seconds,
++                employer_id=source.employer_id,
+             ),
+             successfactors_client,
+             store,
+@@ -295,6 +322,7 @@ def collect_configured_source(
+                 name=source.name, token=source.token, host=source.host,
+                 tenant=source.tenant, site=source.site, page_size=source.page_size,
+                 max_pages=source.max_pages, request_delay_seconds=source.request_delay_seconds,
++                employer_id=source.employer_id,
+             ), workday_client, store, collected_at,
+         )
+     if source.provider == "oracle_hcm":
+@@ -305,6 +333,7 @@ def collect_configured_source(
+                 name=source.name, token=source.token, host=source.host, site=source.site,
+                 page_size=source.page_size, max_pages=source.max_pages,
+                 request_delay_seconds=source.request_delay_seconds,
++                employer_id=source.employer_id,
+             ), oracle_hcm_client, store, collected_at,
+         )
+     if source.provider == "wp_job_manager":
+@@ -315,6 +344,7 @@ def collect_configured_source(
+                 name=source.name, token=source.token, listing_url=source.listing_url,
+                 api_url=source.api_url, page_size=source.page_size,
+                 max_pages=source.max_pages, request_delay_seconds=source.request_delay_seconds,
++                employer_id=source.employer_id,
+             ), wp_job_manager_client, store, collected_at,
+         )
+     raise ValueError(f"Unsupported collection provider: {source.provider}")
+@@ -371,6 +401,11 @@ def parse_args() -> argparse.Namespace:
+         )
+     )
+     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
++    parser.add_argument(
++        "--employers-config",
++        type=Path,
++        default=DEFAULT_EMPLOYERS_CONFIG,
++    )
+     parser.add_argument("--raw-root", type=Path, default=DEFAULT_RAW_ROOT)
+     parser.add_argument(
+         "--source-token",
+@@ -388,6 +423,13 @@ def main() -> int:
+     requested_tokens = set(args.source_tokens) if args.source_tokens else None
+ 
+     try:
++        sources_payload = json.loads(args.config.read_text(encoding="utf-8"))
++        employer_payload = load_employer_registry(args.employers_config)
++        validate_collectable_sources(
++            sources_payload,
++            employer_payload,
++            supported_providers=SUPPORTED_COLLECTION_PROVIDERS,
++        )
+         sources = load_collection_sources(args.config, requested_tokens)
+         greenhouse_client = GreenhouseClient(timeout_seconds=args.timeout)
+         lever_client = LeverClient(
+diff --git a/src/ingestion/config.py b/src/ingestion/config.py
+index 25e14a3..be93608 100644
+--- a/src/ingestion/config.py
++++ b/src/ingestion/config.py
+@@ -26,6 +26,7 @@ class ConfiguredSource:
+     name: str
+     provider: str
+     token: str
++    employer_id: str
+     listing_url: str | None = None
+     api_url: str | None = None
+     host: str | None = None
+@@ -42,6 +43,7 @@ class GreenhouseSource:
+ 
+     name: str
+     token: str
++    employer_id: str = ""
+ 
+ 
+ @dataclass(frozen=True)
+@@ -50,6 +52,7 @@ class LeverSource:
+ 
+     name: str
+     token: str
++    employer_id: str = ""
+ 
+ 
+ @dataclass(frozen=True)
+@@ -62,6 +65,7 @@ class SuccessFactorsSource:
+     page_size: int = 25
+     max_pages: int = 10
+     request_delay_seconds: float = 0.2
++    employer_id: str = ""
+ 
+ 
+ @dataclass(frozen=True)
+@@ -76,6 +80,7 @@ class WorkdaySource:
+     page_size: int = 20
+     max_pages: int = 20
+     request_delay_seconds: float = 0.1
++    employer_id: str = ""
+ 
+ 
+ @dataclass(frozen=True)
+@@ -89,6 +94,7 @@ class OracleHCMSource:
+     page_size: int = 25
+     max_pages: int = 20
+     request_delay_seconds: float = 0.1
++    employer_id: str = ""
+ 
+ 
+ @dataclass(frozen=True)
+@@ -102,6 +108,7 @@ class WPJobManagerSource:
+     page_size: int = 100
+     max_pages: int = 10
+     request_delay_seconds: float = 0.1
++    employer_id: str = ""
+ 
+ 
+ def _read_raw_sources(config_path: Path) -> list[dict[str, Any]]:
+@@ -236,8 +243,8 @@ def _load_provider_sources(
+     *,
+     provider: str,
+     requested_tokens: set[str] | None,
+-) -> list[tuple[str, str]]:
+-    sources: list[tuple[str, str]] = []
++) -> list[tuple[str, str, str]]:
++    sources: list[tuple[str, str, str]] = []
+     seen_tokens: set[str] = set()
+ 
+     for raw_source in _read_raw_sources(config_path):
+@@ -248,17 +255,20 @@ def _load_provider_sources(
+ 
+         name = str(raw_source.get("name") or "").strip()
+         token = str(raw_source.get("token") or "").strip()
+-        if not name or not token:
+-            raise ValueError(f"Enabled {provider} sources require name and token.")
++        employer_id = str(raw_source.get("employer_id") or "").strip()
++        if not name or not token or not employer_id:
++            raise ValueError(
++                f"Enabled {provider} sources require name, token and employer_id."
++            )
+         if token in seen_tokens:
+             raise ValueError(f"Duplicate {provider} source token: {token}")
+ 
+         seen_tokens.add(token)
+         if requested_tokens is None or token in requested_tokens:
+-            sources.append((name, token))
++            sources.append((name, token, employer_id))
+ 
+     if requested_tokens:
+-        configured_tokens = {token for _, token in sources}
++        configured_tokens = {token for _, token, _ in sources}
+         missing_tokens = requested_tokens - configured_tokens
+         if missing_tokens:
+             missing = ", ".join(sorted(missing_tokens))
+@@ -279,8 +289,8 @@ def load_greenhouse_sources(
+     """Return enabled Greenhouse sources, optionally filtered by board token."""
+ 
+     return [
+-        GreenhouseSource(name=name, token=token)
+-        for name, token in _load_provider_sources(
++        GreenhouseSource(name=name, token=token, employer_id=employer_id)
++        for name, token, employer_id in _load_provider_sources(
+             config_path,
+             provider="greenhouse",
+             requested_tokens=requested_tokens,
+@@ -295,8 +305,8 @@ def load_lever_sources(
+     """Return enabled Lever sources, optionally filtered by site token."""
+ 
+     return [
+-        LeverSource(name=name, token=token)
+-        for name, token in _load_provider_sources(
++        LeverSource(name=name, token=token, employer_id=employer_id)
++        for name, token, employer_id in _load_provider_sources(
+             config_path,
+             provider="lever",
+             requested_tokens=requested_tokens,
+@@ -318,6 +328,7 @@ def load_successfactors_sources(
+             page_size=source.page_size,
+             max_pages=source.max_pages,
+             request_delay_seconds=source.request_delay_seconds,
++            employer_id=source.employer_id,
+         )
+         for source in load_collection_sources(
+             config_path,
+@@ -352,8 +363,11 @@ def load_collection_sources(
+ 
+         name = str(raw_source.get("name") or "").strip()
+         token = str(raw_source.get("token") or "").strip()
+-        if not name or not token:
+-            raise ValueError(f"Enabled {provider} sources require name and token.")
++        employer_id = str(raw_source.get("employer_id") or "").strip()
++        if not name or not token or not employer_id:
++            raise ValueError(
++                f"Enabled {provider} sources require name, token and employer_id."
++            )
+ 
+         source_key = (provider, token)
+         if source_key in seen_source_keys:
+@@ -371,6 +385,7 @@ def load_collection_sources(
+                     name=name,
+                     provider=provider,
+                     token=token,
++                    employer_id=employer_id,
+                     listing_url=listing_url,
+                     page_size=page_size,
+                     max_pages=max_pages,
+@@ -386,6 +401,7 @@ def load_collection_sources(
+                     name=name,
+                     provider=provider,
+                     token=token,
++                    employer_id=employer_id,
+                     host=host,
+                     tenant=tenant,
+                     site=site,
+@@ -403,6 +419,7 @@ def load_collection_sources(
+                     name=name,
+                     provider=provider,
+                     token=token,
++                    employer_id=employer_id,
+                     host=host,
+                     site=site,
+                     page_size=page_size,
+@@ -419,6 +436,7 @@ def load_collection_sources(
+                     name=name,
+                     provider=provider,
+                     token=token,
++                    employer_id=employer_id,
+                     listing_url=listing_url,
+                     api_url=api_url,
+                     page_size=page_size,
+@@ -428,7 +446,12 @@ def load_collection_sources(
+             )
+         else:
+             sources.append(
+-                ConfiguredSource(name=name, provider=provider, token=token)
++                ConfiguredSource(
++                    name=name,
++                    provider=provider,
++                    token=token,
++                    employer_id=employer_id,
++                )
+             )
+ 
+     if requested_tokens:
+diff --git a/src/ingestion/snapshot.py b/src/ingestion/snapshot.py
+index 6eb2a81..7c2298b 100644
+--- a/src/ingestion/snapshot.py
++++ b/src/ingestion/snapshot.py
+@@ -51,6 +51,7 @@ class RawSnapshotStore:
+         source_name: str,
+         response: GreenhouseResponse,
+         collected_at: datetime | None = None,
++        employer_id: str | None = None,
+     ) -> SnapshotWriteResult:
+         return self._write_snapshot(
+             provider="greenhouse",
+@@ -62,6 +63,7 @@ class RawSnapshotStore:
+             raw_bytes=response.raw_bytes,
+             job_count=response.job_count,
+             collected_at=collected_at,
++            employer_id=employer_id,
+         )
+ 
+     def write_lever_snapshot(
+@@ -69,6 +71,7 @@ class RawSnapshotStore:
+         source_name: str,
+         response: LeverResponse,
+         collected_at: datetime | None = None,
++        employer_id: str | None = None,
+     ) -> SnapshotWriteResult:
+         return self._write_snapshot(
+             provider="lever",
+@@ -80,6 +83,7 @@ class RawSnapshotStore:
+             raw_bytes=response.raw_bytes,
+             job_count=response.job_count,
+             collected_at=collected_at,
++            employer_id=employer_id,
+         )
+ 
+     def write_successfactors_snapshot(
+@@ -87,6 +91,7 @@ class RawSnapshotStore:
+         source_name: str,
+         response: SuccessFactorsResponse,
+         collected_at: datetime | None = None,
++        employer_id: str | None = None,
+     ) -> SnapshotWriteResult:
+         return self._write_snapshot(
+             provider="successfactors",
+@@ -98,6 +103,7 @@ class RawSnapshotStore:
+             raw_bytes=response.raw_bytes,
+             job_count=response.job_count,
+             collected_at=collected_at,
++            employer_id=employer_id,
+             extra_metadata={
+                 "listing_page_count": response.listing_page_count,
+                 "detail_page_count": response.detail_page_count,
+@@ -109,6 +115,7 @@ class RawSnapshotStore:
+         source_name: str,
+         response: WorkdayResponse,
+         collected_at: datetime | None = None,
++        employer_id: str | None = None,
+     ) -> SnapshotWriteResult:
+         return self._write_snapshot(
+             provider="workday",
+@@ -120,6 +127,7 @@ class RawSnapshotStore:
+             raw_bytes=response.raw_bytes,
+             job_count=response.job_count,
+             collected_at=collected_at,
++            employer_id=employer_id,
+             extra_metadata={
+                 "listing_page_count": response.listing_page_count,
+                 "detail_page_count": response.detail_page_count,
+@@ -131,6 +139,7 @@ class RawSnapshotStore:
+         source_name: str,
+         response: OracleHCMResponse,
+         collected_at: datetime | None = None,
++        employer_id: str | None = None,
+     ) -> SnapshotWriteResult:
+         return self._write_snapshot(
+             provider="oracle_hcm",
+@@ -142,6 +151,7 @@ class RawSnapshotStore:
+             raw_bytes=response.raw_bytes,
+             job_count=response.job_count,
+             collected_at=collected_at,
++            employer_id=employer_id,
+             extra_metadata={
+                 "listing_page_count": response.listing_page_count,
+                 "detail_page_count": response.detail_page_count,
+@@ -153,6 +163,7 @@ class RawSnapshotStore:
+         source_name: str,
+         response: WPJobManagerResponse,
+         collected_at: datetime | None = None,
++        employer_id: str | None = None,
+     ) -> SnapshotWriteResult:
+         return self._write_snapshot(
+             provider="wp_job_manager",
+@@ -164,6 +175,7 @@ class RawSnapshotStore:
+             raw_bytes=response.raw_bytes,
+             job_count=response.job_count,
+             collected_at=collected_at,
++            employer_id=employer_id,
+             extra_metadata={
+                 "listing_page_count": response.listing_page_count,
+                 "detail_page_count": response.detail_page_count,
+@@ -182,6 +194,7 @@ class RawSnapshotStore:
+         raw_bytes: bytes,
+         job_count: int,
+         collected_at: datetime | None,
++        employer_id: str | None,
+         extra_metadata: dict[str, object] | None = None,
+     ) -> SnapshotWriteResult:
+         collection_time = collected_at or utc_now()
+@@ -218,6 +231,8 @@ class RawSnapshotStore:
+             "source_job_count": job_count,
+             "raw_file": raw_path.name,
+         }
++        if employer_id:
++            metadata["employer_id"] = employer_id
+         if extra_metadata:
+             metadata.update(extra_metadata)
+         self._atomic_write_text(
+diff --git a/src/transformation/build.py b/src/transformation/build.py
+index 465231d..5d50df8 100644
+--- a/src/transformation/build.py
++++ b/src/transformation/build.py
+@@ -6,7 +6,12 @@ import argparse
+ import sys
+ from pathlib import Path
+ 
+-from src.transformation.dataset import build_dataset, write_dataset_outputs
++from src.transformation.dataset import (
++    DEFAULT_EMPLOYERS_CONFIG,
++    DEFAULT_SOURCES_CONFIG,
++    build_dataset,
++    write_dataset_outputs,
++)
+ from src.transformation.snapshots import SnapshotReadError
+ 
+ 
+@@ -20,6 +25,16 @@ def parse_args() -> argparse.Namespace:
+         description="Build the canonical jobs Parquet dataset from raw snapshots."
+     )
+     parser.add_argument("--raw-root", type=Path, default=DEFAULT_RAW_ROOT)
++    parser.add_argument(
++        "--sources-config",
++        type=Path,
++        default=DEFAULT_SOURCES_CONFIG,
++    )
++    parser.add_argument(
++        "--employers-config",
++        type=Path,
++        default=DEFAULT_EMPLOYERS_CONFIG,
++    )
+     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
+     return parser.parse_args()
+ 
+@@ -51,7 +66,11 @@ def print_summary(result: object, parquet_path: Path, quality_path: Path) -> Non
+ def main() -> int:
+     args = parse_args()
+     try:
+-        result = build_dataset(args.raw_root)
++        result = build_dataset(
++            args.raw_root,
++            sources_config_path=args.sources_config,
++            employer_registry_path=args.employers_config,
++        )
+         parquet_path, quality_path = write_dataset_outputs(
+             result,
+             args.output_root,
+diff --git a/src/transformation/dataset.py b/src/transformation/dataset.py
+index 9cc2d8b..22fb3d5 100644
+--- a/src/transformation/dataset.py
++++ b/src/transformation/dataset.py
+@@ -6,10 +6,16 @@ import json
+ from collections import Counter, defaultdict
+ from dataclasses import dataclass
+ from datetime import datetime, timezone
+-from pathlib import Path
++from pathlib import Path, PurePosixPath
+ from tempfile import NamedTemporaryFile
+ from typing import Any, Iterable
+ 
++from src.configuration.employers import (
++    employer_index,
++    load_employer_registry,
++    source_employer_index,
++    validate_source_links,
++)
+ from src.transformation.cleaning import unique_strings
+ from src.transformation.greenhouse import parse_datetime, transform_greenhouse_job
+ from src.transformation.lever import transform_lever_job
+@@ -21,6 +27,11 @@ from src.transformation.wp_job_manager import transform_wp_job_manager_job
+ from src.transformation.snapshots import SourceSnapshot, load_snapshots
+ 
+ 
++PROJECT_ROOT = Path(__file__).resolve().parents[2]
++DEFAULT_SOURCES_CONFIG = PROJECT_ROOT / "config" / "sources.json"
++DEFAULT_EMPLOYERS_CONFIG = PROJECT_ROOT / "config" / "employers.json"
++
++
+ @dataclass(frozen=True)
+ class DatasetBuildResult:
+     jobs: tuple[CanonicalJob, ...]
+@@ -79,6 +90,11 @@ def _build_quality_report(
+         str(snapshot.metadata.get("source_name")) for snapshot in snapshots
+     )
+     company_counts = Counter(job.company for job in jobs)
++    employer_counts = Counter(job.employer_name for job in jobs)
++    industry_counts = Counter(job.industry for job in jobs)
++    parent_company_counts = Counter(
++        job.parent_company or job.employer_name for job in jobs
++    )
+     provider_job_counts = Counter(job.source_provider for job in jobs)
+     target_market_jobs = [job for job in jobs if job.is_target_market]
+     early_career_target_market_jobs = [
+@@ -138,6 +154,9 @@ def _build_quality_report(
+         "talent_pool_job_count": sum(job.is_talent_pool for job in jobs),
+         "workplace_type_counts": _count_values(jobs, "workplace_type"),
+         "company_counts": dict(sorted(company_counts.items())),
++        "employer_counts": dict(sorted(employer_counts.items())),
++        "industry_counts": dict(sorted(industry_counts.items())),
++        "parent_company_counts": dict(sorted(parent_company_counts.items())),
+         "provider_job_counts": dict(sorted(provider_job_counts.items())),
+         "target_market_company_counts": dict(
+             sorted(target_market_company_counts.items())
+@@ -150,50 +169,114 @@ def _build_quality_report(
+     }
+ 
+ 
+-def _relative_snapshot_path(raw_path: Path, raw_root: Path) -> Path:
+-    """Store portable lineage paths rather than machine-specific absolute paths."""
++def _relative_snapshot_path(raw_path: Path, raw_root: Path) -> PurePosixPath:
++    """Store portable POSIX lineage paths on every operating system."""
+ 
+     try:
+-        return raw_path.resolve().relative_to(raw_root.resolve())
++        relative = raw_path.resolve().relative_to(raw_root.resolve())
+     except ValueError:
+-        return raw_path
++        relative = raw_path
++    return PurePosixPath(relative.as_posix())
++
++
++def _load_employer_context(
++    sources_config_path: Path,
++    employer_registry_path: Path,
++) -> tuple[dict[tuple[str, str], str], dict[str, dict[str, Any]]]:
++    sources_payload = json.loads(
++        sources_config_path.read_text(encoding="utf-8")
++    )
++    employer_payload = load_employer_registry(employer_registry_path)
++    validate_source_links(sources_payload, employer_payload)
++    return source_employer_index(sources_payload), employer_index(employer_payload)
++
++
++def _resolve_snapshot_employer(
++    snapshot: SourceSnapshot,
++    source_index: dict[tuple[str, str], str],
++    employers: dict[str, dict[str, Any]],
++) -> dict[str, Any]:
++    provider = snapshot.provider
++    token = str(snapshot.metadata.get("source_token") or "").strip()
++    configured_id = source_index.get((provider, token))
++    if configured_id is None:
++        raise ValueError(
++            f"Snapshot source is not linked to an employer: {provider}:{token}"
++        )
++
++    snapshot_id = str(snapshot.metadata.get("employer_id") or "").strip()
++    if snapshot_id and snapshot_id != configured_id:
++        raise ValueError(
++            "Snapshot employer_id does not match source configuration: "
++            f"{provider}:{token} has {snapshot_id!r}, expected {configured_id!r}"
++        )
++
++    try:
++        return employers[configured_id]
++    except KeyError as error:
++        raise ValueError(
++            f"Source {provider}:{token} references unknown employer {configured_id!r}"
++        ) from error
+ 
+ 
+ def _transform_snapshot_job(
+     snapshot: SourceSnapshot,
+     job: dict[str, Any] | Any,
+     raw_root: Path,
++    employer: dict[str, Any],
+ ) -> CanonicalJob:
+     raw_path = _relative_snapshot_path(snapshot.raw_path, raw_root)
+     if snapshot.provider == "greenhouse":
+-        return transform_greenhouse_job(job, snapshot.metadata, raw_path)
+-    if snapshot.provider == "lever":
+-        return transform_lever_job(job, snapshot.metadata, raw_path)
+-    if snapshot.provider == "successfactors":
+-        return transform_successfactors_job(job, snapshot.metadata, raw_path)
+-    if snapshot.provider == "workday":
+-        return transform_workday_job(job, snapshot.metadata, raw_path)
+-    if snapshot.provider == "oracle_hcm":
+-        return transform_oracle_hcm_job(job, snapshot.metadata, raw_path)
+-    if snapshot.provider == "wp_job_manager":
+-        return transform_wp_job_manager_job(job, snapshot.metadata, raw_path)
+-    raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
+-
+-
+-def build_dataset(raw_root: Path) -> DatasetBuildResult:
+-    """Read saved snapshots and produce deterministic canonical job rows."""
++        transformed = transform_greenhouse_job(job, snapshot.metadata, raw_path)
++    elif snapshot.provider == "lever":
++        transformed = transform_lever_job(job, snapshot.metadata, raw_path)
++    elif snapshot.provider == "successfactors":
++        transformed = transform_successfactors_job(job, snapshot.metadata, raw_path)
++    elif snapshot.provider == "workday":
++        transformed = transform_workday_job(job, snapshot.metadata, raw_path)
++    elif snapshot.provider == "oracle_hcm":
++        transformed = transform_oracle_hcm_job(job, snapshot.metadata, raw_path)
++    elif snapshot.provider == "wp_job_manager":
++        transformed = transform_wp_job_manager_job(job, snapshot.metadata, raw_path)
++    else:
++        raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
++
++    return transformed.with_employer_metadata(
++        employer_id=employer["id"],
++        employer_name=employer["name"],
++        parent_company=employer["parent_company"],
++        industry=employer["industry"],
++        employer_priority=employer["priority"],
++        graduate_programme=employer["graduate_programme"],
++        employer_remote_scope=employer["remote_scope"],
++    )
++
+ 
++def build_dataset(
++    raw_root: Path,
++    *,
++    sources_config_path: Path = DEFAULT_SOURCES_CONFIG,
++    employer_registry_path: Path = DEFAULT_EMPLOYERS_CONFIG,
++) -> DatasetBuildResult:
++    """Produce canonical jobs enriched with stable employer metadata."""
++
++    source_index, employers = _load_employer_context(
++        sources_config_path,
++        employer_registry_path,
++    )
+     snapshots = load_snapshots(raw_root)
+-    observations = [
+-        _transform_snapshot_job(snapshot, job, raw_root)
+-        for snapshot in snapshots
+-        for job in snapshot.jobs
+-    ]
++    observations: list[CanonicalJob] = []
++    for snapshot in snapshots:
++        employer = _resolve_snapshot_employer(snapshot, source_index, employers)
++        observations.extend(
++            _transform_snapshot_job(snapshot, job, raw_root, employer)
++            for job in snapshot.jobs
++        )
++
+     jobs = deduplicate_jobs(observations)
+     quality_report = _build_quality_report(snapshots, observations, jobs)
+     return DatasetBuildResult(jobs=tuple(jobs), quality_report=quality_report)
+ 
+-
+ def _parquet_schema() -> Any:
+     try:
+         import pyarrow as pa
+@@ -218,6 +301,13 @@ def _parquet_schema() -> Any:
+             ("title", pa.string()),
+             ("title_normalized", pa.string()),
+             ("company", pa.string()),
++            ("employer_id", pa.string()),
++            ("employer_name", pa.string()),
++            ("parent_company", pa.string()),
++            ("industry", pa.string()),
++            ("employer_priority", pa.string()),
++            ("graduate_programme", pa.string()),
++            ("employer_remote_scope", pa.string()),
+             ("department", pa.string()),
+             ("office", pa.string()),
+             ("location_raw", pa.string()),
+diff --git a/src/transformation/schema.py b/src/transformation/schema.py
+index ea8c6ed..ca85385 100644
+--- a/src/transformation/schema.py
++++ b/src/transformation/schema.py
+@@ -48,6 +48,13 @@ class CanonicalJob:
+     role_level_confidence: str = "low"
+     role_level_score_evidence: tuple[str, ...] = ()
+     is_talent_pool: bool = False
++    employer_id: str = ""
++    employer_name: str = ""
++    parent_company: str | None = None
++    industry: str = "unspecified"
++    employer_priority: str = "tier_3"
++    graduate_programme: str = "unknown"
++    employer_remote_scope: str = "unknown"
+ 
+     def __post_init__(self) -> None:
+         """Populate the scored inference without changing source transformers."""
+@@ -80,6 +87,30 @@ class CanonicalJob:
+             data_quality_issues=data_quality_issues,
+         )
+ 
++    def with_employer_metadata(
++        self,
++        *,
++        employer_id: str,
++        employer_name: str,
++        parent_company: str | None,
++        industry: str,
++        employer_priority: str,
++        graduate_programme: str,
++        employer_remote_scope: str,
++    ) -> "CanonicalJob":
++        """Return a copy enriched with canonical employer metadata."""
++
++        return replace(
++            self,
++            employer_id=employer_id,
++            employer_name=employer_name,
++            parent_company=parent_company,
++            industry=industry,
++            employer_priority=employer_priority,
++            graduate_programme=graduate_programme,
++            employer_remote_scope=employer_remote_scope,
++        )
++
+     def to_record(self) -> dict[str, Any]:
+         """Return a PyArrow-friendly mapping in canonical field order."""
+ 
+diff --git a/src/transformation/snapshots.py b/src/transformation/snapshots.py
+index 4eef5ee..8b17f0e 100644
+--- a/src/transformation/snapshots.py
++++ b/src/transformation/snapshots.py
+@@ -81,6 +81,10 @@ def _read_metadata(metadata_path: Path, expected_provider: str) -> dict[str, Any
+     for field in ("source_name", "source_token"):
+         if not isinstance(metadata.get(field), str) or not metadata[field].strip():
+             raise SnapshotReadError(f"Invalid {field} in metadata: {metadata_path}")
++    if "employer_id" in metadata:
++        employer_id = metadata.get("employer_id")
++        if not isinstance(employer_id, str) or not employer_id.strip():
++            raise SnapshotReadError(f"Invalid employer_id in metadata: {metadata_path}")
+     if parse_datetime(metadata.get("collected_at")) is None:
+         raise SnapshotReadError(f"Invalid collected_at in metadata: {metadata_path}")
+     digest = metadata.get("content_sha256")
+diff --git a/tests/test_collect.py b/tests/test_collect.py
+index f94b0b1..d638fd2 100644
+--- a/tests/test_collect.py
++++ b/tests/test_collect.py
+@@ -1,4 +1,6 @@
+ from datetime import datetime, timezone
++import json
++from pathlib import Path
+ 
+ from src.ingestion.collect import collect_source
+ from src.ingestion.config import GreenhouseSource
+@@ -19,7 +21,11 @@ class StubClient:
+ 
+ 
+ def test_collect_source_returns_written_result(tmp_path):
+-    source = GreenhouseSource(name="Example", token="example")
++    source = GreenhouseSource(
++        name="Example",
++        token="example",
++        employer_id="example-employer",
++    )
+     result = collect_source(
+         source=source,
+         client=StubClient(),
+@@ -31,6 +37,10 @@ def test_collect_source_returns_written_result(tmp_path):
+     assert result.source_token == "example"
+     assert result.job_count == 0
+     assert result.error is None
++    metadata = json.loads(
++        Path(result.metadata_path).read_text(encoding="utf-8")
++    )
++    assert metadata["employer_id"] == "example-employer"
+ 
+ 
+ def test_collect_lever_source_returns_written_result(tmp_path):
+diff --git a/tests/test_employer_registry.py b/tests/test_employer_registry.py
+index e97c5ea..164fd49 100644
+--- a/tests/test_employer_registry.py
++++ b/tests/test_employer_registry.py
+@@ -7,6 +7,7 @@ from src.configuration.employers import (
+     employer_index,
+     iter_employers,
+     load_employer_registry,
++    validate_collectable_sources,
+     validate_employer_registry,
+     validate_source_links,
+ )
+@@ -106,3 +107,43 @@ def test_source_link_validation_rejects_unknown_employer():
+ 
+     with pytest.raises(ValueError, match="missing employer registry links"):
+         validate_source_links(sources_payload, employer_payload)
++
++
++def test_collectable_source_validation_rejects_candidate_employer():
++    employer_payload = {
++        "schema_version": 1,
++        "employers": [
++            {
++                "id": "candidate",
++                "name": "Candidate Employer",
++                "parent_company": None,
++                "brands": [],
++                "industry": "Software",
++                "head_office_city": None,
++                "country": "South Africa",
++                "listed_company": False,
++                "remote_scope": "south_africa",
++                "graduate_programme": "unknown",
++                "priority": "tier_2",
++                "collection_status": "candidate",
++            }
++        ],
++    }
++    sources_payload = {
++        "sources": [
++            {
++                "name": "Candidate Employer",
++                "provider": "greenhouse",
++                "token": "candidate",
++                "employer_id": "candidate",
++                "enabled": True,
++            }
++        ]
++    }
++
++    with pytest.raises(ValueError, match="require active employers"):
++        validate_collectable_sources(
++            sources_payload,
++            employer_payload,
++            supported_providers=("greenhouse",),
++        )
+diff --git a/tests/test_ingestion_config.py b/tests/test_ingestion_config.py
+index 1c2dc5d..a1ea711 100644
+--- a/tests/test_ingestion_config.py
++++ b/tests/test_ingestion_config.py
+@@ -15,12 +15,14 @@ def test_load_greenhouse_sources_filters_other_providers(tmp_path):
+                         "name": "Example",
+                         "provider": "greenhouse",
+                         "token": "example",
++                        "employer_id": "example",
+                         "enabled": True,
+                     },
+                     {
+                         "name": "Other",
+                         "provider": "lever",
+                         "token": "other",
++                        "employer_id": "other",
+                         "enabled": True,
+                     },
+                 ]
+@@ -32,6 +34,7 @@ def test_load_greenhouse_sources_filters_other_providers(tmp_path):
+     sources = load_greenhouse_sources(config_path)
+ 
+     assert [source.token for source in sources] == ["example"]
++    assert sources[0].employer_id == "example"
+ 
+ 
+ def test_load_greenhouse_sources_rejects_unknown_requested_token(tmp_path):
+@@ -44,6 +47,7 @@ def test_load_greenhouse_sources_rejects_unknown_requested_token(tmp_path):
+                         "name": "Example",
+                         "provider": "greenhouse",
+                         "token": "example",
++                        "employer_id": "example",
+                     }
+                 ]
+             }
+@@ -67,18 +71,21 @@ def test_load_collection_sources_includes_greenhouse_and_lever(tmp_path):
+                         "name": "Greenhouse Example",
+                         "provider": "greenhouse",
+                         "token": "greenhouse-example",
++                        "employer_id": "greenhouse-example",
+                         "enabled": True,
+                     },
+                     {
+                         "name": "Lever Example",
+                         "provider": "lever",
+                         "token": "LeverExample",
++                        "employer_id": "lever-example",
+                         "enabled": True,
+                     },
+                     {
+                         "name": "HTML Example",
+                         "provider": "html_listing_page",
+                         "token": "html-example",
++                        "employer_id": "html-example",
+                         "enabled": True,
+                     },
+                 ]
+@@ -89,6 +96,10 @@ def test_load_collection_sources_includes_greenhouse_and_lever(tmp_path):
+ 
+     sources = load_collection_sources(config_path)
+ 
++    assert [source.employer_id for source in sources] == [
++        "greenhouse-example",
++        "lever-example",
++    ]
+     assert [(source.provider, source.token) for source in sources] == [
+         ("greenhouse", "greenhouse-example"),
+         ("lever", "LeverExample"),
+@@ -107,11 +118,13 @@ def test_collection_token_filter_is_resolved_across_providers(tmp_path):
+                         "name": "Greenhouse Example",
+                         "provider": "greenhouse",
+                         "token": "greenhouse-example",
++                        "employer_id": "greenhouse-example",
+                     },
+                     {
+                         "name": "Lever Example",
+                         "provider": "lever",
+                         "token": "LeverExample",
++                        "employer_id": "lever-example",
+                     },
+                 ]
+             }
+@@ -137,6 +150,7 @@ def test_load_collection_sources_includes_successfactors_settings(tmp_path):
+                         "name": "Example Bank",
+                         "provider": "successfactors",
+                         "token": "example-bank",
++                        "employer_id": "example-bank",
+                         "url": "https://jobs.example.test/go/All/123/",
+                         "page_size": 20,
+                         "max_pages": 7,
+@@ -151,6 +165,7 @@ def test_load_collection_sources_includes_successfactors_settings(tmp_path):
+     source = load_collection_sources(config_path)[0]
+ 
+     assert source.provider == "successfactors"
++    assert source.employer_id == "example-bank"
+     assert source.listing_url == "https://jobs.example.test/go/All/123/"
+     assert source.page_size == 20
+     assert source.max_pages == 7
+@@ -169,6 +184,7 @@ def test_successfactors_source_requires_https_url(tmp_path):
+                         "name": "Example Bank",
+                         "provider": "successfactors",
+                         "token": "example-bank",
++                        "employer_id": "example-bank",
+                         "url": "http://jobs.example.test/go/All/123/",
+                     }
+                 ]
+@@ -183,14 +199,71 @@ def test_successfactors_source_requires_https_url(tmp_path):
+ 
+ def test_load_collection_sources_includes_new_provider_settings(tmp_path):
+     from src.ingestion.config import load_collection_sources
++
+     config_path = tmp_path / "sources.json"
+-    config_path.write_text(json.dumps({"sources": [
+-        {"name":"Digi","provider":"workday","token":"digi","host":"https://wd.test","tenant":"t","site":"s"},
+-        {"name":"ACI","provider":"oracle_hcm","token":"aci","host":"https://oracle.test","site":"CX"},
+-        {"name":"BET","provider":"wp_job_manager","token":"bet","url":"https://bet.test/jobs","api_url":"https://bet.test/ajax"},
+-    ]}), encoding="utf-8")
++    config_path.write_text(
++        json.dumps(
++            {
++                "sources": [
++                    {
++                        "name": "Digi",
++                        "provider": "workday",
++                        "token": "digi",
++                        "employer_id": "digi",
++                        "host": "https://wd.test",
++                        "tenant": "t",
++                        "site": "s",
++                    },
++                    {
++                        "name": "ACI",
++                        "provider": "oracle_hcm",
++                        "token": "aci",
++                        "employer_id": "aci",
++                        "host": "https://oracle.test",
++                        "site": "CX",
++                    },
++                    {
++                        "name": "BET",
++                        "provider": "wp_job_manager",
++                        "token": "bet",
++                        "employer_id": "bet",
++                        "url": "https://bet.test/jobs",
++                        "api_url": "https://bet.test/ajax",
++                    },
++                ]
++            }
++        ),
++        encoding="utf-8",
++    )
+     sources = load_collection_sources(config_path)
+-    assert [source.provider for source in sources] == ["workday", "oracle_hcm", "wp_job_manager"]
++    assert [source.provider for source in sources] == [
++        "workday",
++        "oracle_hcm",
++        "wp_job_manager",
++    ]
+     assert sources[0].tenant == "t"
+     assert sources[1].site == "CX"
+     assert sources[2].api_url == "https://bet.test/ajax"
++
++
++def test_load_collection_sources_requires_employer_id(tmp_path):
++    from src.ingestion.config import load_collection_sources
++
++    config_path = tmp_path / "sources.json"
++    config_path.write_text(
++        json.dumps(
++            {
++                "sources": [
++                    {
++                        "name": "Example",
++                        "provider": "greenhouse",
++                        "token": "example",
++                    }
++                ]
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    with pytest.raises(ValueError, match="employer_id"):
++        load_collection_sources(config_path)
+diff --git a/tests/test_transformation_dataset.py b/tests/test_transformation_dataset.py
+index 98c6ba6..1cf8d81 100644
+--- a/tests/test_transformation_dataset.py
++++ b/tests/test_transformation_dataset.py
+@@ -16,6 +16,77 @@ from src.transformation.greenhouse import transform_greenhouse_job
+ FIXTURE = Path(__file__).parent / "fixtures" / "greenhouse_jobs_m2.json"
+ 
+ 
++def write_employer_configs(
++    config_root: Path,
++    *,
++    include_lever: bool = False,
++) -> tuple[Path, Path]:
++    config_root.mkdir(parents=True, exist_ok=True)
++    sources = [
++        {
++            "name": "Example Tech",
++            "provider": "greenhouse",
++            "token": "example",
++            "employer_id": "example-tech",
++            "enabled": True,
++        }
++    ]
++    employers = [
++        {
++            "id": "example-tech",
++            "name": "Example Tech",
++            "parent_company": "Example Holdings",
++            "brands": [],
++            "industry": "Product, software and e-commerce",
++            "head_office_city": "Cape Town",
++            "country": "South Africa",
++            "listed_company": False,
++            "remote_scope": "south_africa",
++            "graduate_programme": "yes",
++            "priority": "tier_1",
++            "collection_status": "active",
++        }
++    ]
++    if include_lever:
++        sources.append(
++            {
++                "name": "Lever Example",
++                "provider": "lever",
++                "token": "lever-example",
++                "employer_id": "lever-example",
++                "enabled": True,
++            }
++        )
++        employers.append(
++            {
++                "id": "lever-example",
++                "name": "Lever Example",
++                "parent_company": None,
++                "brands": [],
++                "industry": "Fintech and payments",
++                "head_office_city": "Johannesburg",
++                "country": "South Africa",
++                "listed_company": False,
++                "remote_scope": "africa",
++                "graduate_programme": "unknown",
++                "priority": "tier_2",
++                "collection_status": "active",
++            }
++        )
++
++    sources_path = config_root / "sources.json"
++    employers_path = config_root / "employers.json"
++    sources_path.write_text(
++        json.dumps({"sources": sources}),
++        encoding="utf-8",
++    )
++    employers_path.write_text(
++        json.dumps({"schema_version": 1, "employers": employers}),
++        encoding="utf-8",
++    )
++    return sources_path, employers_path
++
++
+ def write_snapshot(
+     raw_root: Path,
+     payload: dict[str, object],
+@@ -101,7 +172,12 @@ def test_build_dataset_reports_deduplication_and_market_counts(tmp_path: Path) -
+         collected_at="2026-07-23T12:00:00Z",
+     )
+ 
+-    result = build_dataset(tmp_path)
++    sources_path, employers_path = write_employer_configs(tmp_path / "config")
++    result = build_dataset(
++        tmp_path,
++        sources_config_path=sources_path,
++        employer_registry_path=employers_path,
++    )
+ 
+     assert len(result.jobs) == 3
+     report = result.quality_report
+@@ -122,7 +198,15 @@ def test_build_dataset_reports_deduplication_and_market_counts(tmp_path: Path) -
+         "senior": 1,
+     }
+     latest_job = next(job for job in result.jobs if job.source_job_id == "1001")
+-  #  assert latest_job.source_snapshot_path == "greenhouse/example/second.json"
++    assert latest_job.source_snapshot_path == "greenhouse/example/second.json"
++    assert latest_job.employer_id == "example-tech"
++    assert latest_job.employer_name == "Example Tech"
++    assert latest_job.parent_company == "Example Holdings"
++    assert latest_job.industry == "Product, software and e-commerce"
++    assert report["employer_counts"] == {"Example Tech": 3}
++    assert report["industry_counts"] == {
++        "Product, software and e-commerce": 3
++    }
+ 
+ 
+ @pytest.mark.skipif(
+@@ -141,7 +225,12 @@ def test_write_dataset_outputs_creates_real_parquet_and_quality_report(
+         timestamp="snapshot",
+         collected_at="2026-07-22T12:00:00Z",
+     )
+-    result = build_dataset(tmp_path / "raw")
++    sources_path, employers_path = write_employer_configs(tmp_path / "config")
++    result = build_dataset(
++        tmp_path / "raw",
++        sources_config_path=sources_path,
++        employer_registry_path=employers_path,
++    )
+ 
+     parquet_path, quality_path = write_dataset_outputs(
+         result,
+@@ -153,6 +242,8 @@ def test_write_dataset_outputs_creates_real_parquet_and_quality_report(
+     assert table.num_rows == 3
+     assert table.column_names[0] == "job_key"
+     assert "is_early_career" in table.column_names
++    assert "employer_id" in table.column_names
++    assert "industry" in table.column_names
+     assert quality["canonical_job_count"] == 3
+ 
+ 
+@@ -203,7 +294,15 @@ def test_build_dataset_combines_greenhouse_and_lever_snapshots(tmp_path: Path) -
+         collected_at="2026-07-23T12:00:00Z",
+     )
+ 
+-    result = build_dataset(tmp_path)
++    sources_path, employers_path = write_employer_configs(
++        tmp_path / "config",
++        include_lever=True,
++    )
++    result = build_dataset(
++        tmp_path,
++        sources_config_path=sources_path,
++        employer_registry_path=employers_path,
++    )
+ 
+     assert len(result.jobs) == 6
+     assert {job.source_provider for job in result.jobs} == {"greenhouse", "lever"}
+@@ -223,6 +322,30 @@ def test_build_dataset_combines_greenhouse_and_lever_snapshots(tmp_path: Path) -
+         "Lever Example": 1,
+     }
+     lever_job = next(job for job in result.jobs if job.source_job_id == "lever-1001")
+-   # assert lever_job.source_snapshot_path == "lever/lever-example/lever.json"
++    assert lever_job.source_snapshot_path == "lever/lever-example/lever.json"
++    assert lever_job.employer_id == "lever-example"
++    assert lever_job.industry == "Fintech and payments"
+     assert lever_job.is_early_career is True
+     assert lever_job.role_level_evidence
++
++
++def test_build_dataset_rejects_snapshot_employer_mismatch(tmp_path: Path) -> None:
++    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
++    write_snapshot(
++        tmp_path,
++        payload,
++        timestamp="snapshot",
++        collected_at="2026-07-22T12:00:00Z",
++    )
++    metadata_path = next(tmp_path.glob("greenhouse/example/*.metadata.json"))
++    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
++    metadata["employer_id"] = "wrong-employer"
++    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
++    sources_path, employers_path = write_employer_configs(tmp_path / "config")
++
++    with pytest.raises(ValueError, match="does not match source configuration"):
++        build_dataset(
++            tmp_path,
++            sources_config_path=sources_path,
++            employer_registry_path=employers_path,
++        )
