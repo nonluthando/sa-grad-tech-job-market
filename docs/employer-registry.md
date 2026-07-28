@@ -20,3 +20,33 @@ Candidate entries do not trigger collection. Before promoting one to `active`:
 
 Parent companies and brands are metadata for analysis. They do not merge vacancy
 records during ingestion or deduplication.
+
+## Pipeline integration
+
+Every enabled supported source must include an `employer_id` that exactly matches
+an employer registry `id`. Production collection rejects sources linked to
+`candidate`, `paused` or `retired` employers.
+
+New raw snapshot metadata includes the stable `employer_id`. Historical snapshots
+without that field remain supported: transformation resolves the employer from
+the provider and source token in `config/sources.json`. If a snapshot contains an
+`employer_id`, it must agree with the current source configuration.
+
+The canonical Parquet dataset includes:
+
+- `employer_id`
+- `employer_name`
+- `parent_company`
+- `industry`
+- `employer_priority`
+- `graduate_programme`
+- `employer_remote_scope`
+
+The quality report also includes employer, parent-company and industry counts.
+
+Run the integration checks with:
+
+```powershell
+uv run pytest tests/test_employer_registry.py tests/test_transformation_dataset.py -v
+uv run pytest
+```
