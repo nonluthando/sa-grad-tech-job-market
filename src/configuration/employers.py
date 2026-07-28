@@ -1,8 +1,8 @@
-"""Employer registry loading and validation.
+"""Employer registry loading, validation and source resolution.
 
-The registry separates employer metadata from provider-specific collection
-configuration. Candidate employers can be researched without enabling a
-collector, while active sources reference a stable employer_id.
+The registry separates stable employer metadata from provider-specific
+collection settings. Configured sources reference employers by ``employer_id``
+so collection and transformation can share one canonical company identity.
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ def employer_index(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def validate_employer_registry(payload: dict[str, Any]) -> None:
-    """Raise ValueError when registry structure or values are invalid."""
+    """Raise ``ValueError`` when registry structure or values are invalid."""
 
     if payload.get("schema_version") != 1:
         raise ValueError("config/employers.json must use schema_version 1")
@@ -80,11 +80,18 @@ def validate_employer_registry(payload: dict[str, Any]) -> None:
         employer_id = employer["id"]
         if not isinstance(employer_id, str) or not employer_id.strip():
             raise ValueError(f"Employer at index {position} has an invalid id")
+        if employer_id != employer_id.strip() or employer_id != employer_id.lower():
+            raise ValueError(
+                f"Employer id must be trimmed lowercase text: {employer_id!r}"
+            )
         if employer_id in seen_ids:
             raise ValueError(f"Duplicate employer id: {employer_id}")
         seen_ids.add(employer_id)
 
-        normalised_name = employer["name"].strip().casefold()
+        name = employer["name"]
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f"Employer {employer_id} has an invalid name")
+        normalised_name = name.strip().casefold()
         if normalised_name in seen_names:
             raise ValueError(f"Duplicate employer name: {employer['name']}")
         seen_names.add(normalised_name)
@@ -120,14 +127,76 @@ def validate_source_links(
     known_ids = set(employer_index(employer_payload))
     missing_links: list[str] = []
 
-    for source in sources_payload.get("sources", []):
+    sources = sources_payload.get("sources")
+    if not isinstance(sources, list):
+        raise ValueError("Source configuration must contain a sources list")
+
+    for source in sources:
+        if not isinstance(source, dict):
+            raise ValueError("Every configured source must be an object")
         employer_id = source.get("employer_id")
-        if not employer_id or employer_id not in known_ids:
+        if not isinstance(employer_id, str) or employer_id not in known_ids:
             missing_links.append(source.get("token") or source.get("name") or "<unknown>")
 
     if missing_links:
         joined = ", ".join(sorted(missing_links))
         raise ValueError(f"Sources with missing employer registry links: {joined}")
+
+
+def validate_collectable_sources(
+    sources_payload: dict[str, Any],
+    employer_payload: dict[str, Any],
+    *,
+    supported_providers: Iterable[str],
+) -> None:
+    """Reject enabled production sources whose employers are not active.
+
+    Candidate, paused and retired employers remain useful registry records, but
+    they may not be collected until their status is explicitly changed to
+    ``active``.
+    """
+
+    validate_source_links(sources_payload, employer_payload)
+    employers = employer_index(employer_payload)
+    supported = set(supported_providers)
+    blocked: list[str] = []
+
+    for source in sources_payload["sources"]:
+        if not source.get("enabled", True):
+            continue
+        if source.get("provider") not in supported:
+            continue
+
+        employer_id = source["employer_id"]
+        status = employers[employer_id]["collection_status"]
+        if status != "active":
+            token = source.get("token") or source.get("name") or "<unknown>"
+            blocked.append(f"{token} ({employer_id}: {status})")
+
+    if blocked:
+        joined = ", ".join(sorted(blocked))
+        raise ValueError(f"Enabled sources require active employers: {joined}")
+
+
+def source_employer_index(
+    sources_payload: dict[str, Any],
+) -> dict[tuple[str, str], str]:
+    """Return ``(provider, token)`` source keys mapped to employer IDs."""
+
+    index: dict[tuple[str, str], str] = {}
+    for source in sources_payload.get("sources", []):
+        provider = str(source.get("provider") or "").strip()
+        token = str(source.get("token") or "").strip()
+        employer_id = str(source.get("employer_id") or "").strip()
+        if not provider or not token or not employer_id:
+            continue
+
+        key = (provider, token)
+        if key in index:
+            raise ValueError(f"Duplicate configured source: {provider}:{token}")
+        index[key] = employer_id
+
+    return index
 
 
 def iter_employers(
