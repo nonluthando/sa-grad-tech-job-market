@@ -81,6 +81,10 @@ def _read_metadata(metadata_path: Path, expected_provider: str) -> dict[str, Any
     for field in ("source_name", "source_token"):
         if not isinstance(metadata.get(field), str) or not metadata[field].strip():
             raise SnapshotReadError(f"Invalid {field} in metadata: {metadata_path}")
+    if "employer_id" in metadata:
+        employer_id = metadata.get("employer_id")
+        if not isinstance(employer_id, str) or not employer_id.strip():
+            raise SnapshotReadError(f"Invalid employer_id in metadata: {metadata_path}")
     if parse_datetime(metadata.get("collected_at")) is None:
         raise SnapshotReadError(f"Invalid collected_at in metadata: {metadata_path}")
     digest = metadata.get("content_sha256")

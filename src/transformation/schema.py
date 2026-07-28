@@ -48,6 +48,13 @@ class CanonicalJob:
     role_level_confidence: str = "low"
     role_level_score_evidence: tuple[str, ...] = ()
     is_talent_pool: bool = False
+    employer_id: str = ""
+    employer_name: str = ""
+    parent_company: str | None = None
+    industry: str = "unspecified"
+    employer_priority: str = "tier_3"
+    graduate_programme: str = "unknown"
+    employer_remote_scope: str = "unknown"
 
     def __post_init__(self) -> None:
         """Populate the scored inference without changing source transformers."""
@@ -78,6 +85,30 @@ class CanonicalJob:
             last_seen_at=last_seen_at,
             observation_count=observation_count,
             data_quality_issues=data_quality_issues,
+        )
+
+    def with_employer_metadata(
+        self,
+        *,
+        employer_id: str,
+        employer_name: str,
+        parent_company: str | None,
+        industry: str,
+        employer_priority: str,
+        graduate_programme: str,
+        employer_remote_scope: str,
+    ) -> "CanonicalJob":
+        """Return a copy enriched with canonical employer metadata."""
+
+        return replace(
+            self,
+            employer_id=employer_id,
+            employer_name=employer_name,
+            parent_company=parent_company,
+            industry=industry,
+            employer_priority=employer_priority,
+            graduate_programme=graduate_programme,
+            employer_remote_scope=employer_remote_scope,
         )
 
     def to_record(self) -> dict[str, Any]:

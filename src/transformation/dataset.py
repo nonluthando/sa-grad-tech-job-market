@@ -6,10 +6,16 @@ import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from tempfile import NamedTemporaryFile
 from typing import Any, Iterable
 
+from src.configuration.employers import (
+    employer_index,
+    load_employer_registry,
+    source_employer_index,
+    validate_source_links,
+)
 from src.transformation.cleaning import unique_strings
 from src.transformation.greenhouse import parse_datetime, transform_greenhouse_job
 from src.transformation.lever import transform_lever_job
@@ -19,6 +25,11 @@ from src.transformation.workday import transform_workday_job
 from src.transformation.oracle_hcm import transform_oracle_hcm_job
 from src.transformation.wp_job_manager import transform_wp_job_manager_job
 from src.transformation.snapshots import SourceSnapshot, load_snapshots
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_SOURCES_CONFIG = PROJECT_ROOT / "config" / "sources.json"
+DEFAULT_EMPLOYERS_CONFIG = PROJECT_ROOT / "config" / "employers.json"
 
 
 @dataclass(frozen=True)
@@ -79,6 +90,11 @@ def _build_quality_report(
         str(snapshot.metadata.get("source_name")) for snapshot in snapshots
     )
     company_counts = Counter(job.company for job in jobs)
+    employer_counts = Counter(job.employer_name for job in jobs)
+    industry_counts = Counter(job.industry for job in jobs)
+    parent_company_counts = Counter(
+        job.parent_company or job.employer_name for job in jobs
+    )
     provider_job_counts = Counter(job.source_provider for job in jobs)
     target_market_jobs = [job for job in jobs if job.is_target_market]
     early_career_target_market_jobs = [
@@ -138,6 +154,9 @@ def _build_quality_report(
         "talent_pool_job_count": sum(job.is_talent_pool for job in jobs),
         "workplace_type_counts": _count_values(jobs, "workplace_type"),
         "company_counts": dict(sorted(company_counts.items())),
+        "employer_counts": dict(sorted(employer_counts.items())),
+        "industry_counts": dict(sorted(industry_counts.items())),
+        "parent_company_counts": dict(sorted(parent_company_counts.items())),
         "provider_job_counts": dict(sorted(provider_job_counts.items())),
         "target_market_company_counts": dict(
             sorted(target_market_company_counts.items())
@@ -150,49 +169,113 @@ def _build_quality_report(
     }
 
 
-def _relative_snapshot_path(raw_path: Path, raw_root: Path) -> Path:
-    """Store portable lineage paths rather than machine-specific absolute paths."""
+def _relative_snapshot_path(raw_path: Path, raw_root: Path) -> PurePosixPath:
+    """Store portable POSIX lineage paths on every operating system."""
 
     try:
-        return raw_path.resolve().relative_to(raw_root.resolve())
+        relative = raw_path.resolve().relative_to(raw_root.resolve())
     except ValueError:
-        return raw_path
+        relative = raw_path
+    return PurePosixPath(relative.as_posix())
+
+
+def _load_employer_context(
+    sources_config_path: Path,
+    employer_registry_path: Path,
+) -> tuple[dict[tuple[str, str], str], dict[str, dict[str, Any]]]:
+    sources_payload = json.loads(
+        sources_config_path.read_text(encoding="utf-8")
+    )
+    employer_payload = load_employer_registry(employer_registry_path)
+    validate_source_links(sources_payload, employer_payload)
+    return source_employer_index(sources_payload), employer_index(employer_payload)
+
+
+def _resolve_snapshot_employer(
+    snapshot: SourceSnapshot,
+    source_index: dict[tuple[str, str], str],
+    employers: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    provider = snapshot.provider
+    token = str(snapshot.metadata.get("source_token") or "").strip()
+    configured_id = source_index.get((provider, token))
+    if configured_id is None:
+        raise ValueError(
+            f"Snapshot source is not linked to an employer: {provider}:{token}"
+        )
+
+    snapshot_id = str(snapshot.metadata.get("employer_id") or "").strip()
+    if snapshot_id and snapshot_id != configured_id:
+        raise ValueError(
+            "Snapshot employer_id does not match source configuration: "
+            f"{provider}:{token} has {snapshot_id!r}, expected {configured_id!r}"
+        )
+
+    try:
+        return employers[configured_id]
+    except KeyError as error:
+        raise ValueError(
+            f"Source {provider}:{token} references unknown employer {configured_id!r}"
+        ) from error
 
 
 def _transform_snapshot_job(
     snapshot: SourceSnapshot,
     job: dict[str, Any] | Any,
     raw_root: Path,
+    employer: dict[str, Any],
 ) -> CanonicalJob:
     raw_path = _relative_snapshot_path(snapshot.raw_path, raw_root)
     if snapshot.provider == "greenhouse":
-        return transform_greenhouse_job(job, snapshot.metadata, raw_path)
-    if snapshot.provider == "lever":
-        return transform_lever_job(job, snapshot.metadata, raw_path)
-    if snapshot.provider == "successfactors":
-        return transform_successfactors_job(job, snapshot.metadata, raw_path)
-    if snapshot.provider == "workday":
-        return transform_workday_job(job, snapshot.metadata, raw_path)
-    if snapshot.provider == "oracle_hcm":
-        return transform_oracle_hcm_job(job, snapshot.metadata, raw_path)
-    if snapshot.provider == "wp_job_manager":
-        return transform_wp_job_manager_job(job, snapshot.metadata, raw_path)
-    raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
+        transformed = transform_greenhouse_job(job, snapshot.metadata, raw_path)
+    elif snapshot.provider == "lever":
+        transformed = transform_lever_job(job, snapshot.metadata, raw_path)
+    elif snapshot.provider == "successfactors":
+        transformed = transform_successfactors_job(job, snapshot.metadata, raw_path)
+    elif snapshot.provider == "workday":
+        transformed = transform_workday_job(job, snapshot.metadata, raw_path)
+    elif snapshot.provider == "oracle_hcm":
+        transformed = transform_oracle_hcm_job(job, snapshot.metadata, raw_path)
+    elif snapshot.provider == "wp_job_manager":
+        transformed = transform_wp_job_manager_job(job, snapshot.metadata, raw_path)
+    else:
+        raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
+
+    return transformed.with_employer_metadata(
+        employer_id=employer["id"],
+        employer_name=employer["name"],
+        parent_company=employer["parent_company"],
+        industry=employer["industry"],
+        employer_priority=employer["priority"],
+        graduate_programme=employer["graduate_programme"],
+        employer_remote_scope=employer["remote_scope"],
+    )
 
 
-def build_dataset(raw_root: Path) -> DatasetBuildResult:
-    """Read saved snapshots and produce deterministic canonical job rows."""
+def build_dataset(
+    raw_root: Path,
+    *,
+    sources_config_path: Path = DEFAULT_SOURCES_CONFIG,
+    employer_registry_path: Path = DEFAULT_EMPLOYERS_CONFIG,
+) -> DatasetBuildResult:
+    """Produce canonical jobs enriched with stable employer metadata."""
 
+    source_index, employers = _load_employer_context(
+        sources_config_path,
+        employer_registry_path,
+    )
     snapshots = load_snapshots(raw_root)
-    observations = [
-        _transform_snapshot_job(snapshot, job, raw_root)
-        for snapshot in snapshots
-        for job in snapshot.jobs
-    ]
+    observations: list[CanonicalJob] = []
+    for snapshot in snapshots:
+        employer = _resolve_snapshot_employer(snapshot, source_index, employers)
+        observations.extend(
+            _transform_snapshot_job(snapshot, job, raw_root, employer)
+            for job in snapshot.jobs
+        )
+
     jobs = deduplicate_jobs(observations)
     quality_report = _build_quality_report(snapshots, observations, jobs)
     return DatasetBuildResult(jobs=tuple(jobs), quality_report=quality_report)
-
 
 def _parquet_schema() -> Any:
     try:
@@ -218,6 +301,13 @@ def _parquet_schema() -> Any:
             ("title", pa.string()),
             ("title_normalized", pa.string()),
             ("company", pa.string()),
+            ("employer_id", pa.string()),
+            ("employer_name", pa.string()),
+            ("parent_company", pa.string()),
+            ("industry", pa.string()),
+            ("employer_priority", pa.string()),
+            ("graduate_programme", pa.string()),
+            ("employer_remote_scope", pa.string()),
             ("department", pa.string()),
             ("office", pa.string()),
             ("location_raw", pa.string()),

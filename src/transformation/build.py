@@ -6,7 +6,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from src.transformation.dataset import build_dataset, write_dataset_outputs
+from src.transformation.dataset import (
+    DEFAULT_EMPLOYERS_CONFIG,
+    DEFAULT_SOURCES_CONFIG,
+    build_dataset,
+    write_dataset_outputs,
+)
 from src.transformation.snapshots import SnapshotReadError
 
 
@@ -20,6 +25,16 @@ def parse_args() -> argparse.Namespace:
         description="Build the canonical jobs Parquet dataset from raw snapshots."
     )
     parser.add_argument("--raw-root", type=Path, default=DEFAULT_RAW_ROOT)
+    parser.add_argument(
+        "--sources-config",
+        type=Path,
+        default=DEFAULT_SOURCES_CONFIG,
+    )
+    parser.add_argument(
+        "--employers-config",
+        type=Path,
+        default=DEFAULT_EMPLOYERS_CONFIG,
+    )
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     return parser.parse_args()
 
@@ -51,7 +66,11 @@ def print_summary(result: object, parquet_path: Path, quality_path: Path) -> Non
 def main() -> int:
     args = parse_args()
     try:
-        result = build_dataset(args.raw_root)
+        result = build_dataset(
+            args.raw_root,
+            sources_config_path=args.sources_config,
+            employer_registry_path=args.employers_config,
+        )
         parquet_path, quality_path = write_dataset_outputs(
             result,
             args.output_root,
