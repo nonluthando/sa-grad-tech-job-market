@@ -39,32 +39,28 @@
       "provider": "greenhouse",
       "token": "takealotgroup",
       "enabled": true,
-      "priority": "primary",
-      "employer_id": "takealot-group"
+      "priority": "primary"
     },
     {
       "name": "Luno",
       "provider": "greenhouse",
       "token": "luno",
       "enabled": true,
-      "priority": "primary",
-      "employer_id": "luno"
+      "priority": "primary"
     },
     {
       "name": "Impact.com",
       "provider": "greenhouse",
       "token": "impact",
       "enabled": true,
-      "priority": "primary",
-      "employer_id": "impact-com"
+      "priority": "primary"
     },
     {
       "name": "Mama Money",
       "provider": "lever",
       "token": "mamamoney",
       "enabled": true,
-      "priority": "secondary",
-      "employer_id": "mama-money"
+      "priority": "secondary"
     },
     {
       "name": "Yassir",
@@ -83,8 +79,7 @@
       "max_pages": 10,
       "request_delay_seconds": 0.2,
       "enabled": true,
-      "priority": "secondary",
-      "employer_id": "discovery"
+      "priority": "secondary"
     },
     {
       "name": "Nedbank",
@@ -95,8 +90,7 @@
       "max_pages": 10,
       "request_delay_seconds": 0.2,
       "enabled": true,
-      "priority": "secondary",
-      "employer_id": "nedbank"
+      "priority": "secondary"
     },
     {
       "name": "Electrum",
@@ -111,8 +105,7 @@
         "Job listings"
       ],
       "enabled": true,
-      "priority": "experimental",
-      "employer_id": "electrum"
+      "priority": "experimental"
     },
     {
       "name": "DigiOutsource",
@@ -125,8 +118,7 @@
       "max_pages": 20,
       "request_delay_seconds": 0.1,
       "enabled": true,
-      "priority": "secondary",
-      "employer_id": "digioutsource"
+      "priority": "secondary"
     },
     {
       "name": "ACI Worldwide",
@@ -139,8 +131,7 @@
       "max_pages": 20,
       "request_delay_seconds": 0.1,
       "enabled": true,
-      "priority": "secondary",
-      "employer_id": "aci-worldwide"
+      "priority": "secondary"
     },
     {
       "name": "BET Software",
@@ -153,8 +144,7 @@
       "max_pages": 10,
       "request_delay_seconds": 0.1,
       "enabled": true,
-      "priority": "experimental",
-      "employer_id": "bet-software"
+      "priority": "experimental"
     }
   ]
 }
