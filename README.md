@@ -561,3 +561,16 @@ This project demonstrates practical experience in:
 - Automated testing
 - Modular software architecture
 - Labour-market analytics
+
+## Interactive Dashboard
+
+Patch 6.3 adds a Streamlit dashboard backed directly by the validated Patch 6.2 Parquet marts.
+
+```bash
+uv pip install -r requirements.txt
+uv run streamlit run streamlit_app.py
+```
+
+The dashboard includes overview, employer, skills, early-career, location, opportunity and data-quality views. Global filters are executed through parameterised DuckDB queries rather than transformation logic inside the UI.
+
+See [`docs/patch-6.3-streamlit-dashboard.md`](docs/patch-6.3-streamlit-dashboard.md) for the data requirements and deployment notes.

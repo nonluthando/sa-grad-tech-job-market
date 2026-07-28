@@ -2,3 +2,7 @@ requests==2.32.4
 beautifulsoup4==4.13.4
 pyarrow==25.0.0
 pytest==8.4.1
+streamlit==1.60.0
+duckdb==1.5.5
+plotly==6.9.0
+pandas==2.3.3
