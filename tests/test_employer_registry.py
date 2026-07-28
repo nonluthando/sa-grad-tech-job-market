@@ -29,9 +29,6 @@ def test_every_configured_source_links_to_registered_employer():
     sources_payload = json.loads(
         (ROOT / "config" / "sources.json").read_text(encoding="utf-8")
     )
-    print(employer_payload)
-   # print(sources_payload)
-
     validate_source_links(sources_payload, employer_payload)
 
 
