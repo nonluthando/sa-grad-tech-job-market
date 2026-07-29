@@ -19,6 +19,7 @@ def test_dashboard_workflow_runs_cloud_pipeline() -> None:
     assert "data/processed/dashboard_jobs.parquet" in content
     assert "data/processed/dashboard_skills.parquet" in content
     assert "data/processed/dashboard-quality-report.json" in content
+    assert "timeout-minutes: 90" in content
 
 
 def test_dashboard_workflow_does_not_require_local_uv_project_files() -> None:
