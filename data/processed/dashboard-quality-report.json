@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "source_window_start": "2026-07-29T05:39:59.840441+00:00",
-  "source_window_end": "2026-07-29T05:39:59.840441+00:00",
+  "source_window_start": "2026-07-29T06:47:31.060721+00:00",
+  "source_window_end": "2026-07-29T06:47:31.060721+00:00",
   "dashboard_job_count": 407,
   "dashboard_skill_row_count": 1327,
   "target_market_job_count": 70,
@@ -24,8 +24,8 @@
     "unspecified": 117
   },
   "workplace_type_counts": {
-    "hybrid": 117,
-    "on_site": 79,
+    "hybrid": 118,
+    "on_site": 78,
     "remote": 16,
     "unspecified": 195
   },
@@ -33,16 +33,16 @@
     "Discovery": 59,
     "Luno": 6,
     "Mama Money": 12,
-    "Nedbank": 78,
+    "Nedbank": 79,
     "TFG": 5,
     "Takealot Group": 21,
-    "Yassir": 152,
+    "Yassir": 151,
     "impact.com": 74
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 137,
+    "Banks, insurance and financial services": 138,
     "Fintech and payments": 18,
-    "Product, software and e-commerce": 252
+    "Product, software and e-commerce": 251
   },
   "province_counts": {
     "Eastern Cape": 1,
