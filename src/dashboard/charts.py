@@ -6,13 +6,14 @@ from typing import Any
 
 
 CHART_TEMPLATE = "plotly_white"
-ACCENT = "#7A263A"
-SECONDARY = "#536878"
-GOLD = "#A56A2A"
+ACCENT = "#2563EB"
+SECONDARY = "#475569"
+TEAL = "#0F766E"
+AMBER = "#B45309"
 MUTED = "#6B7280"
-GRID = "#E3DED5"
+GRID = "#E5E7EB"
 PAPER = "#FFFFFF"
-PALETTE = [ACCENT, SECONDARY, GOLD, "#6C5B7B", "#477A6E", "#9B4D3A"]
+PALETTE = [ACCENT, TEAL, SECONDARY, AMBER, "#7C3AED", "#0891B2"]
 
 
 def _px() -> Any:
@@ -33,10 +34,18 @@ def _apply_layout(figure: Any, *, height: int, margin: dict[str, int]) -> Any:
         height=height,
         paper_bgcolor=PAPER,
         plot_bgcolor=PAPER,
-        font={"color": "#20252B", "family": "Arial, sans-serif"},
-        title={"font": {"size": 17}, "x": 0.0, "xanchor": "left"},
+        font={
+            "color": "#111827",
+            "family": "Inter, Arial, sans-serif",
+            "size": 12,
+        },
+        title={
+            "font": {"size": 15, "color": "#111827"},
+            "x": 0.0,
+            "xanchor": "left",
+        },
         margin=margin,
-        hoverlabel={"bgcolor": "#20252B", "font_color": "#FFFFFF"},
+        hoverlabel={"bgcolor": "#111827", "font_color": "#FFFFFF"},
     )
     figure.update_xaxes(gridcolor=GRID, zerolinecolor=GRID)
     figure.update_yaxes(gridcolor=GRID, zerolinecolor=GRID)
@@ -178,8 +187,8 @@ def heatmap(frame: Any, *, title: str) -> Any:
         aspect="auto",
         title=title,
         color_continuous_scale=[
-            [0.0, "#F4F0EA"],
-            [0.5, "#C7A9B1"],
+            [0.0, "#EFF6FF"],
+            [0.5, "#93C5FD"],
             [1.0, ACCENT],
         ],
     )

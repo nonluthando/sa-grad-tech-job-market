@@ -51,133 +51,144 @@ def _inject_css() -> None:
         """
         <style>
         :root {
-            --paper: #f5f3ee;
+            --app-bg: #f7f8fa;
             --surface: #ffffff;
-            --sidebar: #ece9e2;
-            --ink: #20252b;
-            --muted: #687078;
-            --rule: #d8d3ca;
-            --accent: #7a263a;
+            --sidebar: #f3f4f6;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+        }
+        html, body, [class*="css"] {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+                BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
         [data-testid="stAppViewContainer"] {
-            background: var(--paper);
-            color: var(--ink);
+            background: var(--app-bg);
+            color: var(--text);
         }
         [data-testid="stHeader"] {
-            background: rgba(245, 243, 238, .94);
+            background: rgba(247, 248, 250, .96);
+            border-bottom: 1px solid var(--border);
         }
         [data-testid="stSidebar"] {
             background: var(--sidebar);
-            border-right: 1px solid var(--rule);
+            border-right: 1px solid var(--border);
         }
-        [data-testid="stSidebar"] * { color: var(--ink); }
+        [data-testid="stSidebar"] * { color: var(--text); }
         .block-container {
-            max-width: 1440px;
-            padding-top: 2rem;
+            max-width: 1360px;
+            padding-top: 1.45rem;
             padding-bottom: 3rem;
         }
         .page-header {
-            border-bottom: 1px solid var(--rule);
-            padding: .25rem 0 1.15rem;
-            margin-bottom: 1rem;
+            padding: .15rem 0 .9rem;
+            margin-bottom: .35rem;
         }
         .page-header h1 {
-            color: var(--ink);
-            font-family: Georgia, 'Times New Roman', serif;
-            font-size: clamp(2rem, 4vw, 3.15rem);
-            font-weight: 600;
-            letter-spacing: -.035em;
-            line-height: 1.05;
-            margin: .2rem 0 .45rem;
+            color: var(--text);
+            font-size: clamp(1.75rem, 3vw, 2.35rem);
+            font-weight: 700;
+            letter-spacing: -.025em;
+            line-height: 1.15;
+            margin: 0 0 .3rem;
         }
         .page-header p {
             color: var(--muted);
-            font-size: 1rem;
-            line-height: 1.55;
+            font-size: .96rem;
+            line-height: 1.5;
             margin: 0;
-            max-width: 58rem;
-        }
-        .kicker {
-            color: var(--accent);
-            font-size: .73rem;
-            font-weight: 750;
-            letter-spacing: .12em;
-            text-transform: uppercase;
+            max-width: 52rem;
         }
         .status-line {
             color: var(--muted);
-            font-size: .86rem;
-            margin: .2rem 0 1rem;
+            font-size: .82rem;
+            margin: 0 0 1rem;
+            padding-bottom: .85rem;
+            border-bottom: 1px solid var(--border);
         }
-        .status-line strong { color: var(--ink); font-weight: 650; }
+        .status-line strong { color: var(--text); font-weight: 600; }
+        .metric-context {
+            color: var(--muted);
+            font-size: .82rem;
+            margin: .35rem 0 1.15rem;
+        }
         [data-testid="stMetric"] {
             background: var(--surface);
-            border: 1px solid var(--rule);
-            border-radius: 8px;
-            padding: .85rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: .75rem .9rem;
             box-shadow: none;
         }
         [data-testid="stMetricValue"] {
-            color: var(--ink);
-            font-family: Georgia, 'Times New Roman', serif;
+            color: var(--text);
+            font-size: 1.65rem;
+            font-weight: 650;
         }
         [data-testid="stMetricLabel"] { color: var(--muted); }
         [data-testid="stPlotlyChart"] {
             background: var(--surface);
-            border: 1px solid var(--rule);
-            border-radius: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
             overflow: hidden;
         }
         .section-note {
             color: var(--muted);
-            margin-top: -.55rem;
+            font-size: .9rem;
+            margin-top: -.45rem;
             margin-bottom: 1rem;
         }
         .quality-warning {
-            border-top: 1px solid #c9a56a;
-            border-bottom: 1px solid #c9a56a;
-            background: #fbf5e9;
-            color: var(--ink);
-            padding: .7rem .8rem;
+            border: 1px solid #f59e0b;
+            background: #fffbeb;
+            color: var(--text);
+            border-radius: 4px;
+            padding: .65rem .75rem;
             margin: .45rem 0;
         }
         .empty-state {
             background: var(--surface);
-            border: 1px solid var(--rule);
-            border-left: 4px solid var(--accent);
-            border-radius: 6px;
-            padding: 1rem 1.1rem;
-            margin: 1rem 0;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 4px;
+            padding: .9rem 1rem;
+            margin: .75rem 0 1rem;
+            max-width: 46rem;
         }
         .empty-state strong {
             display: block;
-            color: var(--ink);
-            font-size: 1.05rem;
-            margin-bottom: .25rem;
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: .2rem;
         }
         .empty-state span { color: var(--muted); }
         .stTabs [data-baseweb="tab-list"] {
-            gap: 1.1rem;
-            border-bottom: 1px solid var(--rule);
+            gap: 1.15rem;
+            border-bottom: 1px solid var(--border);
         }
         .stTabs [data-baseweb="tab"] {
             background: transparent;
             border-radius: 0;
             padding: .55rem .05rem;
             color: var(--muted);
+            font-weight: 500;
         }
         .stTabs [aria-selected="true"] {
             color: var(--accent);
             border-bottom-color: var(--accent);
         }
         div[data-testid="stDataFrame"] {
-            border: 1px solid var(--rule);
-            border-radius: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .stButton > button, .stLinkButton > a {
+            border-radius: 4px;
         }
         @media (max-width: 700px) {
-            .block-container { padding-top: 1.25rem; }
-            .page-header h1 { font-size: 2.15rem; }
-            .stTabs [data-baseweb="tab-list"] { gap: .75rem; }
+            .block-container { padding-top: 1rem; }
+            .page-header h1 { font-size: 1.75rem; }
+            .stTabs [data-baseweb="tab-list"] { gap: .7rem; }
         }
         </style>
         """,
@@ -244,8 +255,10 @@ def _format_date(value: Any) -> str:
 
 def _metrics(jobs: pd.DataFrame, skills: pd.DataFrame) -> None:
     employer_count = jobs["employer_id"].nunique() if not jobs.empty else 0
+    source_count = jobs["source_name"].nunique() if not jobs.empty else 0
     early_count = int(jobs["is_early_career_target"].sum()) if not jobs.empty else 0
     technology_count = skills["technology"].nunique() if not skills.empty else 0
+    province_count = jobs["province"].dropna().nunique() if not jobs.empty else 0
     flexible_share = 0.0
     if not jobs.empty:
         flexible = jobs["workplace_type"].astype(str).str.casefold().isin(
@@ -253,12 +266,19 @@ def _metrics(jobs: pd.DataFrame, skills: pd.DataFrame) -> None:
         )
         flexible_share = float(flexible.mean())
 
-    columns = st.columns(5)
+    columns = st.columns(4)
     columns[0].metric("Vacancies", f"{len(jobs):,}")
     columns[1].metric("Employers", f"{employer_count:,}")
     columns[2].metric("Early-career", f"{early_count:,}")
-    columns[3].metric("Technologies", f"{technology_count:,}")
-    columns[4].metric("Remote / hybrid", f"{flexible_share:.0%}")
+    columns[3].metric("Sources", f"{source_count:,}")
+    st.markdown(
+        '<div class="metric-context">'
+        f'{technology_count:,} technologies &nbsp;·&nbsp; '
+        f'{province_count:,} provinces &nbsp;·&nbsp; '
+        f'{flexible_share:.0%} remote or hybrid'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def _overview(jobs: pd.DataFrame, skills: pd.DataFrame) -> None:
@@ -536,6 +556,29 @@ def _quality(jobs: pd.DataFrame, report: dict[str, Any]) -> None:
     )
     columns[3].metric("Current filtered rows", f"{len(jobs):,}")
 
+    if not jobs.empty:
+        left, right = st.columns(2)
+        with left:
+            st.plotly_chart(
+                horizontal_bar(
+                    _count_frame(jobs, "source_name", 15),
+                    label="label",
+                    value="count",
+                    title="Rows by source",
+                ),
+                use_container_width=True,
+            )
+        with right:
+            st.plotly_chart(
+                horizontal_bar(
+                    _count_frame(jobs, "source_provider", 10),
+                    label="label",
+                    value="count",
+                    title="Rows by collection platform",
+                ),
+                use_container_width=True,
+            )
+
     warnings = report.get("warnings", [])
     st.markdown("### Validation warnings")
     if warnings:
@@ -567,8 +610,8 @@ def _quality(jobs: pd.DataFrame, report: dict[str, Any]) -> None:
         )
 
     st.caption(
-        "This dashboard represents configured public employer career portals, "
-        "not every technology vacancy in South Africa."
+        "Coverage is limited to configured public employer career portals; "
+        "it is not a census of every technology vacancy in South Africa."
     )
 
 
@@ -576,9 +619,8 @@ def _render_header() -> None:
     st.markdown(
         """
         <header class="page-header">
-          <div class="kicker">Employer-direct labour market data</div>
-          <h1>South African Tech Job Market</h1>
-          <p>Vacancies, employers, technologies and early-career access across configured public career sources.</p>
+          <h1>South African tech jobs</h1>
+          <p>Current vacancies collected directly from employer career sites.</p>
         </header>
         """,
         unsafe_allow_html=True,
@@ -607,7 +649,7 @@ def _render_missing_data(error: DashboardDataError) -> None:
 def main() -> None:
     st.set_page_config(
         page_title=APP_TITLE,
-        page_icon="📈",
+        page_icon="🇿🇦",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -638,7 +680,7 @@ def main() -> None:
 
     tabs = st.tabs(
         [
-            "Market",
+            "Overview",
             "Employers",
             "Skills",
             "Early career",
