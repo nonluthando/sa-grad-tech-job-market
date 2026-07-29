@@ -153,6 +153,42 @@
       "enabled": true,
       "priority": "experimental",
       "employer_id": "bet-software"
+    },
+    {
+      "name": "Bash",
+      "provider": "greenhouse",
+      "token": "bashdotcom",
+      "enabled": true,
+      "priority": "primary",
+      "employer_id": "tfg"
+    },
+    {
+      "name": "FirstRand",
+      "provider": "workday",
+      "token": "firstrand",
+      "host": "https://firstrand.wd3.myworkdayjobs.com",
+      "tenant": "firstrand",
+      "site": "FRB",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.05,
+      "enabled": true,
+      "priority": "primary",
+      "employer_id": "firstrand"
+    },
+    {
+      "name": "Absa",
+      "provider": "workday",
+      "token": "absa",
+      "host": "https://absa.wd3.myworkdayjobs.com",
+      "tenant": "absa",
+      "site": "ABSAcareersite",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.05,
+      "enabled": true,
+      "priority": "primary",
+      "employer_id": "absa"
     }
   ]
 }

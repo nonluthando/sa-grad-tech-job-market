@@ -211,7 +211,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "absa",
@@ -225,7 +225,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "capitec",
@@ -342,7 +342,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "yoco",
