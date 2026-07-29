@@ -5,11 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 
-DARK_TEMPLATE = "plotly_dark"
-ACCENT = "#2DD4BF"
-SECONDARY = "#60A5FA"
-GOLD = "#FBBF24"
-MUTED = "#94A3B8"
+CHART_TEMPLATE = "plotly_white"
+ACCENT = "#7A263A"
+SECONDARY = "#536878"
+GOLD = "#A56A2A"
+MUTED = "#6B7280"
+GRID = "#E3DED5"
+PAPER = "#FFFFFF"
+PALETTE = [ACCENT, SECONDARY, GOLD, "#6C5B7B", "#477A6E", "#9B4D3A"]
 
 
 def _px() -> Any:
@@ -24,6 +27,22 @@ def _go() -> Any:
     return go
 
 
+def _apply_layout(figure: Any, *, height: int, margin: dict[str, int]) -> Any:
+    figure.update_layout(
+        template=CHART_TEMPLATE,
+        height=height,
+        paper_bgcolor=PAPER,
+        plot_bgcolor=PAPER,
+        font={"color": "#20252B", "family": "Arial, sans-serif"},
+        title={"font": {"size": 17}, "x": 0.0, "xanchor": "left"},
+        margin=margin,
+        hoverlabel={"bgcolor": "#20252B", "font_color": "#FFFFFF"},
+    )
+    figure.update_xaxes(gridcolor=GRID, zerolinecolor=GRID)
+    figure.update_yaxes(gridcolor=GRID, zerolinecolor=GRID)
+    return figure
+
+
 def empty_figure(message: str) -> Any:
     go = _go()
     figure = go.Figure()
@@ -34,14 +53,16 @@ def empty_figure(message: str) -> Any:
         xref="paper",
         yref="paper",
         showarrow=False,
-        font={"size": 16, "color": MUTED},
+        font={"size": 15, "color": MUTED},
     )
     figure.update_layout(
-        template=DARK_TEMPLATE,
-        height=360,
+        template=CHART_TEMPLATE,
+        height=340,
+        paper_bgcolor=PAPER,
+        plot_bgcolor=PAPER,
         xaxis={"visible": False},
         yaxis={"visible": False},
-        margin={"l": 20, "r": 20, "t": 30, "b": 20},
+        margin={"l": 20, "r": 20, "t": 25, "b": 20},
     )
     return figure
 
@@ -67,14 +88,23 @@ def horizontal_bar(
         title=title,
         color_discrete_sequence=[ACCENT],
     )
-    figure.update_traces(textposition="outside", cliponaxis=False)
-    figure.update_layout(
-        template=DARK_TEMPLATE,
+    figure.update_traces(
+        textposition="outside",
+        cliponaxis=False,
+        marker_line_width=0,
+        hovertemplate="%{y}<br>%{x:,}<extra></extra>",
+    )
+    _apply_layout(
+        figure,
         height=height,
-        xaxis_title="Vacancies" if value == "count" else value.replace("_", " ").title(),
+        margin={"l": 18, "r": 52, "t": 55, "b": 30},
+    )
+    figure.update_layout(
+        xaxis_title=(
+            "Vacancies" if value == "count" else value.replace("_", " ").title()
+        ),
         yaxis_title=None,
         showlegend=False,
-        margin={"l": 20, "r": 45, "t": 55, "b": 30},
     )
     return figure
 
@@ -93,17 +123,22 @@ def donut(
         frame,
         names=label,
         values=value,
-        hole=0.62,
+        hole=0.68,
         title=title,
-        color_discrete_sequence=[ACCENT, SECONDARY, GOLD, "#A78BFA", "#FB7185"],
+        color_discrete_sequence=PALETTE,
     )
-    figure.update_traces(textposition="inside", textinfo="percent+label")
-    figure.update_layout(
-        template=DARK_TEMPLATE,
-        height=430,
-        legend_title=None,
-        margin={"l": 20, "r": 20, "t": 55, "b": 20},
+    figure.update_traces(
+        textposition="inside",
+        textinfo="percent",
+        hovertemplate="%{label}<br>%{value:,} vacancies<extra></extra>",
+        marker={"line": {"color": PAPER, "width": 2}},
     )
+    _apply_layout(
+        figure,
+        height=420,
+        margin={"l": 18, "r": 18, "t": 55, "b": 20},
+    )
+    figure.update_layout(legend_title=None)
     return figure
 
 
@@ -119,14 +154,17 @@ def timeline(frame: Any, *, title: str) -> Any:
         title=title,
         color_discrete_sequence=[ACCENT],
     )
-    figure.update_traces(line={"width": 3}, marker={"size": 8})
-    figure.update_layout(
-        template=DARK_TEMPLATE,
-        height=390,
-        xaxis_title=None,
-        yaxis_title="Vacancies observed",
-        margin={"l": 20, "r": 20, "t": 55, "b": 30},
+    figure.update_traces(
+        line={"width": 2.5},
+        marker={"size": 7, "line": {"width": 1, "color": PAPER}},
+        hovertemplate="%{x|%b %Y}<br>%{y:,} vacancies<extra></extra>",
     )
+    _apply_layout(
+        figure,
+        height=380,
+        margin={"l": 18, "r": 18, "t": 55, "b": 30},
+    )
+    figure.update_layout(xaxis_title=None, yaxis_title="Vacancies observed")
     return figure
 
 
@@ -139,14 +177,20 @@ def heatmap(frame: Any, *, title: str) -> Any:
         text_auto=True,
         aspect="auto",
         title=title,
-        color_continuous_scale="Teal",
+        color_continuous_scale=[
+            [0.0, "#F4F0EA"],
+            [0.5, "#C7A9B1"],
+            [1.0, ACCENT],
+        ],
+    )
+    _apply_layout(
+        figure,
+        height=500,
+        margin={"l": 18, "r": 18, "t": 55, "b": 30},
     )
     figure.update_layout(
-        template=DARK_TEMPLATE,
-        height=500,
         xaxis_title="Technology",
         yaxis_title="Role level",
         coloraxis_colorbar_title="Mentions",
-        margin={"l": 20, "r": 20, "t": 55, "b": 30},
     )
     return figure
