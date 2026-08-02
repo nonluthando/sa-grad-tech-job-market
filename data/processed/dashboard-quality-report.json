@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "source_window_start": "2026-08-01T06:42:29.567163+00:00",
-  "source_window_end": "2026-08-01T06:42:29.567163+00:00",
-  "dashboard_job_count": 419,
-  "dashboard_skill_row_count": 1385,
+  "source_window_start": "2026-08-02T06:47:15.192898+00:00",
+  "source_window_end": "2026-08-02T06:47:15.192898+00:00",
+  "dashboard_job_count": 416,
+  "dashboard_skill_row_count": 1383,
   "target_market_job_count": 75,
   "non_talent_pool_target_market_job_count": 71,
   "early_career_target_job_count": 9,
   "talent_pool_job_count": 19,
-  "jobs_with_skills_count": 230,
-  "jobs_without_skills_count": 189,
+  "jobs_with_skills_count": 228,
+  "jobs_without_skills_count": 188,
   "target_jobs_with_skills_count": 64,
   "target_skill_coverage_rate": 0.8533333333333334,
   "unique_technology_count": 83,
@@ -20,40 +20,40 @@
     "internship": 2,
     "junior": 50,
     "mid_level": 49,
-    "senior": 205,
-    "unspecified": 110
+    "senior": 204,
+    "unspecified": 108
   },
   "workplace_type_counts": {
     "hybrid": 122,
     "on_site": 81,
     "remote": 19,
-    "unspecified": 197
+    "unspecified": 194
   },
   "employer_counts": {
-    "Discovery": 58,
+    "Discovery": 56,
     "Luno": 9,
     "Mama Money": 13,
-    "Nedbank": 81,
+    "Nedbank": 80,
     "TFG": 5,
     "Takealot Group": 21,
     "Yassir": 153,
     "impact.com": 79
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 139,
+    "Banks, insurance and financial services": 136,
     "Fintech and payments": 22,
     "Product, software and e-commerce": 258
   },
   "province_counts": {
     "Free State": 1,
-    "Gauteng": 117,
-    "KwaZulu-Natal": 11,
+    "Gauteng": 115,
+    "KwaZulu-Natal": 10,
     "Western Cape": 84,
     "unspecified": 206
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 149,
-    "Analytics and BI": 100,
+    "Analytics and BI": 98,
     "Application Development": 46,
     "Backend and Architecture": 121,
     "Cloud": 108,
@@ -91,7 +91,7 @@
     "ETL": 10,
     "Elasticsearch": 5,
     "Event-driven Architecture": 12,
-    "Excel": 52,
+    "Excel": 50,
     "Express.js": 10,
     "Generative AI": 5,
     "Git": 51,
@@ -155,12 +155,12 @@
   },
   "missing_value_counts": {
     "province": 206,
-    "workplace_type": 197,
-    "effective_role_level": 110,
+    "workplace_type": 194,
+    "effective_role_level": 108,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 1,
-  "jobs_with_extraction_warnings_count": 189,
+  "jobs_with_extraction_warnings_count": 188,
   "warnings": [
     "small_early_career_sample",
     "high_unknown_workplace_share"
