@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "source_window_start": "2026-08-03T15:16:37.529009+00:00",
-  "source_window_end": "2026-08-03T15:16:37.529009+00:00",
-  "dashboard_job_count": 429,
-  "dashboard_skill_row_count": 1376,
+  "source_window_start": "2026-08-03T21:30:30.395589+00:00",
+  "source_window_end": "2026-08-03T21:30:30.395589+00:00",
+  "dashboard_job_count": 430,
+  "dashboard_skill_row_count": 1378,
   "target_market_job_count": 74,
   "non_talent_pool_target_market_job_count": 70,
   "early_career_target_job_count": 9,
   "talent_pool_job_count": 19,
-  "jobs_with_skills_count": 232,
+  "jobs_with_skills_count": 233,
   "jobs_without_skills_count": 197,
   "target_jobs_with_skills_count": 63,
   "target_skill_coverage_rate": 0.8513513513513513,
@@ -20,14 +20,14 @@
     "internship": 2,
     "junior": 51,
     "mid_level": 54,
-    "senior": 210,
-    "unspecified": 110
+    "senior": 212,
+    "unspecified": 109
   },
   "workplace_type_counts": {
     "hybrid": 123,
     "on_site": 82,
     "remote": 18,
-    "unspecified": 206
+    "unspecified": 207
   },
   "employer_counts": {
     "Discovery": 57,
@@ -37,24 +37,24 @@
     "TFG": 5,
     "Takealot Group": 21,
     "Yassir": 154,
-    "impact.com": 81
+    "impact.com": 82
   },
   "industry_counts": {
     "Banks, insurance and financial services": 147,
     "Fintech and payments": 21,
-    "Product, software and e-commerce": 261
+    "Product, software and e-commerce": 262
   },
   "province_counts": {
     "Free State": 1,
     "Gauteng": 120,
     "KwaZulu-Natal": 12,
     "Western Cape": 83,
-    "unspecified": 213
+    "unspecified": 214
   },
   "capability_mention_counts": {
-    "AI and Machine Learning": 150,
+    "AI and Machine Learning": 151,
     "Analytics and BI": 99,
-    "Application Development": 44,
+    "Application Development": 45,
     "Backend and Architecture": 122,
     "Cloud": 105,
     "Data Engineering": 74,
@@ -72,7 +72,7 @@
     "AWS": 29,
     "Angular": 7,
     "Apache Spark": 6,
-    "Artificial Intelligence": 56,
+    "Artificial Intelligence": 57,
     "Azure": 17,
     "Bash": 10,
     "BigQuery": 22,
@@ -131,7 +131,7 @@
     "React": 31,
     "Redis": 47,
     "Ruby": 1,
-    "Ruby on Rails": 3,
+    "Ruby on Rails": 4,
     "SAP": 6,
     "SAS": 6,
     "SQL": 71,
@@ -154,9 +154,9 @@
     "scikit-learn": 9
   },
   "missing_value_counts": {
-    "province": 213,
-    "workplace_type": 206,
-    "effective_role_level": 110,
+    "province": 214,
+    "workplace_type": 207,
+    "effective_role_level": 109,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 1,
