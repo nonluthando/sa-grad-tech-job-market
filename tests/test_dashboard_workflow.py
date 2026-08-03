@@ -11,7 +11,7 @@ def test_dashboard_workflow_runs_cloud_pipeline() -> None:
 
     assert "workflow_dispatch:" in content
     assert "schedule:" in content
-    assert 'cron: "15 4 * * *"' in content
+    assert 'cron: "15 4,12,20 * * *"' in content
     assert "python -m src.ingestion.collect" in content
     assert "python -m src.transformation.build" in content
     assert "python -m src.skills.build" in content
