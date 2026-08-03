@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   schedule:
     # 06:15 South Africa Standard Time (UTC+2)
-    - cron: "15 4 * * *"
+    - cron: "15 4,12,20 * * *"
   push:
     branches:
       - main
