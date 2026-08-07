@@ -1,0 +1,220 @@
+diff --git a/.github/workflows/refresh-dashboard.yml b/.github/workflows/refresh-dashboard.yml
+index e11a5f8..be214d5 100644
+--- a/.github/workflows/refresh-dashboard.yml
++++ b/.github/workflows/refresh-dashboard.yml
+@@ -72,17 +72,18 @@ jobs:
+             data/processed/dashboard_skills.parquet
+             data/processed/dashboard-quality-report.json
+ 
+-      - name: Commit refreshed dashboard data
++      - name: Commit snapshot history and refreshed dashboard data
+         run: |
+           git config user.name "github-actions[bot]"
+           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+           git add -f \
++            data/raw \
+             data/processed/dashboard_jobs.parquet \
+             data/processed/dashboard_skills.parquet \
+             data/processed/dashboard-quality-report.json
+ 
+           if git diff --cached --quiet; then
+-            echo "Dashboard data did not change."
++            echo "Snapshot history and dashboard data did not change."
+           else
+             git commit -m "Refresh dashboard data"
+             git push origin "HEAD:${GITHUB_REF_NAME}"
+diff --git a/src/ingestion/snapshot.py b/src/ingestion/snapshot.py
+index 7c2298b..103830f 100644
+--- a/src/ingestion/snapshot.py
++++ b/src/ingestion/snapshot.py
+@@ -41,7 +41,7 @@ def filename_timestamp(value: datetime) -> str:
+ 
+ 
+ class RawSnapshotStore:
+-    """Write exact response bytes once and skip duplicate content."""
++    """Write raw response bytes once while recording every collection observation."""
+ 
+     def __init__(self, root: Path) -> None:
+         self.root = root
+@@ -202,22 +202,48 @@ class RawSnapshotStore:
+         source_directory = self.root / provider / source_token
+         source_directory.mkdir(parents=True, exist_ok=True)
+ 
+-        existing_metadata = self._find_existing_digest(source_directory, digest)
+-        if existing_metadata is not None:
+-            existing_payload = json.loads(existing_metadata.read_text(encoding="utf-8"))
++        timestamp = filename_timestamp(collection_time)
++        metadata_path = source_directory / f"{timestamp}.metadata.json"
++
++        # A collection timestamp identifies one observation. Re-running the same
++        # observation is idempotent, but a conflicting payload at the same
++        # timestamp must never overwrite immutable history.
++        if metadata_path.exists():
++            existing_payload = json.loads(metadata_path.read_text(encoding="utf-8"))
++            if existing_payload.get("content_sha256") != digest:
++                raise FileExistsError(
++                    "Snapshot metadata already exists for this collection timestamp "
++                    f"with different content: {metadata_path}"
++                )
+             raw_path = source_directory / existing_payload["raw_file"]
+             return SnapshotWriteResult(
+                 status="duplicate",
+                 raw_path=raw_path,
+-                metadata_path=existing_metadata,
++                metadata_path=metadata_path,
+                 content_sha256=digest,
+             )
+ 
+-        timestamp = filename_timestamp(collection_time)
+-        raw_path = source_directory / f"{timestamp}.json"
+-        metadata_path = source_directory / f"{timestamp}.metadata.json"
++        # Reuse an identical raw payload to avoid storing the same bytes again,
++        # but still write a fresh metadata sidecar below. That sidecar is the
++        # observation history used to advance first_seen/last_seen counts.
++        existing_metadata = self._find_existing_digest(source_directory, digest)
++        if existing_metadata is not None:
++            existing_payload = json.loads(existing_metadata.read_text(encoding="utf-8"))
++            raw_path = source_directory / existing_payload["raw_file"]
++            if not raw_path.is_file():
++                raise FileNotFoundError(
++                    f"Existing snapshot metadata points to missing raw file: {raw_path}"
++                )
++            status = "duplicate"
++        else:
++            raw_path = source_directory / f"{timestamp}.json"
++            if raw_path.exists():
++                raise FileExistsError(
++                    f"Raw snapshot already exists for collection timestamp: {raw_path}"
++                )
++            self._atomic_write_bytes(raw_path, raw_bytes)
++            status = "written"
+ 
+-        self._atomic_write_bytes(raw_path, raw_bytes)
+         metadata = {
+             "source": provider,
+             "source_name": source_name,
+@@ -241,7 +267,7 @@ class RawSnapshotStore:
+         )
+ 
+         return SnapshotWriteResult(
+-            status="written",
++            status=status,
+             raw_path=raw_path,
+             metadata_path=metadata_path,
+             content_sha256=digest,
+diff --git a/tests/test_dashboard_workflow.py b/tests/test_dashboard_workflow.py
+index 5b98b1d..4633c92 100644
+--- a/tests/test_dashboard_workflow.py
++++ b/tests/test_dashboard_workflow.py
+@@ -28,3 +28,10 @@ def test_dashboard_workflow_does_not_require_local_uv_project_files() -> None:
+     assert "actions/setup-python@v5" in content
+     assert "python -m pip install -r requirements.txt" in content
+     assert "uv run" not in content
++
++
++def test_dashboard_workflow_persists_raw_snapshot_history() -> None:
++    content = WORKFLOW.read_text(encoding="utf-8")
++
++    assert "git add -f" in content
++    assert "data/raw" in content
+diff --git a/tests/test_snapshot_store.py b/tests/test_snapshot_store.py
+index 321460e..18a681d 100644
+--- a/tests/test_snapshot_store.py
++++ b/tests/test_snapshot_store.py
+@@ -42,17 +42,39 @@ def test_snapshot_store_writes_raw_bytes_and_metadata(tmp_path):
+     assert metadata["raw_file"] == result.raw_path.name
+ 
+ 
+-def test_snapshot_store_skips_identical_payload(tmp_path):
++def test_snapshot_store_reuses_identical_raw_bytes_but_records_each_observation(
++    tmp_path,
++):
+     store = RawSnapshotStore(tmp_path)
+     response = build_response()
++    first_at = datetime(2026, 7, 22, 19, 0, tzinfo=timezone.utc)
++    second_at = datetime(2026, 7, 23, 19, 0, tzinfo=timezone.utc)
+ 
+-    first = store.write_greenhouse_snapshot("Example Company", response)
+-    second = store.write_greenhouse_snapshot("Example Company", response)
++    first = store.write_greenhouse_snapshot(
++        "Example Company", response, collected_at=first_at
++    )
++    second = store.write_greenhouse_snapshot(
++        "Example Company", response, collected_at=second_at
++    )
+ 
+     assert first.status == "written"
+     assert second.status == "duplicate"
+     assert second.raw_path == first.raw_path
+-    assert len(list((tmp_path / "greenhouse" / "example").glob("*.json"))) == 2
++    assert second.metadata_path != first.metadata_path
++
++    source_directory = tmp_path / "greenhouse" / "example"
++    metadata_paths = sorted(source_directory.glob("*.metadata.json"))
++    raw_paths = sorted(
++        path
++        for path in source_directory.glob("*.json")
++        if not path.name.endswith(".metadata.json")
++    )
++    assert len(metadata_paths) == 2
++    assert raw_paths == [first.raw_path]
++
++    second_metadata = json.loads(second.metadata_path.read_text(encoding="utf-8"))
++    assert second_metadata["collected_at"] == second_at.isoformat()
++    assert second_metadata["raw_file"] == first.raw_path.name
+ 
+ 
+ def test_snapshot_store_writes_lever_raw_bytes_and_metadata(tmp_path):
+diff --git a/src/dashboard/app.py b/src/dashboard/app.py
+--- a/src/dashboard/app.py
++++ b/src/dashboard/app.py
+@@ -502,6 +502,7 @@ def _opportunities(jobs: pd.DataFrame) -> None:
+             "workplace_type",
+             "effective_role_level",
+             "skills",
++            "first_seen_at",
+             "last_seen_at",
+             "application_url",
+         ]
+@@ -525,6 +526,7 @@ def _opportunities(jobs: pd.DataFrame) -> None:
+             "workplace_type": "Work arrangement",
+             "effective_role_level": "Level",
+             "skills": "Technologies",
++            "first_seen_at": "First seen",
+             "last_seen_at": "Last seen",
+             "application_url": "Apply",
+         }
+@@ -535,6 +537,10 @@ def _opportunities(jobs: pd.DataFrame) -> None:
+         use_container_width=True,
+         column_config={
+             "Apply": st.column_config.LinkColumn("Apply", display_text="Open role"),
++            "First seen": st.column_config.DatetimeColumn(
++                "First seen",
++                format="D MMM YYYY",
++            ),
+             "Last seen": st.column_config.DatetimeColumn(
+                 "Last seen",
+                 format="D MMM YYYY",
+diff --git a/tests/test_dashboard_opportunities.py b/tests/test_dashboard_opportunities.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_dashboard_opportunities.py
+@@ -0,0 +1,18 @@
++from __future__ import annotations
++
++from pathlib import Path
++
++
++APP = Path("src/dashboard/app.py")
++
++
++def test_opportunities_table_shows_first_seen_date() -> None:
++    app = APP.read_text(encoding="utf-8")
++    opportunities = app.split("def _opportunities", 1)[1].split(
++        "def _quality", 1
++    )[0]
++
++    assert '"first_seen_at"' in opportunities
++    assert '"first_seen_at": "First seen"' in opportunities
++    assert '"First seen": st.column_config.DatetimeColumn(' in opportunities
++    assert '"last_seen_at": "Last seen"' in opportunities
