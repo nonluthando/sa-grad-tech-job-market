@@ -4,44 +4,52 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 34
+**Roles audited:** 36
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 12 |
-| likely_mid_level | 12 |
-| likely_senior | 10 |
+| ambiguous | 14 |
+| likely_mid_level | 16 |
+| likely_senior | 6 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 13 |
-| Impact.com | 6 |
+| Nedbank | 9 |
+| Impact.com | 8 |
+| Discovery | 7 |
 | Takealot Group | 6 |
-| Discovery | 5 |
 | Yassir | 3 |
-| Mama Money | 1 |
+| Luno | 1 |
+| Theodo | 1 |
+| Bash | 1 |
 
 ## Roles
 
 | Likely level | Company | Title | Experience evidence |
 |---|---|---|---|
 | ambiguous | Discovery | Android Developer - Talent Pool | description: 3+ Year \| description: 2+ years \| description: 3+ years |
-| ambiguous | Discovery | Business Analyst | No explicit evidence |
-| ambiguous | Discovery | IT Auditor | description: 2+ years |
+| ambiguous | Discovery | Business Analyst (Talent Pool) | No explicit evidence |
+| ambiguous | Discovery | Data Scientist | No explicit evidence |
+| ambiguous | Discovery | Machine Learning Engineer | description: 1-3 years |
 | ambiguous | Discovery | iOS Developer - Talent Pool | description: 2+ years |
 | ambiguous | Impact.com | GenAI Engineer - Product Marketing & Adoption | description: At least 1 year |
 | ambiguous | Impact.com | QA Engineer | No explicit evidence |
 | ambiguous | Impact.com | Software Quality Engineer (Java using Selenium) | description: At least 3 years \| description: At least 2 years |
-| ambiguous | Mama Money | Snr. Full-Stack JavaScript Engineer | description: at least 2 years \| description: 6+ years |
-| ambiguous | Nedbank | Title: Automation Design Practioner | No explicit evidence |
+| ambiguous | Luno | Backend Engineer | No explicit evidence |
+| ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
 | ambiguous | Takealot Group | Zendesk Platform Software Engineer | description: 2–4 years |
+| ambiguous | Theodo | Full Stack Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Yassir | Data Scientist | No explicit evidence |
 | ambiguous | Yassir | Data Scientist (Pricing) | description: at least 2 years |
-| likely_mid_level | Discovery | Business Analyst | description: 3 – 5 years |
+| likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
+| likely_mid_level | Discovery | Data Scientist | description: 3+ years |
+| likely_mid_level | Discovery | Java Developer | description: 4-5 years |
+| likely_mid_level | Impact.com | Android Developer | description: 3+ years |
+| likely_mid_level | Impact.com | Email & Marketing Automation Developer | description: 3–5 years of experience |
 | likely_mid_level | Impact.com | Site Reliability Engineer | description: 3+ years |
 | likely_mid_level | Impact.com | Software engineer | description: 4 + years |
 | likely_mid_level | Nedbank | Title: ACE Software Developer | description: Min 3 years |
@@ -49,17 +57,13 @@ do not overwrite the production classification.
 | likely_mid_level | Nedbank | Title: Data Engineer | description: 3 - 6 years |
 | likely_mid_level | Nedbank | Title: Software Developer | description: Min 3 years |
 | likely_mid_level | Nedbank | Title: Software Developer | description: Min 3 years |
-| likely_mid_level | Nedbank | Title: Software Developer II | title: Developer II \| description: 5 - 10 years \| description: 3-5 years \| description: at least 2 years |
+| likely_mid_level | Nedbank | Title: Software Developer II | title: Developer II \| description: Min 3 years |
 | likely_mid_level | Takealot Group | BI Engineer: Takealot Group | description: minimum of 5 years \| description: minimum of 8 years \| description: Minimum 3 years |
-| likely_mid_level | Takealot Group | Mr D - Android Engineer | description: 3-5 years \| description: minimum of 6 years \| description: minimum of 3 years |
+| likely_mid_level | Takealot Group | Software Engineer (Python) | description: 3 to 6 years \| description: 5 to 10 years |
 | likely_mid_level | Yassir | Data Scientist (Personalization) | description: at least 3 years |
 | likely_senior | Impact.com | Technical Services Engineer III | title: Engineer III |
-| likely_senior | Nedbank | Title: Asset Management: Business Analyst | description: 5 - 8 years |
-| likely_senior | Nedbank | Title: BI Data Analyst | description: Minimum 8 years \| description: Minimum 6 years |
+| likely_senior | Nedbank | Title: BI Data Analyst II | title: Analyst II \| description: 5-7 years |
 | likely_senior | Nedbank | Title: Front Arena Developer | description: Min 5 years |
-| likely_senior | Nedbank | Title: Software Quality Engineer II | title: Engineer II \| description: 5+ years |
-| likely_senior | Nedbank | Title: Specialist: Quantitative Analytics | title: Specialist \| description: Minimum 6 years |
-| likely_senior | Nedbank | Title: Systems Engineer Specialist | title: Specialist \| description: 8+ years |
 | likely_senior | Takealot Group | Python Software Engineer | description: 5+ years |
 | likely_senior | Takealot Group | Search Software Engineer | description: 5 to 10 years |
 | likely_senior | Takealot Group | Software Engineer (Scala) | description: At least 5 years |
