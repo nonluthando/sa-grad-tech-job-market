@@ -1,0 +1,467 @@
+diff --git a/config/employers.json b/config/employers.json
+--- a/config/employers.json
++++ b/config/employers.json
+@@ -407,6 +407,50 @@
+       "graduate_programme": "yes",
+       "priority": "tier_2",
+       "collection_status": "candidate"
++    },
++    {
++      "id": "binance",
++      "name": "Binance",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Fintech and payments",
++      "head_office_city": null,
++      "country": "Global",
++      "listed_company": false,
++      "remote_scope": "global",
++      "graduate_programme": "unknown",
++      "priority": "tier_2",
++      "collection_status": "active"
++    },
++    {
++      "id": "theodo",
++      "name": "Theodo",
++      "parent_company": "Theodo Group",
++      "brands": [
++        "Theodo UK"
++      ],
++      "industry": "Software consultancies and engineering firms",
++      "head_office_city": "London",
++      "country": "United Kingdom",
++      "listed_company": false,
++      "remote_scope": "multi_country",
++      "graduate_programme": "unknown",
++      "priority": "tier_2",
++      "collection_status": "active"
++    },
++    {
++      "id": "moo",
++      "name": "MOO",
++      "parent_company": null,
++      "brands": [],
++      "industry": "Product, software and e-commerce",
++      "head_office_city": "London",
++      "country": "United Kingdom",
++      "listed_company": false,
++      "remote_scope": "multi_country",
++      "graduate_programme": "unknown",
++      "priority": "tier_2",
++      "collection_status": "active"
+     }
+   ]
+ }
+diff --git a/config/sources.json b/config/sources.json
+--- a/config/sources.json
++++ b/config/sources.json
+@@ -154,6 +154,30 @@
+       "enabled": true,
+       "priority": "primary",
+       "employer_id": "absa"
++    },
++    {
++      "name": "Binance",
++      "provider": "lever",
++      "token": "binance",
++      "enabled": true,
++      "priority": "secondary",
++      "employer_id": "binance"
++    },
++    {
++      "name": "Theodo",
++      "provider": "lever",
++      "token": "theodo",
++      "enabled": true,
++      "priority": "secondary",
++      "employer_id": "theodo"
++    },
++    {
++      "name": "MOO",
++      "provider": "lever",
++      "token": "moo",
++      "enabled": true,
++      "priority": "secondary",
++      "employer_id": "moo"
+     }
+   ]
+ }
+diff --git a/.github/workflows/refresh-dashboard.yml b/.github/workflows/refresh-dashboard.yml
+--- a/.github/workflows/refresh-dashboard.yml
++++ b/.github/workflows/refresh-dashboard.yml
+@@ -17,6 +17,7 @@ on:
+       - "src/transformation/**"
+       - "src/skills/**"
+       - "src/analytics/**"
++      - "scripts/audit_unspecified.py"
+       - "requirements.txt"
+       - ".github/workflows/refresh-dashboard.yml"
+ 
+@@ -48,6 +49,9 @@ jobs:
+       - name: Build canonical jobs
+         run: python -m src.transformation.build
+ 
++      - name: Audit unspecified role levels
++        run: python -m scripts.audit_unspecified
++
+       - name: Extract skills and requirements
+         run: python -m src.skills.build
+ 
+@@ -68,6 +72,8 @@ jobs:
+             data/processed/dashboard_jobs.parquet
+             data/processed/dashboard_skills.parquet
+             data/processed/dashboard-quality-report.json
++            data/analysis/unspecified-role-audit.csv
++            data/analysis/unspecified-role-audit.md
+ 
+       - name: Commit snapshot history and refreshed dashboard data
+         run: |
+@@ -76,6 +82,8 @@ jobs:
+           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+           git add -f \
+             data/raw \
++            data/analysis/unspecified-role-audit.csv \
++            data/analysis/unspecified-role-audit.md \
+             data/processed/dashboard_jobs.parquet \
+             data/processed/dashboard_skills.parquet \
+             data/processed/dashboard-quality-report.json
+diff --git a/scripts/audit_unspecified.py b/scripts/audit_unspecified.py
+--- a/scripts/audit_unspecified.py
++++ b/scripts/audit_unspecified.py
+@@ -169,6 +169,11 @@ def build_audit_rows(jobs: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+ 
+         rows.append(
+             {
++                "job_key": job.get("job_key"),
++                "employer_id": job.get("employer_id"),
++                "employer_name": job.get("employer_name") or job.get("company"),
++                "first_seen_at": job.get("first_seen_at"),
++                "last_seen_at": job.get("last_seen_at"),
+                 "company": job.get("company"),
+                 "title": title,
+                 "city": job.get("city"),
+@@ -196,5 +200,10 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+     path.parent.mkdir(parents=True, exist_ok=True)
+     fieldnames = [
++        "job_key",
++        "employer_id",
++        "employer_name",
++        "first_seen_at",
++        "last_seen_at",
+         "company",
+         "title",
+         "city",
+diff --git a/src/dashboard/data.py b/src/dashboard/data.py
+--- a/src/dashboard/data.py
++++ b/src/dashboard/data.py
+@@ -189,13 +189,17 @@ class DashboardRepository:
+         result: dict[str, list[str]] = {}
+         relation = self._read_sql("jobs")
+         for name, field in OPTION_FIELDS.items():
++            excluded_values = (
++                "('unknown', 'none')"
++                if name == "role_levels"
++                else "('unknown', 'unspecified', 'none')"
++            )
+             sql = f"""
+                 SELECT DISTINCT {field} AS value
+                 FROM {relation}
+                 WHERE {field} IS NOT NULL
+                   AND TRIM(CAST({field} AS VARCHAR)) <> ''
+-                  AND LOWER(TRIM(CAST({field} AS VARCHAR))) NOT IN
+-                      ('unknown', 'unspecified', 'none')
++                  AND LOWER(TRIM(CAST({field} AS VARCHAR))) NOT IN {excluded_values}
+                 ORDER BY value
+             """
+             frame = self._query(sql)
+diff --git a/src/dashboard/app.py b/src/dashboard/app.py
+--- a/src/dashboard/app.py
++++ b/src/dashboard/app.py
+@@ -20,10 +20,12 @@ from src.dashboard.data import (
+ 
+ 
+ APP_TITLE = "South African Tech Job Market"
++PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ WORKFLOW_URL = (
+     "https://github.com/nonluthando/sa-grad-tech-job-market/"
+     "actions/workflows/refresh-dashboard.yml"
+ )
++UNSPECIFIED_AUDIT_PATH = PROJECT_ROOT / "data" / "analysis" / "unspecified-role-audit.csv"
+ 
+ 
+ @st.cache_data(show_spinner=False)
+@@ -45,6 +48,17 @@ def load_filtered_data(
+     )
+ 
+ 
++@st.cache_data(show_spinner=False)
++def load_unspecified_audit(path: str) -> pd.DataFrame:
++    audit_path = Path(path)
++    if not audit_path.is_file():
++        return pd.DataFrame()
++    try:
++        return pd.read_csv(audit_path)
++    except (OSError, UnicodeDecodeError, pd.errors.ParserError):
++        return pd.DataFrame()
++
++
+ def _inject_css() -> None:
+     st.markdown(
+         """
+@@ -435,11 +450,92 @@ def _locations(jobs: pd.DataFrame) -> None:
+     )
+ 
+ 
+-def _opportunities(jobs: pd.DataFrame) -> None:
++def _render_unspecified_audit(jobs: pd.DataFrame) -> None:
++    st.markdown("### Unspecified-level audit")
++    st.caption(
++        "Exploratory review suggestions for South African technology vacancies "
++        "whose effective role level "
++        "is still unspecified. Audit suggestions do not overwrite canonical labels."
++    )
++
++    audit = load_unspecified_audit(str(UNSPECIFIED_AUDIT_PATH))
++    if audit.empty:
++        st.info("The unspecified-level audit has not been generated yet.")
++        return
++    if "job_key" not in audit.columns:
++        st.info("The audit output predates job-level dashboard linking. Run a data refresh.")
++        return
++
++    unspecified_jobs = jobs[
++        jobs["effective_role_level"].astype(str).str.casefold().eq("unspecified")
++    ]
++    visible_keys = set(unspecified_jobs["job_key"].dropna().astype(str))
++    audit = audit[audit["job_key"].astype(str).isin(visible_keys)].copy()
++    if audit.empty:
++        st.info("No audited unspecified vacancies match the current filters.")
++        return
++
++    for column in ("first_seen_at", "last_seen_at"):
++        if column in audit.columns:
++            audit[column] = pd.to_datetime(audit[column], errors="coerce", utc=True)
++
++    display_columns = [
++        "title",
++        "employer_name",
++        "likely_level",
++        "minimum_experience_years",
++        "maximum_experience_years",
++        "audit_evidence",
++        "first_seen_at",
++        "last_seen_at",
++        "application_url",
++    ]
++    display = audit[
++        [column for column in display_columns if column in audit.columns]
++    ].copy()
++    display = display.rename(
++        columns={
++            "title": "Role",
++            "employer_name": "Employer",
++            "likely_level": "Audit suggestion",
++            "minimum_experience_years": "Minimum experience",
++            "maximum_experience_years": "Maximum experience",
++            "audit_evidence": "Audit evidence",
++            "first_seen_at": "First seen",
++            "last_seen_at": "Last seen",
++            "application_url": "Apply",
++        }
++    )
++    st.dataframe(
++        display,
++        hide_index=True,
++        use_container_width=True,
++        column_config={
++            "Apply": st.column_config.LinkColumn("Apply", display_text="Open role"),
++            "First seen": st.column_config.DatetimeColumn(
++                "First seen",
++                format="D MMM YYYY",
++            ),
++            "Last seen": st.column_config.DatetimeColumn(
++                "Last seen",
++                format="D MMM YYYY",
++            ),
++        },
++    )
++
++
++def _opportunities(
++    jobs: pd.DataFrame,
++    *,
++    show_unspecified_audit: bool = False,
++) -> None:
+     if jobs.empty:
+         st.info("No vacancies match the current filters.")
+         return
+ 
++    if show_unspecified_audit:
++        _render_unspecified_audit(jobs)
++
+     display = jobs[
+         [
+             "title",
+@@ -661,7 +750,13 @@ def main() -> None:
+     with tabs[4]:
+         _locations(jobs)
+     with tabs[5]:
+-        _opportunities(jobs)
++        _opportunities(
++            jobs,
++            show_unspecified_audit=any(
++                str(level).casefold() == "unspecified"
++                for level in filters.role_levels
++            ),
++        )
+     with tabs[6]:
+         _quality(jobs, quality)
+ 
+diff --git a/tests/test_audit_unspecified.py b/tests/test_audit_unspecified.py
+--- a/tests/test_audit_unspecified.py
++++ b/tests/test_audit_unspecified.py
+@@ -34,5 +34,10 @@ def test_build_audit_rows_only_keeps_target_market_unspecified_jobs():
+     jobs = [
+         {
++            "job_key": "example:qa-engineer",
++            "employer_id": "example",
++            "employer_name": "Example Employer",
++            "first_seen_at": "2026-08-01T08:00:00+00:00",
++            "last_seen_at": "2026-08-08T08:00:00+00:00",
+             "company": "Example",
+             "title": "QA Engineer",
+             "city": "Cape Town",
+@@ -64,4 +68,9 @@ def test_build_audit_rows_only_keeps_target_market_unspecified_jobs():
+ 
+     assert len(rows) == 1
+     assert rows[0]["title"] == "QA Engineer"
++    assert rows[0]["job_key"] == "example:qa-engineer"
++    assert rows[0]["employer_id"] == "example"
++    assert rows[0]["employer_name"] == "Example Employer"
++    assert rows[0]["first_seen_at"] == "2026-08-01T08:00:00+00:00"
++    assert rows[0]["last_seen_at"] == "2026-08-08T08:00:00+00:00"
+     assert rows[0]["likely_level"] == "likely_early_career"
+diff --git a/tests/test_dashboard_data.py b/tests/test_dashboard_data.py
+--- a/tests/test_dashboard_data.py
++++ b/tests/test_dashboard_data.py
+@@ -126,6 +126,23 @@ def test_repository_filters_parquet_marts(tmp_path: Path) -> None:
+                 "is_talent_pool": False,
+                 "last_seen_at": None,
+             },
++            {
++                "job_key": "three",
++                "title": "QA Engineer",
++                "employer_id": "review",
++                "employer_name": "Needs Review",
++                "employer_group": "Needs Review",
++                "industry": "Software",
++                "province": None,
++                "city": None,
++                "location_label": "South Africa",
++                "workplace_type": "remote",
++                "effective_role_level": "unspecified",
++                "is_target_market": True,
++                "is_early_career_target": False,
++                "is_talent_pool": False,
++                "last_seen_at": None,
++            },
+         ]
+     )
+     skills = pa.Table.from_pylist(
+@@ -157,7 +174,7 @@ def test_repository_filters_parquet_marts(tmp_path: Path) -> None:
+         json.dumps(
+             {
+                 "schema_version": 1,
+-                "dashboard_job_count": 2,
++                "dashboard_job_count": 3,
+                 "dashboard_skill_row_count": 1,
+                 "warnings": [],
+             }
+@@ -177,4 +194,6 @@ def test_repository_filters_parquet_marts(tmp_path: Path) -> None:
+     )
+ 
+     assert frame["job_key"].tolist() == ["one"]
+-    assert repository.filter_options()["provinces"] == ["Gauteng", "Western Cape"]
++    options = repository.filter_options()
++    assert options["provinces"] == ["Gauteng", "Western Cape"]
++    assert options["role_levels"] == ["junior", "senior", "unspecified"]
+diff --git a/tests/test_dashboard_opportunities.py b/tests/test_dashboard_opportunities.py
+--- a/tests/test_dashboard_opportunities.py
++++ b/tests/test_dashboard_opportunities.py
+@@ -17,3 +17,14 @@ def test_opportunities_table_shows_first_seen_date() -> None:
+     assert '"first_seen_at": "First seen"' in opportunities
+     assert '"First seen": st.column_config.DatetimeColumn(' in opportunities
+     assert '"last_seen_at": "Last seen"' in opportunities
++
++
++def test_unspecified_role_filter_renders_audit_output() -> None:
++    app = APP.read_text(encoding="utf-8")
++
++    assert "unspecified-role-audit.csv" in app
++    assert "def _render_unspecified_audit" in app
++    assert '"Audit suggestion"' in app
++    assert "Audit suggestions do not overwrite canonical labels." in app
++    assert "show_unspecified_audit=any(" in app
++    assert 'str(level).casefold() == "unspecified"' in app
+diff --git a/tests/test_dashboard_workflow.py b/tests/test_dashboard_workflow.py
+--- a/tests/test_dashboard_workflow.py
++++ b/tests/test_dashboard_workflow.py
+@@ -14,5 +14,6 @@ def test_dashboard_workflow_runs_cloud_pipeline() -> None:
+     assert "python -m src.ingestion.collect" in content
+     assert "python -m src.transformation.build" in content
++    assert "python -m scripts.audit_unspecified" in content
+     assert "python -m src.skills.build" in content
+     assert "python -m src.analytics.build" in content
+     assert "data/processed/dashboard_jobs.parquet" in content
+@@ -33,3 +34,11 @@ def test_dashboard_workflow_persists_raw_snapshot_history() -> None:
+ 
+     assert "git add -f" in content
+     assert "data/raw" in content
++
++
++def test_dashboard_workflow_publishes_unspecified_role_audit() -> None:
++    content = WORKFLOW.read_text(encoding="utf-8")
++
++    assert "data/analysis/unspecified-role-audit.csv" in content
++    assert "data/analysis/unspecified-role-audit.md" in content
++    assert "scripts/audit_unspecified.py" in content
+diff --git a/tests/test_expanded_sources.py b/tests/test_expanded_sources.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_expanded_sources.py
+@@ -0,0 +1,34 @@
++from __future__ import annotations
++
++import json
++from pathlib import Path
++
++from src.configuration.employers import employer_index, load_employer_registry
++
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def test_expanded_direct_employer_sources_are_active_lever_boards() -> None:
++    employers = employer_index(
++        load_employer_registry(ROOT / "config" / "employers.json")
++    )
++    source_payload = json.loads(
++        (ROOT / "config" / "sources.json").read_text(encoding="utf-8")
++    )
++    sources_by_employer = {
++        source["employer_id"]: source
++        for source in source_payload["sources"]
++    }
++
++    expected = {
++        "binance": "binance",
++        "theodo": "theodo",
++        "moo": "moo",
++    }
++    for employer_id, token in expected.items():
++        source = sources_by_employer[employer_id]
++        assert source["provider"] == "lever"
++        assert source["token"] == token
++        assert source["enabled"] is True
++        assert employers[employer_id]["collection_status"] == "active"
++        assert employers[employer_id]["priority"] == "tier_2"
