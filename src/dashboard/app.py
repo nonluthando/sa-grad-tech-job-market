@@ -502,6 +502,7 @@ def _opportunities(jobs: pd.DataFrame) -> None:
             "workplace_type",
             "effective_role_level",
             "skills",
+            "first_seen_at",
             "last_seen_at",
             "application_url",
         ]
@@ -525,6 +526,7 @@ def _opportunities(jobs: pd.DataFrame) -> None:
             "workplace_type": "Work arrangement",
             "effective_role_level": "Level",
             "skills": "Technologies",
+            "first_seen_at": "First seen",
             "last_seen_at": "Last seen",
             "application_url": "Apply",
         }
@@ -535,6 +537,10 @@ def _opportunities(jobs: pd.DataFrame) -> None:
         use_container_width=True,
         column_config={
             "Apply": st.column_config.LinkColumn("Apply", display_text="Open role"),
+            "First seen": st.column_config.DatetimeColumn(
+                "First seen",
+                format="D MMM YYYY",
+            ),
             "Last seen": st.column_config.DatetimeColumn(
                 "Last seen",
                 format="D MMM YYYY",

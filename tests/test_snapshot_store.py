@@ -42,17 +42,39 @@ def test_snapshot_store_writes_raw_bytes_and_metadata(tmp_path):
     assert metadata["raw_file"] == result.raw_path.name
 
 
-def test_snapshot_store_skips_identical_payload(tmp_path):
+def test_snapshot_store_reuses_identical_raw_bytes_but_records_each_observation(
+    tmp_path,
+):
     store = RawSnapshotStore(tmp_path)
     response = build_response()
+    first_at = datetime(2026, 7, 22, 19, 0, tzinfo=timezone.utc)
+    second_at = datetime(2026, 7, 23, 19, 0, tzinfo=timezone.utc)
 
-    first = store.write_greenhouse_snapshot("Example Company", response)
-    second = store.write_greenhouse_snapshot("Example Company", response)
+    first = store.write_greenhouse_snapshot(
+        "Example Company", response, collected_at=first_at
+    )
+    second = store.write_greenhouse_snapshot(
+        "Example Company", response, collected_at=second_at
+    )
 
     assert first.status == "written"
     assert second.status == "duplicate"
     assert second.raw_path == first.raw_path
-    assert len(list((tmp_path / "greenhouse" / "example").glob("*.json"))) == 2
+    assert second.metadata_path != first.metadata_path
+
+    source_directory = tmp_path / "greenhouse" / "example"
+    metadata_paths = sorted(source_directory.glob("*.metadata.json"))
+    raw_paths = sorted(
+        path
+        for path in source_directory.glob("*.json")
+        if not path.name.endswith(".metadata.json")
+    )
+    assert len(metadata_paths) == 2
+    assert raw_paths == [first.raw_path]
+
+    second_metadata = json.loads(second.metadata_path.read_text(encoding="utf-8"))
+    assert second_metadata["collected_at"] == second_at.isoformat()
+    assert second_metadata["raw_file"] == first.raw_path.name
 
 
 def test_snapshot_store_writes_lever_raw_bytes_and_metadata(tmp_path):

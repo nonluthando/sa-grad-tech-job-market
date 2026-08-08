@@ -28,3 +28,10 @@ def test_dashboard_workflow_does_not_require_local_uv_project_files() -> None:
     assert "actions/setup-python@v5" in content
     assert "python -m pip install -r requirements.txt" in content
     assert "uv run" not in content
+
+
+def test_dashboard_workflow_persists_raw_snapshot_history() -> None:
+    content = WORKFLOW.read_text(encoding="utf-8")
+
+    assert "git add -f" in content
+    assert "data/raw" in content

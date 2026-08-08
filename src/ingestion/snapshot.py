@@ -41,7 +41,7 @@ def filename_timestamp(value: datetime) -> str:
 
 
 class RawSnapshotStore:
-    """Write exact response bytes once and skip duplicate content."""
+    """Write raw response bytes once while recording every collection observation."""
 
     def __init__(self, root: Path) -> None:
         self.root = root
@@ -202,22 +202,48 @@ class RawSnapshotStore:
         source_directory = self.root / provider / source_token
         source_directory.mkdir(parents=True, exist_ok=True)
 
-        existing_metadata = self._find_existing_digest(source_directory, digest)
-        if existing_metadata is not None:
-            existing_payload = json.loads(existing_metadata.read_text(encoding="utf-8"))
+        timestamp = filename_timestamp(collection_time)
+        metadata_path = source_directory / f"{timestamp}.metadata.json"
+
+        # A collection timestamp identifies one observation. Re-running the same
+        # observation is idempotent, but a conflicting payload at the same
+        # timestamp must never overwrite immutable history.
+        if metadata_path.exists():
+            existing_payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+            if existing_payload.get("content_sha256") != digest:
+                raise FileExistsError(
+                    "Snapshot metadata already exists for this collection timestamp "
+                    f"with different content: {metadata_path}"
+                )
             raw_path = source_directory / existing_payload["raw_file"]
             return SnapshotWriteResult(
                 status="duplicate",
                 raw_path=raw_path,
-                metadata_path=existing_metadata,
+                metadata_path=metadata_path,
                 content_sha256=digest,
             )
 
-        timestamp = filename_timestamp(collection_time)
-        raw_path = source_directory / f"{timestamp}.json"
-        metadata_path = source_directory / f"{timestamp}.metadata.json"
+        # Reuse an identical raw payload to avoid storing the same bytes again,
+        # but still write a fresh metadata sidecar below. That sidecar is the
+        # observation history used to advance first_seen/last_seen counts.
+        existing_metadata = self._find_existing_digest(source_directory, digest)
+        if existing_metadata is not None:
+            existing_payload = json.loads(existing_metadata.read_text(encoding="utf-8"))
+            raw_path = source_directory / existing_payload["raw_file"]
+            if not raw_path.is_file():
+                raise FileNotFoundError(
+                    f"Existing snapshot metadata points to missing raw file: {raw_path}"
+                )
+            status = "duplicate"
+        else:
+            raw_path = source_directory / f"{timestamp}.json"
+            if raw_path.exists():
+                raise FileExistsError(
+                    f"Raw snapshot already exists for collection timestamp: {raw_path}"
+                )
+            self._atomic_write_bytes(raw_path, raw_bytes)
+            status = "written"
 
-        self._atomic_write_bytes(raw_path, raw_bytes)
         metadata = {
             "source": provider,
             "source_name": source_name,
@@ -241,7 +267,7 @@ class RawSnapshotStore:
         )
 
         return SnapshotWriteResult(
-            status="written",
+            status=status,
             raw_path=raw_path,
             metadata_path=metadata_path,
             content_sha256=digest,
