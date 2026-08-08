@@ -194,6 +194,11 @@ def build_audit_rows(jobs: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
 
         rows.append(
             {
+                "job_key": job.get("job_key"),
+                "employer_id": job.get("employer_id"),
+                "employer_name": job.get("employer_name") or job.get("company"),
+                "first_seen_at": job.get("first_seen_at"),
+                "last_seen_at": job.get("last_seen_at"),
                 "company": job.get("company"),
                 "title": title,
                 "city": job.get("city"),
@@ -220,6 +225,11 @@ def build_audit_rows(jobs: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
 def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
+        "job_key",
+        "employer_id",
+        "employer_name",
+        "first_seen_at",
+        "last_seen_at",
         "company",
         "title",
         "city",

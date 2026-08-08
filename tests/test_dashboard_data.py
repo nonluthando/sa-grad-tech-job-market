@@ -151,6 +151,23 @@ def test_repository_filters_parquet_marts(tmp_path: Path) -> None:
                 "is_talent_pool": False,
                 "last_seen_at": None,
             },
+            {
+                "job_key": "three",
+                "title": "QA Engineer",
+                "employer_id": "review",
+                "employer_name": "Needs Review",
+                "employer_group": "Needs Review",
+                "industry": "Software",
+                "province": None,
+                "city": None,
+                "location_label": "South Africa",
+                "workplace_type": "remote",
+                "effective_role_level": "unspecified",
+                "is_target_market": True,
+                "is_early_career_target": False,
+                "is_talent_pool": False,
+                "last_seen_at": None,
+            },
         ]
     )
     skills = pa.Table.from_pylist(
@@ -178,7 +195,7 @@ def test_repository_filters_parquet_marts(tmp_path: Path) -> None:
         json.dumps(
             {
                 "schema_version": 1,
-                "dashboard_job_count": 2,
+                "dashboard_job_count": 3,
                 "dashboard_skill_row_count": 1,
                 "warnings": [],
             }
@@ -195,4 +212,6 @@ def test_repository_filters_parquet_marts(tmp_path: Path) -> None:
     )
 
     assert frame["job_key"].tolist() == ["one"]
-    assert repository.filter_options()["provinces"] == ["Gauteng", "Western Cape"]
+    options = repository.filter_options()
+    assert options["provinces"] == ["Gauteng", "Western Cape"]
+    assert options["role_levels"] == ["junior", "senior", "unspecified"]

@@ -14,6 +14,7 @@ on:
       - "src/transformation/**"
       - "src/skills/**"
       - "src/analytics/**"
+      - "scripts/audit_unspecified.py"
       - "requirements.txt"
       - ".github/workflows/refresh-dashboard.yml"
 
@@ -52,6 +53,9 @@ jobs:
       - name: Build canonical jobs
         run: python -m src.transformation.build
 
+      - name: Audit unspecified role levels
+        run: python -m scripts.audit_unspecified
+
       - name: Extract skills and requirements
         run: python -m src.skills.build
 
@@ -71,6 +75,8 @@ jobs:
             data/processed/dashboard_jobs.parquet
             data/processed/dashboard_skills.parquet
             data/processed/dashboard-quality-report.json
+            data/analysis/unspecified-role-audit.csv
+            data/analysis/unspecified-role-audit.md
 
       - name: Commit snapshot history and refreshed dashboard data
         run: |
@@ -78,6 +84,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f \
             data/raw \
+            data/analysis/unspecified-role-audit.csv \
+            data/analysis/unspecified-role-audit.md \
             data/processed/dashboard_jobs.parquet \
             data/processed/dashboard_skills.parquet \
             data/processed/dashboard-quality-report.json

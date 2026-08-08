@@ -519,6 +519,50 @@
       "graduate_programme": "yes",
       "priority": "tier_2",
       "collection_status": "candidate"
+    },
+    {
+      "id": "binance",
+      "name": "Binance",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Fintech and payments",
+      "head_office_city": null,
+      "country": "Global",
+      "listed_company": false,
+      "remote_scope": "global",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "theodo",
+      "name": "Theodo",
+      "parent_company": "Theodo Group",
+      "brands": [
+        "Theodo UK"
+      ],
+      "industry": "Software consultancies and engineering firms",
+      "head_office_city": "London",
+      "country": "United Kingdom",
+      "listed_company": false,
+      "remote_scope": "multi_country",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "moo",
+      "name": "MOO",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Product, software and e-commerce",
+      "head_office_city": "London",
+      "country": "United Kingdom",
+      "listed_company": false,
+      "remote_scope": "multi_country",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
     }
   ]
 }

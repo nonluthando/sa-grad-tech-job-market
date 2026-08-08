@@ -215,13 +215,17 @@ class DashboardRepository:
         result: dict[str, list[str]] = {}
         relation = self._read_sql("jobs")
         for name, field in OPTION_FIELDS.items():
+            excluded_values = (
+                "('unknown', 'none')"
+                if name == "role_levels"
+                else "('unknown', 'unspecified', 'none')"
+            )
             sql = f"""
                 SELECT DISTINCT {field} AS value
                 FROM {relation}
                 WHERE {field} IS NOT NULL
                   AND TRIM(CAST({field} AS VARCHAR)) <> ''
-                  AND LOWER(TRIM(CAST({field} AS VARCHAR))) NOT IN
-                      ('unknown', 'unspecified', 'none')
+                  AND LOWER(TRIM(CAST({field} AS VARCHAR))) NOT IN {excluded_values}
                 ORDER BY value
             """
             frame = self._query(sql)

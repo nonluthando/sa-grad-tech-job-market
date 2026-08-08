@@ -189,6 +189,30 @@
       "enabled": true,
       "priority": "primary",
       "employer_id": "absa"
+    },
+    {
+      "name": "Binance",
+      "provider": "lever",
+      "token": "binance",
+      "enabled": true,
+      "priority": "secondary",
+      "employer_id": "binance"
+    },
+    {
+      "name": "Theodo",
+      "provider": "lever",
+      "token": "theodo",
+      "enabled": true,
+      "priority": "secondary",
+      "employer_id": "theodo"
+    },
+    {
+      "name": "MOO",
+      "provider": "lever",
+      "token": "moo",
+      "enabled": true,
+      "priority": "secondary",
+      "employer_id": "moo"
     }
   ]
 }

@@ -20,10 +20,12 @@ from src.dashboard.data import (
 
 
 APP_TITLE = "South African Tech Job Market"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW_URL = (
     "https://github.com/nonluthando/sa-grad-tech-job-market/"
     "actions/workflows/refresh-dashboard.yml"
 )
+UNSPECIFIED_AUDIT_PATH = PROJECT_ROOT / "data" / "analysis" / "unspecified-role-audit.csv"
 
 
 @st.cache_data(show_spinner=False)
@@ -44,6 +46,17 @@ def load_filtered_data(
         repository.skills(filters),
         repository.quality_report(),
     )
+
+
+@st.cache_data(show_spinner=False)
+def load_unspecified_audit(path: str) -> pd.DataFrame:
+    audit_path = Path(path)
+    if not audit_path.is_file():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(audit_path)
+    except (OSError, UnicodeDecodeError, pd.errors.ParserError):
+        return pd.DataFrame()
 
 
 def _inject_css() -> None:
@@ -489,10 +502,91 @@ def _locations(jobs: pd.DataFrame) -> None:
     )
 
 
-def _opportunities(jobs: pd.DataFrame) -> None:
+def _render_unspecified_audit(jobs: pd.DataFrame) -> None:
+    st.markdown("### Unspecified-level audit")
+    st.caption(
+        "Exploratory review suggestions for South African technology vacancies "
+        "whose effective role level "
+        "is still unspecified. Audit suggestions do not overwrite canonical labels."
+    )
+
+    audit = load_unspecified_audit(str(UNSPECIFIED_AUDIT_PATH))
+    if audit.empty:
+        st.info("The unspecified-level audit has not been generated yet.")
+        return
+    if "job_key" not in audit.columns:
+        st.info("The audit output predates job-level dashboard linking. Run a data refresh.")
+        return
+
+    unspecified_jobs = jobs[
+        jobs["effective_role_level"].astype(str).str.casefold().eq("unspecified")
+    ]
+    visible_keys = set(unspecified_jobs["job_key"].dropna().astype(str))
+    audit = audit[audit["job_key"].astype(str).isin(visible_keys)].copy()
+    if audit.empty:
+        st.info("No audited unspecified vacancies match the current filters.")
+        return
+
+    for column in ("first_seen_at", "last_seen_at"):
+        if column in audit.columns:
+            audit[column] = pd.to_datetime(audit[column], errors="coerce", utc=True)
+
+    display_columns = [
+        "title",
+        "employer_name",
+        "likely_level",
+        "minimum_experience_years",
+        "maximum_experience_years",
+        "audit_evidence",
+        "first_seen_at",
+        "last_seen_at",
+        "application_url",
+    ]
+    display = audit[
+        [column for column in display_columns if column in audit.columns]
+    ].copy()
+    display = display.rename(
+        columns={
+            "title": "Role",
+            "employer_name": "Employer",
+            "likely_level": "Audit suggestion",
+            "minimum_experience_years": "Minimum experience",
+            "maximum_experience_years": "Maximum experience",
+            "audit_evidence": "Audit evidence",
+            "first_seen_at": "First seen",
+            "last_seen_at": "Last seen",
+            "application_url": "Apply",
+        }
+    )
+    st.dataframe(
+        display,
+        hide_index=True,
+        use_container_width=True,
+        column_config={
+            "Apply": st.column_config.LinkColumn("Apply", display_text="Open role"),
+            "First seen": st.column_config.DatetimeColumn(
+                "First seen",
+                format="D MMM YYYY",
+            ),
+            "Last seen": st.column_config.DatetimeColumn(
+                "Last seen",
+                format="D MMM YYYY",
+            ),
+        },
+    )
+
+
+def _opportunities(
+    jobs: pd.DataFrame,
+    *,
+    show_unspecified_audit: bool = False,
+) -> None:
     if jobs.empty:
         st.info("No vacancies match the current filters.")
         return
+
+    if show_unspecified_audit:
+        _render_unspecified_audit(jobs)
 
     display = jobs[
         [
@@ -706,7 +800,13 @@ def main() -> None:
     with tabs[4]:
         _locations(jobs)
     with tabs[5]:
-        _opportunities(jobs)
+        _opportunities(
+            jobs,
+            show_unspecified_audit=any(
+                str(level).casefold() == "unspecified"
+                for level in filters.role_levels
+            ),
+        )
     with tabs[6]:
         _quality(jobs, quality)
 

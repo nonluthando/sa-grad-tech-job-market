@@ -36,6 +36,11 @@ def test_classifies_five_year_requirement_as_likely_senior():
 def test_build_audit_rows_only_keeps_target_market_unspecified_jobs():
     jobs = [
         {
+            "job_key": "example:qa-engineer",
+            "employer_id": "example",
+            "employer_name": "Example Employer",
+            "first_seen_at": "2026-08-01T08:00:00+00:00",
+            "last_seen_at": "2026-08-08T08:00:00+00:00",
             "company": "Example",
             "title": "QA Engineer",
             "city": "Cape Town",
@@ -66,4 +71,9 @@ def test_build_audit_rows_only_keeps_target_market_unspecified_jobs():
 
     assert len(rows) == 1
     assert rows[0]["title"] == "QA Engineer"
+    assert rows[0]["job_key"] == "example:qa-engineer"
+    assert rows[0]["employer_id"] == "example"
+    assert rows[0]["employer_name"] == "Example Employer"
+    assert rows[0]["first_seen_at"] == "2026-08-01T08:00:00+00:00"
+    assert rows[0]["last_seen_at"] == "2026-08-08T08:00:00+00:00"
     assert rows[0]["likely_level"] == "likely_early_career"
