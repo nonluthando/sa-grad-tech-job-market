@@ -4,23 +4,23 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 36
+**Roles audited:** 38
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 14 |
-| likely_mid_level | 16 |
+| ambiguous | 15 |
+| likely_mid_level | 17 |
 | likely_senior | 6 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
+| Impact.com | 9 |
 | Nedbank | 9 |
-| Impact.com | 8 |
-| Discovery | 7 |
+| Discovery | 8 |
 | Takealot Group | 6 |
 | Yassir | 3 |
 | Luno | 1 |
@@ -37,6 +37,7 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Machine Learning Engineer | description: 1-3 years |
 | ambiguous | Discovery | iOS Developer - Talent Pool | description: 2+ years |
 | ambiguous | Impact.com | GenAI Engineer - Product Marketing & Adoption | description: At least 1 year |
+| ambiguous | Impact.com | Platform Engineer | description: 2+ years \| description: 1+ year |
 | ambiguous | Impact.com | QA Engineer | No explicit evidence |
 | ambiguous | Impact.com | Software Quality Engineer (Java using Selenium) | description: At least 3 years \| description: At least 2 years |
 | ambiguous | Luno | Backend Engineer | No explicit evidence |
@@ -47,6 +48,7 @@ do not overwrite the production classification.
 | ambiguous | Yassir | Data Scientist (Pricing) | description: at least 2 years |
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
+| likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
 | likely_mid_level | Discovery | Java Developer | description: 4-5 years |
 | likely_mid_level | Impact.com | Android Developer | description: 3+ years |
 | likely_mid_level | Impact.com | Email & Marketing Automation Developer | description: 3–5 years of experience |
