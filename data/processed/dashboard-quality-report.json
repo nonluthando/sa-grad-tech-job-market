@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-12T13:47:30.585452+00:00",
-  "dashboard_job_count": 953,
-  "dashboard_skill_row_count": 2925,
+  "source_window_end": "2026-08-12T21:03:08.242850+00:00",
+  "dashboard_job_count": 956,
+  "dashboard_skill_row_count": 2928,
   "target_market_job_count": 92,
   "non_talent_pool_target_market_job_count": 87,
   "early_career_target_job_count": 10,
   "talent_pool_job_count": 23,
-  "jobs_with_skills_count": 593,
-  "jobs_without_skills_count": 360,
+  "jobs_with_skills_count": 594,
+  "jobs_without_skills_count": 362,
   "target_jobs_with_skills_count": 85,
   "target_skill_coverage_rate": 0.9239130434782609,
   "unique_technology_count": 89,
@@ -18,24 +18,24 @@
   "role_level_counts": {
     "graduate": 6,
     "internship": 78,
-    "junior": 84,
+    "junior": 86,
     "mid_level": 91,
-    "senior": 466,
+    "senior": 467,
     "unspecified": 228
   },
   "workplace_type_counts": {
     "hybrid": 263,
     "on_site": 164,
     "remote": 282,
-    "unspecified": 244
+    "unspecified": 247
   },
   "employer_counts": {
     "Binance": 313,
-    "Discovery": 74,
+    "Discovery": 75,
     "Luno": 13,
     "MOO": 18,
     "Mama Money": 13,
-    "Nedbank": 106,
+    "Nedbank": 108,
     "TFG": 6,
     "Takealot Group": 24,
     "Theodo": 136,
@@ -43,7 +43,7 @@
     "impact.com": 91
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 180,
+    "Banks, insurance and financial services": 183,
     "Fintech and payments": 339,
     "Product, software and e-commerce": 298,
     "Software consultancies and engineering firms": 136
@@ -51,14 +51,14 @@
   "province_counts": {
     "Eastern Cape": 2,
     "Free State": 1,
-    "Gauteng": 138,
+    "Gauteng": 139,
     "KwaZulu-Natal": 9,
     "Western Cape": 107,
-    "unspecified": 696
+    "unspecified": 698
   },
   "capability_mention_counts": {
-    "AI and Machine Learning": 548,
-    "Analytics and BI": 148,
+    "AI and Machine Learning": 550,
+    "Analytics and BI": 149,
     "Application Development": 110,
     "Backend and Architecture": 189,
     "Cloud": 192,
@@ -78,7 +78,7 @@
     "AWS": 66,
     "Angular": 29,
     "Apache Spark": 7,
-    "Artificial Intelligence": 248,
+    "Artificial Intelligence": 249,
     "Azure": 35,
     "Bash": 15,
     "BigQuery": 27,
@@ -120,7 +120,7 @@
     "Large Language Models": 106,
     "Linux": 27,
     "Looker": 20,
-    "Machine Learning": 97,
+    "Machine Learning": 98,
     "Microservices": 31,
     "Microsoft SQL Server": 4,
     "MongoDB": 18,
@@ -133,7 +133,7 @@
     "Pandas": 9,
     "Playwright": 5,
     "PostgreSQL": 15,
-    "Power BI": 19,
+    "Power BI": 20,
     "PyTorch": 22,
     "Python": 154,
     "REST APIs": 62,
@@ -165,13 +165,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 696,
-    "workplace_type": 244,
+    "province": 698,
+    "workplace_type": 247,
     "effective_role_level": 228,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 1,
-  "jobs_with_extraction_warnings_count": 360,
+  "jobs_with_extraction_warnings_count": 362,
   "warnings": [
     "high_unknown_workplace_share"
   ]
