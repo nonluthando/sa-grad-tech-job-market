@@ -1,0 +1,14 @@
+{
+  "source": "lever",
+  "source_name": "Binance",
+  "source_token": "binance",
+  "endpoint": "https://api.lever.co/v0/postings/binance?mode=json&limit=500",
+  "collected_at": "2026-08-13T21:04:04.319255+00:00",
+  "http_status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "content_sha256": "4db69882ae29dafba4a16399f90072dbc8fcba5d8d853533423e9007dc618180",
+  "byte_count": 2730260,
+  "source_job_count": 270,
+  "raw_file": "20260813T210404319255Z.json",
+  "employer_id": "binance"
+}

@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-13T13:48:07.447720+00:00",
-  "dashboard_job_count": 969,
-  "dashboard_skill_row_count": 2960,
+  "source_window_end": "2026-08-13T21:04:04.319255+00:00",
+  "dashboard_job_count": 977,
+  "dashboard_skill_row_count": 2961,
   "target_market_job_count": 93,
   "non_talent_pool_target_market_job_count": 88,
   "early_career_target_job_count": 10,
   "talent_pool_job_count": 23,
-  "jobs_with_skills_count": 601,
-  "jobs_without_skills_count": 368,
+  "jobs_with_skills_count": 603,
+  "jobs_without_skills_count": 374,
   "target_jobs_with_skills_count": 86,
   "target_skill_coverage_rate": 0.9247311827956989,
   "unique_technology_count": 89,
@@ -17,51 +17,51 @@
   "industry_count": 4,
   "role_level_counts": {
     "graduate": 6,
-    "internship": 79,
-    "junior": 87,
-    "mid_level": 92,
-    "senior": 472,
+    "internship": 78,
+    "junior": 90,
+    "mid_level": 93,
+    "senior": 477,
     "unspecified": 233
   },
   "workplace_type_counts": {
-    "hybrid": 265,
+    "hybrid": 267,
     "on_site": 164,
     "remote": 287,
-    "unspecified": 253
+    "unspecified": 259
   },
   "employer_counts": {
     "Binance": 319,
-    "Discovery": 76,
+    "Discovery": 79,
     "Luno": 13,
-    "MOO": 18,
+    "MOO": 19,
     "Mama Money": 13,
-    "Nedbank": 112,
+    "Nedbank": 115,
     "TFG": 7,
     "Takealot Group": 24,
     "Theodo": 136,
-    "Yassir": 159,
+    "Yassir": 160,
     "impact.com": 92
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 188,
+    "Banks, insurance and financial services": 194,
     "Fintech and payments": 345,
-    "Product, software and e-commerce": 300,
+    "Product, software and e-commerce": 302,
     "Software consultancies and engineering firms": 136
   },
   "province_counts": {
     "Eastern Cape": 2,
     "Free State": 1,
-    "Gauteng": 143,
+    "Gauteng": 148,
     "KwaZulu-Natal": 9,
     "Western Cape": 109,
-    "unspecified": 705
+    "unspecified": 708
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 559,
-    "Analytics and BI": 153,
+    "Analytics and BI": 154,
     "Application Development": 111,
     "Backend and Architecture": 189,
-    "Cloud": 195,
+    "Cloud": 196,
     "Data Engineering": 106,
     "Data Storage": 276,
     "Data and Analytics": 79,
@@ -71,11 +71,11 @@
     "Mobile Development": 73,
     "Programming": 548,
     "Quality Engineering": 68,
-    "Software Delivery": 156
+    "Software Delivery": 155
   },
   "technology_mention_counts": {
     ".NET": 3,
-    "AWS": 67,
+    "AWS": 68,
     "Angular": 29,
     "Apache Spark": 7,
     "Artificial Intelligence": 252,
@@ -99,12 +99,12 @@
     "ETL": 14,
     "Elasticsearch": 7,
     "Event-driven Architecture": 17,
-    "Excel": 79,
+    "Excel": 80,
     "Express.js": 9,
     "FastAPI": 1,
     "Flask": 1,
     "Generative AI": 32,
-    "Git": 89,
+    "Git": 88,
     "GitHub Actions": 8,
     "Go": 18,
     "Google Cloud": 85,
@@ -165,13 +165,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 705,
-    "workplace_type": 253,
+    "province": 708,
+    "workplace_type": 259,
     "effective_role_level": 233,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 1,
-  "jobs_with_extraction_warnings_count": 368,
+  "jobs_with_extraction_warnings_count": 374,
   "warnings": [
     "high_unknown_workplace_share"
   ]
