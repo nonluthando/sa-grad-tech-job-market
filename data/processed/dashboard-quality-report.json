@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-13T21:04:04.319255+00:00",
-  "dashboard_job_count": 977,
+  "source_window_end": "2026-08-14T05:47:04.864427+00:00",
+  "dashboard_job_count": 978,
   "dashboard_skill_row_count": 2961,
   "target_market_job_count": 93,
   "non_talent_pool_target_market_job_count": 88,
   "early_career_target_job_count": 10,
   "talent_pool_job_count": 23,
   "jobs_with_skills_count": 603,
-  "jobs_without_skills_count": 374,
+  "jobs_without_skills_count": 375,
   "target_jobs_with_skills_count": 86,
   "target_skill_coverage_rate": 0.9247311827956989,
   "unique_technology_count": 89,
@@ -21,17 +21,17 @@
     "junior": 90,
     "mid_level": 93,
     "senior": 477,
-    "unspecified": 233
+    "unspecified": 234
   },
   "workplace_type_counts": {
     "hybrid": 267,
     "on_site": 164,
     "remote": 287,
-    "unspecified": 259
+    "unspecified": 260
   },
   "employer_counts": {
     "Binance": 319,
-    "Discovery": 79,
+    "Discovery": 80,
     "Luno": 13,
     "MOO": 19,
     "Mama Money": 13,
@@ -43,7 +43,7 @@
     "impact.com": 92
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 194,
+    "Banks, insurance and financial services": 195,
     "Fintech and payments": 345,
     "Product, software and e-commerce": 302,
     "Software consultancies and engineering firms": 136
@@ -51,7 +51,7 @@
   "province_counts": {
     "Eastern Cape": 2,
     "Free State": 1,
-    "Gauteng": 148,
+    "Gauteng": 149,
     "KwaZulu-Natal": 9,
     "Western Cape": 109,
     "unspecified": 708
@@ -166,12 +166,12 @@
   },
   "missing_value_counts": {
     "province": 708,
-    "workplace_type": 259,
-    "effective_role_level": 233,
+    "workplace_type": 260,
+    "effective_role_level": 234,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 1,
-  "jobs_with_extraction_warnings_count": 374,
+  "jobs_with_extraction_warnings_count": 375,
   "warnings": [
     "high_unknown_workplace_share"
   ]
