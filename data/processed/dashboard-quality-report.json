@@ -1,41 +1,41 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-14T20:45:41.085268+00:00",
-  "dashboard_job_count": 999,
-  "dashboard_skill_row_count": 3023,
-  "target_market_job_count": 96,
-  "non_talent_pool_target_market_job_count": 91,
+  "source_window_end": "2026-08-15T04:47:12.518567+00:00",
+  "dashboard_job_count": 1008,
+  "dashboard_skill_row_count": 3025,
+  "target_market_job_count": 97,
+  "non_talent_pool_target_market_job_count": 92,
   "early_career_target_job_count": 10,
   "talent_pool_job_count": 23,
-  "jobs_with_skills_count": 613,
-  "jobs_without_skills_count": 386,
-  "target_jobs_with_skills_count": 89,
-  "target_skill_coverage_rate": 0.9270833333333334,
+  "jobs_with_skills_count": 615,
+  "jobs_without_skills_count": 393,
+  "target_jobs_with_skills_count": 90,
+  "target_skill_coverage_rate": 0.9278350515463918,
   "unique_technology_count": 90,
   "employer_count": 11,
   "industry_count": 4,
   "role_level_counts": {
     "graduate": 6,
     "internship": 79,
-    "junior": 92,
-    "mid_level": 98,
-    "senior": 489,
-    "unspecified": 235
+    "junior": 97,
+    "mid_level": 99,
+    "senior": 491,
+    "unspecified": 236
   },
   "workplace_type_counts": {
     "hybrid": 270,
     "on_site": 164,
     "remote": 293,
-    "unspecified": 272
+    "unspecified": 281
   },
   "employer_counts": {
     "Binance": 324,
-    "Discovery": 84,
+    "Discovery": 86,
     "Luno": 13,
     "MOO": 20,
     "Mama Money": 13,
-    "Nedbank": 121,
+    "Nedbank": 128,
     "TFG": 7,
     "Takealot Group": 27,
     "Theodo": 136,
@@ -43,7 +43,7 @@
     "impact.com": 94
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 205,
+    "Banks, insurance and financial services": 214,
     "Fintech and payments": 350,
     "Product, software and e-commerce": 308,
     "Software consultancies and engineering firms": 136
@@ -51,18 +51,18 @@
   "province_counts": {
     "Eastern Cape": 2,
     "Free State": 1,
-    "Gauteng": 158,
+    "Gauteng": 162,
     "KwaZulu-Natal": 10,
-    "Western Cape": 113,
-    "unspecified": 715
+    "Western Cape": 114,
+    "unspecified": 719
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 571,
-    "Analytics and BI": 158,
+    "Analytics and BI": 159,
     "Application Development": 114,
     "Backend and Architecture": 193,
     "Cloud": 202,
-    "Data Engineering": 109,
+    "Data Engineering": 110,
     "Data Storage": 279,
     "Data and Analytics": 79,
     "DevOps and Platform Engineering": 280,
@@ -96,10 +96,10 @@
     "Django": 1,
     "Docker": 80,
     "DynamoDB": 3,
-    "ETL": 14,
+    "ETL": 15,
     "Elasticsearch": 7,
     "Event-driven Architecture": 19,
-    "Excel": 83,
+    "Excel": 84,
     "Express.js": 10,
     "FastAPI": 1,
     "Flask": 1,
@@ -166,13 +166,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 715,
-    "workplace_type": 272,
-    "effective_role_level": 235,
+    "province": 719,
+    "workplace_type": 281,
+    "effective_role_level": 236,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 1,
-  "jobs_with_extraction_warnings_count": 386,
+  "jobs_with_extraction_warnings_count": 393,
   "warnings": [
     "high_unknown_workplace_share"
   ]
