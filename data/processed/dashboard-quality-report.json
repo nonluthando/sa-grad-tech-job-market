@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-16T04:50:47.443841+00:00",
-  "dashboard_job_count": 1009,
+  "source_window_end": "2026-08-16T13:00:53.103223+00:00",
+  "dashboard_job_count": 1010,
   "dashboard_skill_row_count": 3025,
   "target_market_job_count": 97,
   "non_talent_pool_target_market_job_count": 92,
   "early_career_target_job_count": 10,
   "talent_pool_job_count": 23,
   "jobs_with_skills_count": 615,
-  "jobs_without_skills_count": 394,
+  "jobs_without_skills_count": 395,
   "target_jobs_with_skills_count": 90,
   "target_skill_coverage_rate": 0.9278350515463918,
   "unique_technology_count": 90,
@@ -20,17 +20,17 @@
     "internship": 79,
     "junior": 98,
     "mid_level": 99,
-    "senior": 491,
+    "senior": 492,
     "unspecified": 236
   },
   "workplace_type_counts": {
     "hybrid": 270,
     "on_site": 164,
-    "remote": 293,
+    "remote": 294,
     "unspecified": 282
   },
   "employer_counts": {
-    "Binance": 324,
+    "Binance": 325,
     "Discovery": 86,
     "Luno": 13,
     "MOO": 20,
@@ -44,7 +44,7 @@
   },
   "industry_counts": {
     "Banks, insurance and financial services": 215,
-    "Fintech and payments": 350,
+    "Fintech and payments": 351,
     "Product, software and e-commerce": 308,
     "Software consultancies and engineering firms": 136
   },
@@ -54,7 +54,7 @@
     "Gauteng": 162,
     "KwaZulu-Natal": 10,
     "Western Cape": 115,
-    "unspecified": 719
+    "unspecified": 720
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 571,
@@ -166,13 +166,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 719,
+    "province": 720,
     "workplace_type": 282,
     "effective_role_level": 236,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 1,
-  "jobs_with_extraction_warnings_count": 394,
+  "jobs_with_extraction_warnings_count": 395,
   "warnings": [
     "high_unknown_workplace_share"
   ]
