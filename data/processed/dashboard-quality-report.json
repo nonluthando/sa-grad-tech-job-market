@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-17T04:58:29.202975+00:00",
-  "dashboard_job_count": 1011,
-  "dashboard_skill_row_count": 3025,
+  "source_window_end": "2026-08-17T13:06:25.393955+00:00",
+  "dashboard_job_count": 1014,
+  "dashboard_skill_row_count": 3026,
   "target_market_job_count": 97,
   "non_talent_pool_target_market_job_count": 92,
   "early_career_target_job_count": 10,
   "talent_pool_job_count": 23,
-  "jobs_with_skills_count": 615,
-  "jobs_without_skills_count": 396,
+  "jobs_with_skills_count": 616,
+  "jobs_without_skills_count": 398,
   "target_jobs_with_skills_count": 90,
   "target_skill_coverage_rate": 0.9278350515463918,
   "unique_technology_count": 90,
@@ -20,23 +20,23 @@
     "internship": 79,
     "junior": 98,
     "mid_level": 99,
-    "senior": 493,
-    "unspecified": 236
+    "senior": 494,
+    "unspecified": 238
   },
   "workplace_type_counts": {
     "hybrid": 270,
-    "on_site": 164,
-    "remote": 294,
-    "unspecified": 283
+    "on_site": 165,
+    "remote": 295,
+    "unspecified": 284
   },
   "employer_counts": {
-    "Binance": 325,
+    "Binance": 326,
     "Discovery": 86,
     "Luno": 13,
-    "MOO": 20,
+    "MOO": 21,
     "Mama Money": 13,
     "Nedbank": 130,
-    "TFG": 7,
+    "TFG": 8,
     "Takealot Group": 27,
     "Theodo": 136,
     "Yassir": 160,
@@ -44,8 +44,8 @@
   },
   "industry_counts": {
     "Banks, insurance and financial services": 216,
-    "Fintech and payments": 351,
-    "Product, software and e-commerce": 308,
+    "Fintech and payments": 352,
+    "Product, software and e-commerce": 310,
     "Software consultancies and engineering firms": 136
   },
   "province_counts": {
@@ -53,8 +53,8 @@
     "Free State": 1,
     "Gauteng": 163,
     "KwaZulu-Natal": 10,
-    "Western Cape": 115,
-    "unspecified": 720
+    "Western Cape": 116,
+    "unspecified": 722
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 571,
@@ -65,7 +65,7 @@
     "Data Engineering": 110,
     "Data Storage": 279,
     "Data and Analytics": 79,
-    "DevOps and Platform Engineering": 280,
+    "DevOps and Platform Engineering": 281,
     "Enterprise Technology": 30,
     "Frontend Development": 147,
     "Mobile Development": 73,
@@ -80,7 +80,7 @@
     "Apache Spark": 7,
     "Artificial Intelligence": 259,
     "Azure": 37,
-    "Bash": 16,
+    "Bash": 17,
     "BigQuery": 28,
     "C": 139,
     "C#": 6,
@@ -166,13 +166,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 720,
-    "workplace_type": 283,
-    "effective_role_level": 236,
+    "province": 722,
+    "workplace_type": 284,
+    "effective_role_level": 238,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 1,
-  "jobs_with_extraction_warnings_count": 396,
+  "jobs_with_extraction_warnings_count": 398,
   "warnings": [
     "high_unknown_workplace_share"
   ]
