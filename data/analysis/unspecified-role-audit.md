@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 42
+**Roles audited:** 43
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 15 |
-| likely_mid_level | 20 |
+| likely_mid_level | 21 |
 | likely_senior | 7 |
 
 ## Employer distribution
@@ -19,8 +19,8 @@ do not overwrite the production classification.
 | Company | Count |
 |---|---|
 | Discovery | 10 |
+| Nedbank | 10 |
 | Impact.com | 9 |
-| Nedbank | 9 |
 | Takealot Group | 8 |
 | Yassir | 3 |
 | Luno | 1 |
@@ -58,6 +58,7 @@ do not overwrite the production classification.
 | likely_mid_level | Nedbank | Title: ACE Software Developer | description: Min 3 years |
 | likely_mid_level | Nedbank | Title: Cloud Engineer: Database Services | description: 8-10 Years \| description: 6+ Years \| description: 3+ Years |
 | likely_mid_level | Nedbank | Title: Data Engineer | description: 3 - 6 years |
+| likely_mid_level | Nedbank | Title: ML Engineer | description: 3-7 years |
 | likely_mid_level | Nedbank | Title: Software Developer | description: Min 3 years |
 | likely_mid_level | Nedbank | Title: Software Developer | description: Min 3 years |
 | likely_mid_level | Nedbank | Title: Software Developer II | title: Developer II \| description: Min 3 years |
