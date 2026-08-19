@@ -4,7 +4,7 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 44
+**Roles audited:** 46
 
 ## Likely level distribution
 
@@ -12,13 +12,13 @@ do not overwrite the production classification.
 |---|---|
 | ambiguous | 15 |
 | likely_mid_level | 22 |
-| likely_senior | 7 |
+| likely_senior | 9 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Discovery | 10 |
+| Discovery | 12 |
 | Nedbank | 10 |
 | Impact.com | 9 |
 | Takealot Group | 8 |
@@ -68,6 +68,8 @@ do not overwrite the production classification.
 | likely_mid_level | Takealot Group | Software Engineer (Python) | description: 3 to 6 years \| description: 5 to 10 years |
 | likely_mid_level | Takealot Group | Web Frontend Engineer | description: 3-4 years \| description: 20+ years \| description: 5+ years |
 | likely_mid_level | Yassir | Data Scientist (Personalization) | description: at least 3 years |
+| likely_senior | Discovery | Security DevOps Specialist | title: Specialist \| description: 5+ years |
+| likely_senior | Discovery | Security DevOps Specialist | title: Specialist \| description: 5+ years |
 | likely_senior | Discovery | Security DevOps Specialist | title: Specialist \| description: 5+ years |
 | likely_senior | Impact.com | Technical Services Engineer III | title: Engineer III |
 | likely_senior | Nedbank | Title: BI Data Analyst II | title: Analyst II \| description: 5-7 years |
