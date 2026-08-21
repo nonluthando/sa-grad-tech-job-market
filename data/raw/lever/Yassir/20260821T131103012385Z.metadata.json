@@ -1,0 +1,14 @@
+{
+  "source": "lever",
+  "source_name": "Yassir",
+  "source_token": "Yassir",
+  "endpoint": "https://api.lever.co/v0/postings/Yassir?mode=json&limit=500",
+  "collected_at": "2026-08-21T13:11:03.012385+00:00",
+  "http_status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "content_sha256": "6c844a780b3e415a5a22181136c1e3eb0f7e58cf3b0a03de35c46c80f855e509",
+  "byte_count": 1392012,
+  "source_job_count": 142,
+  "raw_file": "20260820T204643941771Z.json",
+  "employer_id": "yassir"
+}
