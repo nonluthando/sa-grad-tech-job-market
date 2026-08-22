@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-22T04:49:38.738996+00:00",
-  "dashboard_job_count": 1117,
-  "dashboard_skill_row_count": 3197,
+  "source_window_end": "2026-08-22T13:01:15.072374+00:00",
+  "dashboard_job_count": 1118,
+  "dashboard_skill_row_count": 3199,
   "target_market_job_count": 109,
   "non_talent_pool_target_market_job_count": 104,
   "early_career_target_job_count": 10,
   "talent_pool_job_count": 28,
-  "jobs_with_skills_count": 664,
+  "jobs_with_skills_count": 665,
   "jobs_without_skills_count": 453,
   "target_jobs_with_skills_count": 100,
   "target_skill_coverage_rate": 0.9174311926605505,
@@ -20,18 +20,18 @@
     "internship": 81,
     "junior": 115,
     "mid_level": 116,
-    "senior": 543,
+    "senior": 544,
     "unspecified": 254
   },
   "workplace_type_counts": {
     "hybrid": 283,
     "on_site": 173,
     "remote": 309,
-    "unspecified": 352
+    "unspecified": 353
   },
   "employer_counts": {
     "Binance": 345,
-    "Discovery": 109,
+    "Discovery": 110,
     "Luno": 13,
     "MOO": 25,
     "Mama Money": 14,
@@ -43,7 +43,7 @@
     "impact.com": 105
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 276,
+    "Banks, insurance and financial services": 277,
     "Fintech and payments": 372,
     "Product, software and e-commerce": 333,
     "Software consultancies and engineering firms": 136
@@ -52,13 +52,13 @@
     "Eastern Cape": 2,
     "Free State": 1,
     "Gauteng": 206,
-    "KwaZulu-Natal": 13,
+    "KwaZulu-Natal": 14,
     "Western Cape": 124,
     "unspecified": 771
   },
   "capability_mention_counts": {
-    "AI and Machine Learning": 597,
-    "Analytics and BI": 178,
+    "AI and Machine Learning": 598,
+    "Analytics and BI": 179,
     "Application Development": 121,
     "Backend and Architecture": 198,
     "Cloud": 217,
@@ -78,7 +78,7 @@
     "AWS": 77,
     "Angular": 31,
     "Apache Spark": 7,
-    "Artificial Intelligence": 274,
+    "Artificial Intelligence": 275,
     "Azure": 42,
     "Bash": 23,
     "BigQuery": 28,
@@ -99,7 +99,7 @@
     "ETL": 16,
     "Elasticsearch": 7,
     "Event-driven Architecture": 20,
-    "Excel": 98,
+    "Excel": 99,
     "Express.js": 11,
     "FastAPI": 2,
     "Flask": 1,
@@ -167,7 +167,7 @@
   },
   "missing_value_counts": {
     "province": 771,
-    "workplace_type": 352,
+    "workplace_type": 353,
     "effective_role_level": 254,
     "industry": 0
   },
