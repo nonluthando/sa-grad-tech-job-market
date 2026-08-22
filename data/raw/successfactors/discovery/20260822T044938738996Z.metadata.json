@@ -1,0 +1,16 @@
+{
+  "source": "successfactors",
+  "source_name": "Discovery",
+  "source_token": "discovery",
+  "endpoint": "https://careers.discovery.co.za/go/All-Jobs/4509301/",
+  "collected_at": "2026-08-22T04:49:38.738996+00:00",
+  "http_status": 200,
+  "content_type": "application/vnd.sa-tech-job-market.successfactors+json",
+  "content_sha256": "5efb1a3fc63212630bb988185760a04f330f960d2aaf9d51a6fde23d81eca5e2",
+  "byte_count": 9840767,
+  "source_job_count": 72,
+  "raw_file": "20260822T044938738996Z.json",
+  "employer_id": "discovery",
+  "listing_page_count": 3,
+  "detail_page_count": 72
+}
