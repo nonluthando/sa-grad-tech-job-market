@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-23T20:39:19.582108+00:00",
-  "dashboard_job_count": 1119,
-  "dashboard_skill_row_count": 3199,
+  "source_window_end": "2026-08-24T05:01:37.429387+00:00",
+  "dashboard_job_count": 1120,
+  "dashboard_skill_row_count": 3202,
   "target_market_job_count": 109,
   "non_talent_pool_target_market_job_count": 104,
   "early_career_target_job_count": 10,
   "talent_pool_job_count": 28,
-  "jobs_with_skills_count": 665,
+  "jobs_with_skills_count": 666,
   "jobs_without_skills_count": 454,
   "target_jobs_with_skills_count": 100,
   "target_skill_coverage_rate": 0.9174311926605505,
@@ -20,17 +20,17 @@
     "internship": 81,
     "junior": 115,
     "mid_level": 116,
-    "senior": 544,
+    "senior": 545,
     "unspecified": 255
   },
   "workplace_type_counts": {
     "hybrid": 283,
     "on_site": 174,
-    "remote": 309,
+    "remote": 310,
     "unspecified": 353
   },
   "employer_counts": {
-    "Binance": 345,
+    "Binance": 346,
     "Discovery": 110,
     "Luno": 13,
     "MOO": 25,
@@ -44,7 +44,7 @@
   },
   "industry_counts": {
     "Banks, insurance and financial services": 277,
-    "Fintech and payments": 372,
+    "Fintech and payments": 373,
     "Product, software and e-commerce": 334,
     "Software consultancies and engineering firms": 136
   },
@@ -54,11 +54,11 @@
     "Gauteng": 206,
     "KwaZulu-Natal": 14,
     "Western Cape": 124,
-    "unspecified": 772
+    "unspecified": 773
   },
   "capability_mention_counts": {
-    "AI and Machine Learning": 598,
-    "Analytics and BI": 179,
+    "AI and Machine Learning": 600,
+    "Analytics and BI": 180,
     "Application Development": 121,
     "Backend and Architecture": 198,
     "Cloud": 217,
@@ -78,7 +78,7 @@
     "AWS": 77,
     "Angular": 31,
     "Apache Spark": 7,
-    "Artificial Intelligence": 275,
+    "Artificial Intelligence": 276,
     "Azure": 42,
     "Bash": 23,
     "BigQuery": 28,
@@ -99,11 +99,11 @@
     "ETL": 16,
     "Elasticsearch": 7,
     "Event-driven Architecture": 20,
-    "Excel": 99,
+    "Excel": 100,
     "Express.js": 11,
     "FastAPI": 2,
     "Flask": 1,
-    "Generative AI": 35,
+    "Generative AI": 36,
     "Git": 95,
     "GitHub Actions": 9,
     "Go": 21,
@@ -166,7 +166,7 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 772,
+    "province": 773,
     "workplace_type": 353,
     "effective_role_level": 255,
     "industry": 0
