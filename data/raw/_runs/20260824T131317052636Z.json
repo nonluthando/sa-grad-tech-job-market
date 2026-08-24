@@ -1,0 +1,176 @@
+{
+  "collected_at": "2026-08-24T13:13:17.052636+00:00",
+  "successful_sources": 11,
+  "failed_sources": 5,
+  "total_source_jobs": 849,
+  "provider_job_counts": {
+    "greenhouse": 126,
+    "lever": 580,
+    "oracle_hcm": 0,
+    "successfactors": 143,
+    "workday": 0,
+    "wp_job_manager": 0
+  },
+  "results": [
+    {
+      "source_name": "Takealot Group",
+      "source_provider": "greenhouse",
+      "source_token": "takealotgroup",
+      "status": "written",
+      "job_count": 19,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/greenhouse/takealotgroup/20260824T131317052636Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/greenhouse/takealotgroup/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "Luno",
+      "source_provider": "greenhouse",
+      "source_token": "luno",
+      "status": "written",
+      "job_count": 9,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/greenhouse/luno/20260824T131317052636Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/greenhouse/luno/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "Impact.com",
+      "source_provider": "greenhouse",
+      "source_token": "impact",
+      "status": "written",
+      "job_count": 93,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/greenhouse/impact/20260824T131317052636Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/greenhouse/impact/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "Mama Money",
+      "source_provider": "lever",
+      "source_token": "mamamoney",
+      "status": "duplicate",
+      "job_count": 11,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/mamamoney/20260822T130115072374Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/mamamoney/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "Yassir",
+      "source_provider": "lever",
+      "source_token": "Yassir",
+      "status": "written",
+      "job_count": 143,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/Yassir/20260824T131317052636Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/Yassir/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "Discovery",
+      "source_provider": "successfactors",
+      "source_token": "discovery",
+      "status": "written",
+      "job_count": 73,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/successfactors/discovery/20260824T131317052636Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/successfactors/discovery/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "Nedbank",
+      "source_provider": "successfactors",
+      "source_token": "nedbank",
+      "status": "written",
+      "job_count": 70,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/successfactors/nedbank/20260824T131317052636Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/successfactors/nedbank/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "DigiOutsource",
+      "source_provider": "workday",
+      "source_token": "digioutsource",
+      "status": "failed",
+      "job_count": 0,
+      "raw_path": null,
+      "metadata_path": null,
+      "error": "Workday reported job count changed during pagination."
+    },
+    {
+      "source_name": "ACI Worldwide",
+      "source_provider": "oracle_hcm",
+      "source_token": "aci-worldwide",
+      "status": "failed",
+      "job_count": 0,
+      "raw_path": null,
+      "metadata_path": null,
+      "error": "404 Client Error: Not Found for url: https://ebwg.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails/1?onlyData=true"
+    },
+    {
+      "source_name": "BET Software",
+      "source_provider": "wp_job_manager",
+      "source_token": "betsoftware",
+      "status": "failed",
+      "job_count": 0,
+      "raw_path": null,
+      "metadata_path": null,
+      "error": "404 Client Error: Not Found for url: https://betsoftware.com/wp-admin/admin-ajax.php"
+    },
+    {
+      "source_name": "Bash",
+      "source_provider": "greenhouse",
+      "source_token": "bashdotcom",
+      "status": "duplicate",
+      "job_count": 5,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/greenhouse/bashdotcom/20260822T130115072374Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/greenhouse/bashdotcom/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "FirstRand",
+      "source_provider": "workday",
+      "source_token": "firstrand",
+      "status": "failed",
+      "job_count": 0,
+      "raw_path": null,
+      "metadata_path": null,
+      "error": "Workday reported job count changed during pagination."
+    },
+    {
+      "source_name": "Absa",
+      "source_provider": "workday",
+      "source_token": "absa",
+      "status": "failed",
+      "job_count": 0,
+      "raw_path": null,
+      "metadata_path": null,
+      "error": "Workday reported job count changed during pagination."
+    },
+    {
+      "source_name": "Binance",
+      "source_provider": "lever",
+      "source_token": "binance",
+      "status": "written",
+      "job_count": 278,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/binance/20260824T131317052636Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/binance/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "Theodo",
+      "source_provider": "lever",
+      "source_token": "theodo",
+      "status": "duplicate",
+      "job_count": 135,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/theodo/20260817T130625393955Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/theodo/20260824T131317052636Z.metadata.json",
+      "error": null
+    },
+    {
+      "source_name": "MOO",
+      "source_provider": "lever",
+      "source_token": "moo",
+      "status": "duplicate",
+      "job_count": 13,
+      "raw_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/moo/20260823T203919582108Z.json",
+      "metadata_path": "/home/runner/work/sa-grad-tech-job-market/sa-grad-tech-job-market/data/raw/lever/moo/20260824T131317052636Z.metadata.json",
+      "error": null
+    }
+  ]
+}
