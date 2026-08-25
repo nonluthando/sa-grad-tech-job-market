@@ -4,13 +4,13 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 51
+**Roles audited:** 52
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 15 |
+| ambiguous | 16 |
 | likely_mid_level | 26 |
 | likely_senior | 10 |
 
@@ -23,9 +23,9 @@ do not overwrite the production classification.
 | Impact.com | 9 |
 | Takealot Group | 8 |
 | Yassir | 3 |
+| Theodo | 2 |
 | Bash | 2 |
 | Luno | 1 |
-| Theodo | 1 |
 
 ## Roles
 
@@ -43,6 +43,7 @@ do not overwrite the production classification.
 | ambiguous | Luno | Backend Engineer | No explicit evidence |
 | ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
 | ambiguous | Takealot Group | Zendesk Platform Software Engineer | description: 2–4 years |
+| ambiguous | Theodo | Frontend Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Theodo | Full Stack Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Yassir | Data Scientist | No explicit evidence |
 | ambiguous | Yassir | Data Scientist (Pricing) | description: at least 2 years |
