@@ -1,0 +1,14 @@
+{
+  "source": "lever",
+  "source_name": "Theodo",
+  "source_token": "theodo",
+  "endpoint": "https://api.lever.co/v0/postings/theodo?mode=json&limit=500",
+  "collected_at": "2026-08-26T04:56:12.402684+00:00",
+  "http_status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "content_sha256": "fe24005c0484c553ef73ba1eeea1f2be2768715485f070e991b5ee9378f3c8de",
+  "byte_count": 3575951,
+  "source_job_count": 137,
+  "raw_file": "20260825T204700031729Z.json",
+  "employer_id": "theodo"
+}
