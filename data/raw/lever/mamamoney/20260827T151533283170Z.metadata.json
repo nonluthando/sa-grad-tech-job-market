@@ -1,0 +1,14 @@
+{
+  "source": "lever",
+  "source_name": "Mama Money",
+  "source_token": "mamamoney",
+  "endpoint": "https://api.lever.co/v0/postings/mamamoney?mode=json&limit=500",
+  "collected_at": "2026-08-27T15:15:33.283170+00:00",
+  "http_status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "content_sha256": "2e27e61b58882e08d98e2d2f665a771e313b70e9132174e26e717fc76b49a6e5",
+  "byte_count": 127672,
+  "source_job_count": 10,
+  "raw_file": "20260826T131659024119Z.json",
+  "employer_id": "mama-money"
+}

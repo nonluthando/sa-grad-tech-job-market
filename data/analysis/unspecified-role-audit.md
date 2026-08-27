@@ -4,7 +4,7 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 56
+**Roles audited:** 57
 
 ## Likely level distribution
 
@@ -12,7 +12,7 @@ do not overwrite the production classification.
 |---|---|
 | ambiguous | 19 |
 | likely_mid_level | 27 |
-| likely_senior | 10 |
+| likely_senior | 11 |
 
 ## Employer distribution
 
@@ -20,8 +20,8 @@ do not overwrite the production classification.
 |---|---|
 | Discovery | 15 |
 | Nedbank | 15 |
+| Takealot Group | 10 |
 | Impact.com | 9 |
-| Takealot Group | 9 |
 | Yassir | 3 |
 | Theodo | 2 |
 | Bash | 2 |
@@ -85,6 +85,7 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: Business Analyst | description: 5 - 8 years |
 | likely_senior | Nedbank | Title: Front Arena Developer | description: Min 5 years |
 | likely_senior | Takealot Group | Python Software Engineer | description: 5+ years |
+| likely_senior | Takealot Group | Search Software Engineer | description: 5 to 10 years |
 | likely_senior | Takealot Group | Search Software Engineer | description: 5 to 10 years |
 | likely_senior | Takealot Group | Software Engineer (Scala) | description: At least 5 years |
 
