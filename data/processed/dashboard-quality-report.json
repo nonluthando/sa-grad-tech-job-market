@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-08-28T22:20:28.465931+00:00",
-  "dashboard_job_count": 1239,
-  "dashboard_skill_row_count": 3435,
+  "source_window_end": "2026-08-29T11:05:50.005268+00:00",
+  "dashboard_job_count": 1241,
+  "dashboard_skill_row_count": 3437,
   "target_market_job_count": 124,
   "non_talent_pool_target_market_job_count": 119,
   "early_career_target_job_count": 12,
   "talent_pool_job_count": 29,
-  "jobs_with_skills_count": 726,
-  "jobs_without_skills_count": 513,
+  "jobs_with_skills_count": 727,
+  "jobs_without_skills_count": 514,
   "target_jobs_with_skills_count": 111,
   "target_skill_coverage_rate": 0.8951612903225806,
   "unique_technology_count": 90,
@@ -20,17 +20,17 @@
     "internship": 91,
     "junior": 138,
     "mid_level": 130,
-    "senior": 599,
-    "unspecified": 272
+    "senior": 600,
+    "unspecified": 273
   },
   "workplace_type_counts": {
     "hybrid": 294,
     "on_site": 179,
-    "remote": 330,
+    "remote": 332,
     "unspecified": 436
   },
   "employer_counts": {
-    "Binance": 365,
+    "Binance": 367,
     "Discovery": 133,
     "Luno": 13,
     "MOO": 26,
@@ -44,7 +44,7 @@
   },
   "industry_counts": {
     "Banks, insurance and financial services": 355,
-    "Fintech and payments": 392,
+    "Fintech and payments": 394,
     "Product, software and e-commerce": 353,
     "Software consultancies and engineering firms": 139
   },
@@ -54,7 +54,7 @@
     "Gauteng": 258,
     "KwaZulu-Natal": 17,
     "Western Cape": 139,
-    "unspecified": 816
+    "unspecified": 818
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 636,
@@ -63,13 +63,13 @@
     "Backend and Architecture": 214,
     "Cloud": 232,
     "Data Engineering": 119,
-    "Data Storage": 328,
+    "Data Storage": 329,
     "Data and Analytics": 88,
     "DevOps and Platform Engineering": 313,
     "Enterprise Technology": 41,
     "Frontend Development": 161,
     "Mobile Development": 79,
-    "Programming": 621,
+    "Programming": 622,
     "Quality Engineering": 89,
     "Software Delivery": 175
   },
@@ -135,7 +135,7 @@
     "PostgreSQL": 20,
     "Power BI": 27,
     "PyTorch": 23,
-    "Python": 177,
+    "Python": 178,
     "REST APIs": 69,
     "RabbitMQ": 16,
     "React": 95,
@@ -144,7 +144,7 @@
     "Ruby on Rails": 10,
     "SAP": 19,
     "SAS": 14,
-    "SQL": 157,
+    "SQL": 158,
     "Salesforce": 20,
     "Scala": 24,
     "Selenium": 11,
@@ -166,13 +166,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 816,
+    "province": 818,
     "workplace_type": 436,
-    "effective_role_level": 272,
+    "effective_role_level": 273,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 2,
-  "jobs_with_extraction_warnings_count": 513,
+  "jobs_with_extraction_warnings_count": 514,
   "warnings": [
     "high_unknown_workplace_share"
   ]
