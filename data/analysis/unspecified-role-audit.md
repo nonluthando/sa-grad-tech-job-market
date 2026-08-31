@@ -4,13 +4,13 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 57
+**Roles audited:** 58
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 19 |
+| ambiguous | 20 |
 | likely_mid_level | 27 |
 | likely_senior | 11 |
 
@@ -18,7 +18,7 @@ do not overwrite the production classification.
 
 | Company | Count |
 |---|---|
-| Discovery | 15 |
+| Discovery | 16 |
 | Nedbank | 15 |
 | Takealot Group | 10 |
 | Impact.com | 9 |
@@ -32,6 +32,7 @@ do not overwrite the production classification.
 | Likely level | Company | Title | Experience evidence |
 |---|---|---|---|
 | ambiguous | Discovery | Android Developer - Talent Pool | description: 3+ Year \| description: 2+ years \| description: 3+ years |
+| ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | description: 3 – 4 years \| description: Minimum 2 years |
 | ambiguous | Discovery | Business Analyst (Talent Pool) | No explicit evidence |
