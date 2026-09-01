@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-09-01T16:40:46.835031+00:00",
-  "dashboard_job_count": 1295,
-  "dashboard_skill_row_count": 3572,
+  "source_window_end": "2026-09-01T22:37:16.752290+00:00",
+  "dashboard_job_count": 1299,
+  "dashboard_skill_row_count": 3570,
   "target_market_job_count": 131,
   "non_talent_pool_target_market_job_count": 126,
   "early_career_target_job_count": 13,
   "talent_pool_job_count": 32,
   "jobs_with_skills_count": 759,
-  "jobs_without_skills_count": 536,
+  "jobs_without_skills_count": 540,
   "target_jobs_with_skills_count": 118,
   "target_skill_coverage_rate": 0.9007633587786259,
   "unique_technology_count": 90,
@@ -18,16 +18,16 @@
   "role_level_counts": {
     "graduate": 9,
     "internship": 95,
-    "junior": 148,
+    "junior": 150,
     "mid_level": 138,
-    "senior": 616,
+    "senior": 618,
     "unspecified": 289
   },
   "workplace_type_counts": {
-    "hybrid": 304,
+    "hybrid": 305,
     "on_site": 183,
     "remote": 338,
-    "unspecified": 470
+    "unspecified": 473
   },
   "employer_counts": {
     "Binance": 375,
@@ -35,7 +35,7 @@
     "Luno": 13,
     "MOO": 27,
     "Mama Money": 14,
-    "Nedbank": 241,
+    "Nedbank": 245,
     "TFG": 11,
     "Takealot Group": 39,
     "Theodo": 146,
@@ -43,7 +43,7 @@
     "impact.com": 111
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 385,
+    "Banks, insurance and financial services": 389,
     "Fintech and payments": 402,
     "Product, software and e-commerce": 362,
     "Software consultancies and engineering firms": 146
@@ -54,12 +54,12 @@
     "Gauteng": 278,
     "KwaZulu-Natal": 20,
     "Western Cape": 145,
-    "unspecified": 843
+    "unspecified": 847
   },
   "capability_mention_counts": {
-    "AI and Machine Learning": 649,
+    "AI and Machine Learning": 648,
     "Analytics and BI": 230,
-    "Application Development": 134,
+    "Application Development": 133,
     "Backend and Architecture": 218,
     "Cloud": 241,
     "Data Engineering": 124,
@@ -78,7 +78,7 @@
     "AWS": 85,
     "Angular": 33,
     "Apache Spark": 8,
-    "Artificial Intelligence": 308,
+    "Artificial Intelligence": 307,
     "Azure": 51,
     "Bash": 25,
     "BigQuery": 29,
@@ -151,7 +151,7 @@
     "ServiceNow": 2,
     "Snowflake": 8,
     "Spring": 10,
-    "Spring Boot": 49,
+    "Spring Boot": 48,
     "Swift": 41,
     "TDD": 14,
     "Tableau": 29,
@@ -166,13 +166,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 843,
-    "workplace_type": 470,
+    "province": 847,
+    "workplace_type": 473,
     "effective_role_level": 289,
     "industry": 0
   },
-  "jobs_with_data_quality_issues_count": 20,
-  "jobs_with_extraction_warnings_count": 536,
+  "jobs_with_data_quality_issues_count": 24,
+  "jobs_with_extraction_warnings_count": 540,
   "warnings": [
     "high_unknown_workplace_share"
   ]
