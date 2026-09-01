@@ -4,22 +4,22 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 59
+**Roles audited:** 61
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 20 |
-| likely_mid_level | 28 |
-| likely_senior | 11 |
+| likely_mid_level | 29 |
+| likely_senior | 12 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
+| Nedbank | 17 |
 | Discovery | 16 |
-| Nedbank | 15 |
 | Takealot Group | 11 |
 | Impact.com | 9 |
 | Yassir | 3 |
@@ -62,6 +62,7 @@ do not overwrite the production classification.
 | likely_mid_level | Impact.com | Site Reliability Engineer | description: 3+ years |
 | likely_mid_level | Impact.com | Software engineer | description: 4 + years |
 | likely_mid_level | Nedbank | Title: ACE Software Developer | description: Min 3 years |
+| likely_mid_level | Nedbank | Title: BI Data Analyst | description: 3–5 Years |
 | likely_mid_level | Nedbank | Title: Cloud Engineer: Database Services | description: 8-10 Years \| description: 6+ Years \| description: 3+ Years |
 | likely_mid_level | Nedbank | Title: Cloud Engineer: Database Services | description: 8-10 Years \| description: 6+ Years \| description: 3+ Years |
 | likely_mid_level | Nedbank | Title: Data Engineer | description: 3 - 6 years |
@@ -83,6 +84,7 @@ do not overwrite the production classification.
 | likely_senior | Discovery | Security DevOps Specialist | title: Specialist \| description: 5+ years |
 | likely_senior | Discovery | Security DevOps Specialist | title: Specialist \| description: 5+ years |
 | likely_senior | Impact.com | Technical Services Engineer III | title: Engineer III |
+| likely_senior | Nedbank | Title: BI Data Analyst | description: 5+ years of experience |
 | likely_senior | Nedbank | Title: BI Data Analyst II | title: Analyst II \| description: 5-7 years |
 | likely_senior | Nedbank | Title: Business Analyst | description: 5 - 8 years |
 | likely_senior | Nedbank | Title: Front Arena Developer | description: Min 5 years |
