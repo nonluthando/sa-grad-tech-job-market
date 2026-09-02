@@ -4,21 +4,21 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 61
+**Roles audited:** 63
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 20 |
+| ambiguous | 21 |
 | likely_mid_level | 29 |
-| likely_senior | 12 |
+| likely_senior | 13 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 17 |
+| Nedbank | 19 |
 | Discovery | 16 |
 | Takealot Group | 11 |
 | Impact.com | 9 |
@@ -45,12 +45,13 @@ do not overwrite the production classification.
 | ambiguous | Impact.com | QA Engineer | No explicit evidence |
 | ambiguous | Impact.com | Software Quality Engineer (Java using Selenium) | description: At least 3 years \| description: At least 2 years |
 | ambiguous | Luno | Backend Engineer | No explicit evidence |
+| ambiguous | Nedbank | Title: Data Analyst - Recons and Control | description: 3 – 5 Years \| description: 1 – 3 Years |
 | ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
 | ambiguous | Takealot Group | Zendesk Platform Software Engineer | description: 2–4 years |
 | ambiguous | Theodo | Frontend Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Theodo | Full Stack Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Yassir | Data Scientist | No explicit evidence |
-| ambiguous | Yassir | Data Scientist (Pricing) | description: at least 2 years |
+| ambiguous | Yassir | Data Scientist - L5 | description: at least 2 years |
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
 | likely_mid_level | Bash | Software Engineer - GoLang (OmniComm) | description: 3+ years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
@@ -87,6 +88,7 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: BI Data Analyst | description: 5+ years of experience |
 | likely_senior | Nedbank | Title: BI Data Analyst II | title: Analyst II \| description: 5-7 years |
 | likely_senior | Nedbank | Title: Business Analyst | description: 5 - 8 years |
+| likely_senior | Nedbank | Title: Cloud Engineer | description: 8-10 Years |
 | likely_senior | Nedbank | Title: Front Arena Developer | description: Min 5 years |
 | likely_senior | Takealot Group | Python Software Engineer | description: 5+ years |
 | likely_senior | Takealot Group | Search Software Engineer | description: 5 to 10 years |
