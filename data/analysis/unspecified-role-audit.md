@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 63
+**Roles audited:** 62
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 21 |
-| likely_mid_level | 29 |
+| likely_mid_level | 28 |
 | likely_senior | 13 |
 
 ## Employer distribution
@@ -24,8 +24,8 @@ do not overwrite the production classification.
 | Impact.com | 9 |
 | Yassir | 3 |
 | Theodo | 2 |
-| Bash | 2 |
 | Luno | 1 |
+| Bash | 1 |
 
 ## Roles
 
@@ -53,7 +53,6 @@ do not overwrite the production classification.
 | ambiguous | Yassir | Data Scientist | No explicit evidence |
 | ambiguous | Yassir | Data Scientist - L5 | description: at least 2 years |
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
-| likely_mid_level | Bash | Software Engineer - GoLang (OmniComm) | description: 3+ years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
 | likely_mid_level | Discovery | Java Developer | description: 4-5 years |
