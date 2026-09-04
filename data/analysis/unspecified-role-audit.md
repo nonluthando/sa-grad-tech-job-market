@@ -4,23 +4,23 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 62
+**Roles audited:** 64
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 21 |
-| likely_mid_level | 28 |
+| ambiguous | 22 |
+| likely_mid_level | 29 |
 | likely_senior | 13 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 19 |
+| Nedbank | 20 |
 | Discovery | 16 |
-| Takealot Group | 11 |
+| Takealot Group | 12 |
 | Impact.com | 9 |
 | Yassir | 3 |
 | Theodo | 2 |
@@ -47,6 +47,7 @@ do not overwrite the production classification.
 | ambiguous | Luno | Backend Engineer | No explicit evidence |
 | ambiguous | Nedbank | Title: Data Analyst - Recons and Control | description: 3 – 5 Years \| description: 1 – 3 Years |
 | ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
+| ambiguous | Takealot Group | Android Software Engineer | description: minimum of 3 years \| description: minimum of 6 years \| description: at least 2 years \| description: 3+ years |
 | ambiguous | Takealot Group | Zendesk Platform Software Engineer | description: 2–4 years |
 | ambiguous | Theodo | Frontend Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Theodo | Full Stack Software Engineer - Cape Town | No explicit evidence |
@@ -73,6 +74,7 @@ do not overwrite the production classification.
 | likely_mid_level | Nedbank | Title: Software Developer II | title: Developer II \| description: Min 3 years |
 | likely_mid_level | Nedbank | Title: Software Developer II | title: Developer II \| description: Minimum 3 years |
 | likely_mid_level | Nedbank | Title: Software System Designer I | description: Min 3 years |
+| likely_mid_level | Nedbank | Title: Windows Server Systems Engineer II | title: Engineer II \| description: 3 + years |
 | likely_mid_level | Takealot Group | BI Engineer: Takealot Group | description: minimum of 5 years \| description: minimum of 8 years \| description: Minimum 3 years |
 | likely_mid_level | Takealot Group | BI Engineer: Takealot Group | description: minimum of 5 years \| description: minimum of 8 years \| description: Minimum 3 years |
 | likely_mid_level | Takealot Group | DC Industrial Systems Engineer | description: Minimum 3 years |
