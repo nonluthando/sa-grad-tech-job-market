@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-09-05T22:04:02.814619+00:00",
-  "dashboard_job_count": 1397,
-  "dashboard_skill_row_count": 3686,
+  "source_window_end": "2026-09-06T08:40:46.979342+00:00",
+  "dashboard_job_count": 1398,
+  "dashboard_skill_row_count": 3689,
   "target_market_job_count": 135,
   "non_talent_pool_target_market_job_count": 130,
   "early_career_target_job_count": 14,
   "talent_pool_job_count": 35,
-  "jobs_with_skills_count": 795,
+  "jobs_with_skills_count": 796,
   "jobs_without_skills_count": 602,
   "target_jobs_with_skills_count": 122,
   "target_skill_coverage_rate": 0.9037037037037037,
@@ -20,12 +20,12 @@
     "internship": 98,
     "junior": 163,
     "mid_level": 144,
-    "senior": 675,
+    "senior": 676,
     "unspecified": 307
   },
   "workplace_type_counts": {
     "hybrid": 310,
-    "on_site": 186,
+    "on_site": 187,
     "remote": 357,
     "unspecified": 544
   },
@@ -39,13 +39,13 @@
     "TFG": 12,
     "Takealot Group": 41,
     "Theodo": 149,
-    "Yassir": 174,
+    "Yassir": 175,
     "impact.com": 112
   },
   "industry_counts": {
     "Banks, insurance and financial services": 459,
     "Fintech and payments": 421,
-    "Product, software and e-commerce": 368,
+    "Product, software and e-commerce": 369,
     "Software consultancies and engineering firms": 149
   },
   "province_counts": {
@@ -54,11 +54,11 @@
     "Gauteng": 324,
     "KwaZulu-Natal": 24,
     "Western Cape": 160,
-    "unspecified": 878
+    "unspecified": 879
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 676,
-    "Analytics and BI": 242,
+    "Analytics and BI": 244,
     "Application Development": 133,
     "Backend and Architecture": 225,
     "Cloud": 249,
@@ -69,7 +69,7 @@
     "Enterprise Technology": 49,
     "Frontend Development": 172,
     "Mobile Development": 82,
-    "Programming": 666,
+    "Programming": 667,
     "Quality Engineering": 91,
     "Software Delivery": 184
   },
@@ -82,7 +82,7 @@
     "Azure": 54,
     "Bash": 27,
     "BigQuery": 29,
-    "C": 156,
+    "C": 157,
     "C#": 11,
     "C++": 17,
     "CI/CD": 80,
@@ -99,7 +99,7 @@
     "ETL": 20,
     "Elasticsearch": 8,
     "Event-driven Architecture": 21,
-    "Excel": 141,
+    "Excel": 142,
     "Express.js": 12,
     "FastAPI": 2,
     "Flask": 1,
@@ -133,7 +133,7 @@
     "Pandas": 10,
     "Playwright": 8,
     "PostgreSQL": 25,
-    "Power BI": 30,
+    "Power BI": 31,
     "PyTorch": 23,
     "Python": 190,
     "REST APIs": 71,
@@ -166,7 +166,7 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 878,
+    "province": 879,
     "workplace_type": 544,
     "effective_role_level": 307,
     "industry": 0
