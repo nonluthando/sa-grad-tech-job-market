@@ -31,7 +31,7 @@ do not overwrite the production classification.
 
 | Likely level | Company | Title | Experience evidence |
 |---|---|---|---|
-| ambiguous | Discovery | Android Developer - Talent Pool | description: 3+ Year \| description: 2+ years \| description: 3+ years |
+| ambiguous | Discovery | Android Developer - Talent Pool | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | description: 3 – 4 years \| description: Minimum 2 years |
