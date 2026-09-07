@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 64
+**Roles audited:** 66
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 22 |
-| likely_mid_level | 29 |
+| ambiguous | 23 |
+| likely_mid_level | 30 |
 | likely_senior | 13 |
 
 ## Employer distribution
@@ -19,7 +19,7 @@ do not overwrite the production classification.
 | Company | Count |
 |---|---|
 | Nedbank | 20 |
-| Discovery | 16 |
+| Discovery | 18 |
 | Takealot Group | 12 |
 | Impact.com | 9 |
 | Yassir | 3 |
@@ -37,6 +37,7 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Business Analyst | description: 3 – 4 years \| description: Minimum 2 years |
 | ambiguous | Discovery | Business Analyst (Talent Pool) | No explicit evidence |
 | ambiguous | Discovery | Data Scientist | No explicit evidence |
+| ambiguous | Discovery | Data Scientist (Intermediate) | description: 2-3 years |
 | ambiguous | Discovery | IT Auditor | description: 2+ years |
 | ambiguous | Discovery | Machine Learning Engineer | description: 1-3 years |
 | ambiguous | Discovery | iOS Developer - Talent Pool | description: 2+ years |
@@ -56,6 +57,7 @@ do not overwrite the production classification.
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
+| likely_mid_level | Discovery | Information Security Analyst | description: 3-5 years |
 | likely_mid_level | Discovery | Java Developer | description: 4-5 years |
 | likely_mid_level | Discovery | Java Developer (Intermediate) | description: Minimum 3 years |
 | likely_mid_level | Impact.com | Android Developer | description: 3+ years |
