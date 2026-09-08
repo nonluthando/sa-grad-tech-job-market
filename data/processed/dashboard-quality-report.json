@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-09-08T16:38:47.122688+00:00",
-  "dashboard_job_count": 1448,
-  "dashboard_skill_row_count": 3763,
+  "source_window_end": "2026-09-08T22:41:12.030704+00:00",
+  "dashboard_job_count": 1449,
+  "dashboard_skill_row_count": 3764,
   "target_market_job_count": 142,
   "non_talent_pool_target_market_job_count": 137,
   "early_career_target_job_count": 14,
   "talent_pool_job_count": 36,
-  "jobs_with_skills_count": 819,
+  "jobs_with_skills_count": 820,
   "jobs_without_skills_count": 629,
   "target_jobs_with_skills_count": 127,
   "target_skill_coverage_rate": 0.8943661971830986,
@@ -21,13 +21,13 @@
     "junior": 172,
     "mid_level": 148,
     "senior": 697,
-    "unspecified": 319
+    "unspecified": 320
   },
   "workplace_type_counts": {
     "hybrid": 315,
     "on_site": 191,
     "remote": 362,
-    "unspecified": 580
+    "unspecified": 581
   },
   "employer_counts": {
     "Binance": 398,
@@ -35,7 +35,7 @@
     "Luno": 14,
     "MOO": 29,
     "Mama Money": 14,
-    "Nedbank": 323,
+    "Nedbank": 324,
     "TFG": 14,
     "Takealot Group": 44,
     "Theodo": 150,
@@ -43,7 +43,7 @@
     "impact.com": 114
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 492,
+    "Banks, insurance and financial services": 493,
     "Fintech and payments": 426,
     "Product, software and e-commerce": 380,
     "Software consultancies and engineering firms": 150
@@ -54,11 +54,11 @@
     "Gauteng": 343,
     "KwaZulu-Natal": 25,
     "Western Cape": 168,
-    "unspecified": 901
+    "unspecified": 902
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 691,
-    "Analytics and BI": 256,
+    "Analytics and BI": 257,
     "Application Development": 133,
     "Backend and Architecture": 228,
     "Cloud": 254,
@@ -99,7 +99,7 @@
     "ETL": 20,
     "Elasticsearch": 8,
     "Event-driven Architecture": 21,
-    "Excel": 150,
+    "Excel": 151,
     "Express.js": 12,
     "FastAPI": 2,
     "Flask": 1,
@@ -166,12 +166,12 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 901,
-    "workplace_type": 580,
-    "effective_role_level": 319,
+    "province": 902,
+    "workplace_type": 581,
+    "effective_role_level": 320,
     "industry": 0
   },
-  "jobs_with_data_quality_issues_count": 137,
+  "jobs_with_data_quality_issues_count": 138,
   "jobs_with_extraction_warnings_count": 629,
   "warnings": [
     "high_unknown_workplace_share"
