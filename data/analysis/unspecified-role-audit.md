@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 67
+**Roles audited:** 68
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 23 |
-| likely_mid_level | 31 |
+| likely_mid_level | 32 |
 | likely_senior | 13 |
 
 ## Employer distribution
@@ -19,7 +19,7 @@ do not overwrite the production classification.
 | Company | Count |
 |---|---|
 | Nedbank | 21 |
-| Discovery | 18 |
+| Discovery | 19 |
 | Takealot Group | 12 |
 | Impact.com | 9 |
 | Yassir | 3 |
@@ -60,6 +60,7 @@ do not overwrite the production classification.
 | likely_mid_level | Discovery | Information Security Analyst | description: 3-5 years |
 | likely_mid_level | Discovery | Java Developer | description: 4-5 years |
 | likely_mid_level | Discovery | Java Developer (Intermediate) | description: Minimum 3 years |
+| likely_mid_level | Discovery | RPA Developer | description: 3 – 5 years |
 | likely_mid_level | Impact.com | Android Developer | description: 3+ years |
 | likely_mid_level | Impact.com | Email & Marketing Automation Developer | description: 3–5 years of experience |
 | likely_mid_level | Impact.com | Site Reliability Engineer | description: 3+ years |
