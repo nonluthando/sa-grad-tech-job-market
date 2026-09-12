@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-09-11T22:36:00.415365+00:00",
+  "source_window_end": "2026-09-12T08:38:51.504190+00:00",
   "dashboard_job_count": 1528,
   "dashboard_skill_row_count": 3922,
   "target_market_job_count": 147,
@@ -171,7 +171,7 @@
     "effective_role_level": 332,
     "industry": 0
   },
-  "jobs_with_data_quality_issues_count": 189,
+  "jobs_with_data_quality_issues_count": 191,
   "jobs_with_extraction_warnings_count": 671,
   "warnings": [
     "high_unknown_workplace_share"
