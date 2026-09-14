@@ -1,0 +1,14 @@
+{
+  "source": "greenhouse",
+  "source_name": "Bash",
+  "source_token": "bashdotcom",
+  "endpoint": "https://boards-api.greenhouse.io/v1/boards/bashdotcom/jobs?content=true",
+  "collected_at": "2026-09-14T23:08:17.494658+00:00",
+  "http_status": 200,
+  "content_type": "application/json",
+  "content_sha256": "81d1d25e807b3859808b25afd824ab528c8abf87db38abe82ab1beae79c945c7",
+  "byte_count": 100059,
+  "source_job_count": 7,
+  "raw_file": "20260914T230817494658Z.json",
+  "employer_id": "tfg"
+}

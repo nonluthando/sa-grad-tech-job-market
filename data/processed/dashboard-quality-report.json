@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-09-14T18:05:28.456691+00:00",
-  "dashboard_job_count": 1541,
+  "source_window_end": "2026-09-14T23:08:17.494658+00:00",
+  "dashboard_job_count": 1544,
   "dashboard_skill_row_count": 3962,
   "target_market_job_count": 150,
   "non_talent_pool_target_market_job_count": 145,
   "early_career_target_job_count": 15,
   "talent_pool_job_count": 36,
   "jobs_with_skills_count": 864,
-  "jobs_without_skills_count": 677,
+  "jobs_without_skills_count": 680,
   "target_jobs_with_skills_count": 133,
   "target_skill_coverage_rate": 0.8866666666666667,
   "unique_technology_count": 90,
@@ -17,8 +17,8 @@
   "industry_count": 4,
   "role_level_counts": {
     "graduate": 10,
-    "internship": 108,
-    "junior": 188,
+    "internship": 109,
+    "junior": 190,
     "mid_level": 157,
     "senior": 745,
     "unspecified": 333
@@ -27,15 +27,15 @@
     "hybrid": 331,
     "on_site": 196,
     "remote": 383,
-    "unspecified": 631
+    "unspecified": 634
   },
   "employer_counts": {
     "Binance": 418,
-    "Discovery": 184,
+    "Discovery": 185,
     "Luno": 14,
     "MOO": 30,
     "Mama Money": 15,
-    "Nedbank": 360,
+    "Nedbank": 362,
     "TFG": 15,
     "Takealot Group": 47,
     "Theodo": 155,
@@ -43,7 +43,7 @@
     "impact.com": 117
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 544,
+    "Banks, insurance and financial services": 547,
     "Fintech and payments": 447,
     "Product, software and e-commerce": 395,
     "Software consultancies and engineering firms": 155
@@ -51,10 +51,10 @@
   "province_counts": {
     "Eastern Cape": 7,
     "Free State": 5,
-    "Gauteng": 381,
+    "Gauteng": 382,
     "KwaZulu-Natal": 25,
     "Western Cape": 178,
-    "unspecified": 945
+    "unspecified": 947
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 724,
@@ -166,13 +166,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 945,
-    "workplace_type": 631,
+    "province": 947,
+    "workplace_type": 634,
     "effective_role_level": 333,
     "industry": 0
   },
-  "jobs_with_data_quality_issues_count": 201,
-  "jobs_with_extraction_warnings_count": 677,
+  "jobs_with_data_quality_issues_count": 204,
+  "jobs_with_extraction_warnings_count": 680,
   "warnings": [
     "high_unknown_workplace_share"
   ]
