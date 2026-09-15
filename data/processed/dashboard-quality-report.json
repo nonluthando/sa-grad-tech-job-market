@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-09-15T16:59:50.126060+00:00",
-  "dashboard_job_count": 1570,
+  "source_window_end": "2026-09-15T22:55:05.299496+00:00",
+  "dashboard_job_count": 1573,
   "dashboard_skill_row_count": 3988,
   "target_market_job_count": 151,
   "non_talent_pool_target_market_job_count": 146,
   "early_career_target_job_count": 15,
   "talent_pool_job_count": 36,
   "jobs_with_skills_count": 875,
-  "jobs_without_skills_count": 695,
+  "jobs_without_skills_count": 698,
   "target_jobs_with_skills_count": 134,
   "target_skill_coverage_rate": 0.8874172185430463,
   "unique_technology_count": 90,
@@ -18,16 +18,16 @@
   "role_level_counts": {
     "graduate": 10,
     "internship": 109,
-    "junior": 196,
+    "junior": 198,
     "mid_level": 159,
-    "senior": 752,
+    "senior": 753,
     "unspecified": 344
   },
   "workplace_type_counts": {
-    "hybrid": 331,
+    "hybrid": 332,
     "on_site": 198,
     "remote": 385,
-    "unspecified": 656
+    "unspecified": 658
   },
   "employer_counts": {
     "Binance": 421,
@@ -35,26 +35,26 @@
     "Luno": 14,
     "MOO": 30,
     "Mama Money": 15,
-    "Nedbank": 375,
+    "Nedbank": 377,
     "TFG": 20,
     "Takealot Group": 47,
-    "Theodo": 155,
+    "Theodo": 156,
     "Yassir": 187,
     "impact.com": 120
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 561,
+    "Banks, insurance and financial services": 563,
     "Fintech and payments": 450,
     "Product, software and e-commerce": 404,
-    "Software consultancies and engineering firms": 155
+    "Software consultancies and engineering firms": 156
   },
   "province_counts": {
     "Eastern Cape": 7,
     "Free State": 5,
-    "Gauteng": 392,
+    "Gauteng": 394,
     "KwaZulu-Natal": 25,
     "Western Cape": 182,
-    "unspecified": 959
+    "unspecified": 960
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 724,
@@ -166,13 +166,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 959,
-    "workplace_type": 656,
+    "province": 960,
+    "workplace_type": 658,
     "effective_role_level": 344,
     "industry": 0
   },
-  "jobs_with_data_quality_issues_count": 222,
-  "jobs_with_extraction_warnings_count": 695,
+  "jobs_with_data_quality_issues_count": 224,
+  "jobs_with_extraction_warnings_count": 698,
   "warnings": [
     "high_unknown_workplace_share"
   ]
