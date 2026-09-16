@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 72
+**Roles audited:** 73
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 23 |
-| likely_mid_level | 34 |
+| likely_mid_level | 35 |
 | likely_senior | 15 |
 
 ## Employer distribution
@@ -19,7 +19,7 @@ do not overwrite the production classification.
 | Company | Count |
 |---|---|
 | Nedbank | 23 |
-| Discovery | 20 |
+| Discovery | 21 |
 | Takealot Group | 13 |
 | Impact.com | 9 |
 | Yassir | 3 |
@@ -53,8 +53,9 @@ do not overwrite the production classification.
 | ambiguous | Theodo | Frontend Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Theodo | Full Stack Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Yassir | Data Scientist | No explicit evidence |
-| ambiguous | Yassir | Data Scientist - L5 | description: at least 2 years |
+| ambiguous | Yassir | Data Scientist - Pricing | description: at least 2 years |
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
+| likely_mid_level | Discovery | AI Developer | description: 3+ years |
 | likely_mid_level | Discovery | Business Analyst | description: 3 – 5 years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
