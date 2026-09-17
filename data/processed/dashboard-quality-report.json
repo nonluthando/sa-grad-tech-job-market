@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-09-17T17:00:16.168041+00:00",
-  "dashboard_job_count": 1617,
+  "source_window_end": "2026-09-17T22:51:43.308527+00:00",
+  "dashboard_job_count": 1618,
   "dashboard_skill_row_count": 4105,
   "target_market_job_count": 157,
   "non_talent_pool_target_market_job_count": 152,
   "early_career_target_job_count": 15,
   "talent_pool_job_count": 36,
   "jobs_with_skills_count": 895,
-  "jobs_without_skills_count": 722,
+  "jobs_without_skills_count": 723,
   "target_jobs_with_skills_count": 139,
   "target_skill_coverage_rate": 0.8853503184713376,
   "unique_technology_count": 90,
@@ -18,7 +18,7 @@
   "role_level_counts": {
     "graduate": 10,
     "internship": 114,
-    "junior": 202,
+    "junior": 203,
     "mid_level": 164,
     "senior": 770,
     "unspecified": 357
@@ -27,7 +27,7 @@
     "hybrid": 341,
     "on_site": 202,
     "remote": 395,
-    "unspecified": 679
+    "unspecified": 680
   },
   "employer_counts": {
     "Binance": 432,
@@ -35,7 +35,7 @@
     "Luno": 14,
     "MOO": 33,
     "Mama Money": 15,
-    "Nedbank": 389,
+    "Nedbank": 390,
     "TFG": 20,
     "Takealot Group": 50,
     "Theodo": 158,
@@ -43,7 +43,7 @@
     "impact.com": 121
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 585,
+    "Banks, insurance and financial services": 586,
     "Fintech and payments": 461,
     "Product, software and e-commerce": 413,
     "Software consultancies and engineering firms": 158
@@ -53,7 +53,7 @@
     "Free State": 5,
     "Gauteng": 414,
     "KwaZulu-Natal": 25,
-    "Western Cape": 185,
+    "Western Cape": 186,
     "unspecified": 981
   },
   "capability_mention_counts": {
@@ -167,12 +167,12 @@
   },
   "missing_value_counts": {
     "province": 981,
-    "workplace_type": 679,
+    "workplace_type": 680,
     "effective_role_level": 357,
     "industry": 0
   },
-  "jobs_with_data_quality_issues_count": 250,
-  "jobs_with_extraction_warnings_count": 722,
+  "jobs_with_data_quality_issues_count": 251,
+  "jobs_with_extraction_warnings_count": 723,
   "warnings": [
     "high_unknown_workplace_share"
   ]
