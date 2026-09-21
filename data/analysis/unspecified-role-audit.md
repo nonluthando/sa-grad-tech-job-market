@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 74
+**Roles audited:** 76
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 23 |
-| likely_mid_level | 36 |
+| ambiguous | 24 |
+| likely_mid_level | 37 |
 | likely_senior | 15 |
 
 ## Employer distribution
@@ -19,7 +19,7 @@ do not overwrite the production classification.
 | Company | Count |
 |---|---|
 | Nedbank | 24 |
-| Discovery | 21 |
+| Discovery | 23 |
 | Takealot Group | 13 |
 | Impact.com | 9 |
 | Yassir | 3 |
@@ -36,6 +36,7 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | description: 3 – 4 years \| description: Minimum 2 years |
 | ambiguous | Discovery | Business Analyst (Talent Pool) | No explicit evidence |
+| ambiguous | Discovery | Data Scientist | description: 3+ years \| description: 2+ years \| description: 5+ years |
 | ambiguous | Discovery | Data Scientist | No explicit evidence |
 | ambiguous | Discovery | Data Scientist (Intermediate) | description: 2-3 years |
 | ambiguous | Discovery | IT Auditor | description: 2+ years |
@@ -58,6 +59,7 @@ do not overwrite the production classification.
 | likely_mid_level | Discovery | AI Developer | description: 3+ years |
 | likely_mid_level | Discovery | Business Analyst | description: 3 – 5 years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
+| likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
 | likely_mid_level | Discovery | Information Security Analyst | description: 3-5 years |
 | likely_mid_level | Discovery | Java Developer | description: 4-5 years |
