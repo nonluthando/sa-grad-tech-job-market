@@ -386,7 +386,7 @@
       "remote_scope": "global",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "microsoft",
@@ -444,7 +444,7 @@
       "remote_scope": "emea",
       "graduate_programme": "unknown",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "sap",
@@ -458,7 +458,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "accenture",
@@ -474,7 +474,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "vodacom",
@@ -518,7 +518,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "binance",
@@ -560,6 +560,62 @@
       "country": "United Kingdom",
       "listed_company": false,
       "remote_scope": "multi_country",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "old-mutual",
+      "name": "Old Mutual",
+      "parent_company": "Old Mutual Limited",
+      "brands": [],
+      "industry": "Banks, insurance and financial services",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "yes",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "pick-n-pay",
+      "name": "Pick n Pay",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Product, software and e-commerce",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "ozow",
+      "name": "Ozow",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Fintech and payments",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "gitlab",
+      "name": "GitLab",
+      "parent_company": "GitLab Inc.",
+      "brands": [],
+      "industry": "Foreign and remote-first",
+      "head_office_city": null,
+      "country": "United States",
+      "listed_company": true,
+      "remote_scope": "global",
       "graduate_programme": "unknown",
       "priority": "tier_2",
       "collection_status": "active"

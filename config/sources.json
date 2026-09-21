@@ -213,6 +213,112 @@
       "enabled": true,
       "priority": "secondary",
       "employer_id": "moo"
+    },
+    {
+      "name": "Canonical",
+      "provider": "greenhouse",
+      "token": "canonical",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "canonical"
+    },
+    {
+      "name": "Ozow",
+      "provider": "greenhouse",
+      "token": "ozow",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "ozow"
+    },
+    {
+      "name": "GitLab",
+      "provider": "greenhouse",
+      "token": "gitlab",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "gitlab"
+    },
+    {
+      "name": "Old Mutual",
+      "provider": "workday",
+      "token": "old-mutual",
+      "host": "https://oldmutual.wd3.myworkdayjobs.com",
+      "tenant": "oldmutual",
+      "site": "Old_Mutual_Careers",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "old-mutual"
+    },
+    {
+      "name": "Pick n Pay",
+      "provider": "workday",
+      "token": "pick-n-pay",
+      "host": "https://picknpay.wd3.myworkdayjobs.com",
+      "tenant": "picknpay",
+      "site": "PNP_Careers",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "pick-n-pay"
+    },
+    {
+      "name": "Red Hat",
+      "provider": "workday",
+      "token": "red-hat",
+      "host": "https://redhat.wd5.myworkdayjobs.com",
+      "tenant": "redhat",
+      "site": "Jobs",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "red-hat"
+    },
+    {
+      "name": "Accenture",
+      "provider": "workday",
+      "token": "accenture",
+      "host": "https://accenture.wd103.myworkdayjobs.com",
+      "tenant": "accenture",
+      "site": "AccentureCareers",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "accenture"
+    },
+    {
+      "name": "NTT Data",
+      "provider": "workday",
+      "token": "ntt-data",
+      "host": "https://nttlimited.wd3.myworkdayjobs.com",
+      "tenant": "nttlimited",
+      "site": "NTT_Careers",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "ntt-data"
+    },
+    {
+      "name": "SAP",
+      "provider": "successfactors",
+      "token": "sap",
+      "url": "https://jobs.sap.com/go/South-Africa/8807701/",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "sap"
     }
   ]
 }
