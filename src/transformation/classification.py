@@ -170,13 +170,33 @@ _TECH_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ),
     ("automation", (r"\bautomation\b", r"\brpa\b")),
     ("security", (r"\bcyber(?:security)?\b", r"\binformation\s+security\b", r"\bsecurity\s+(?:analyst|engineer|operations)\b")),
-    ("cloud_devops", (r"\bcloud\b", r"\bdevops\b", r"\bsite\s+reliability\b", r"\bsre\b", r"\bplatform\s+engineer\b")),
+    (
+        "architecture",
+        (
+            r"\bsolutions?\s+architect\b",
+            r"\bdata\s+architect\b",
+            r"\bsecurity\s+architect\b",
+            r"\benterprise\s+architect\b",
+            r"\btechnical\s+architect\b",
+        ),
+    ),
+    (
+        "cloud_devops",
+        (
+            r"\bcloud\b",
+            r"\bdevops\b",
+            r"\bsite\s+reliability\b",
+            r"\bsre\b",
+            r"\bplatform\s+engineer\b",
+            r"\bobservability\b",
+        ),
+    ),
     ("quality_engineering", (r"\bquality\s+assurance\b", r"\bqa\b", r"\btest\s+(?:engineer|automation|analyst)\b")),
     ("business_intelligence", (r"\bbusiness\s+intelligence\b", r"\bbi\s+(?:analyst|developer|engineer)\b")),
     (
         "systems",
         (
-            r"\bsystems?\s+(?:analyst|engineer)\b",
+            r"\bsystems?\s+(?:analyst|engineer|administrator)\b",
             r"\b(?:integration|implementation|solutions?|support)\s+engineer\b",
             r"\btechnical\s+services?\s+engineer\b",
             r"\bit\s+(?:analyst|support|engineer|technician|auditor)\b",
@@ -185,7 +205,45 @@ _TECH_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     ("business_analysis", (r"\bbusiness\s+analyst\b",)),
-    ("product", (r"\bproduct\s+manager\b", r"\btechnical\s+product\b")),
+    (
+        "product",
+        (
+            r"\bproduct\s+manager\b",
+            r"\btechnical\s+product\b",
+            r"\bproduct\s+owner\b",
+            r"\bplatform\s+owner\b",
+        ),
+    ),
+    (
+        "engineering_leadership",
+        (
+            r"\bengineering\s+manager\b",
+            r"\bengineering\s+lead\b",
+            r"\blead\s+engineer\b",
+        ),
+    ),
+    (
+        "language_and_framework_stack",
+        (
+            r"\bflutter\b",
+            r"\bjava\s+engineer\b",
+            r"\bjava\s+developer\b",
+            r"\breact\s+native\b",
+            r"\bgolang\b",
+            r"\b\.net\s+(?:developer|engineer)\b",
+            r"\bkotlin\b",
+            r"\bswift\s+(?:developer|engineer)\b",
+        ),
+    ),
+    (
+        "erp_and_core_platform",
+        (
+            r"\bsap\s+(?:basis|fscm|consultant)\b",
+            r"\bpostilion\b",
+            r"\bt24\b",
+            r"\bcore\s+banking\b",
+        ),
+    ),
 )
 
 _GENERIC_EARLY_CAREER = re.compile(
@@ -205,6 +263,8 @@ _TECH_FALSE_POSITIVES = (
     r"\bdata\s+(?:capturer|capture|clerk|privacy|protection)\b",
     r"\bsoftware\s+sales\b",
     r"\btechnical\s+recruit(?:er|ment)\b",
+    r"\btechnical\s+accountant\b",
+    r"\btechnical\s+production\b",
 )
 
 _WORKPLACE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
