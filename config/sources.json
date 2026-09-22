@@ -319,6 +319,38 @@
       "enabled": true,
       "priority": "experimental",
       "employer_id": "sap"
+    },
+    {
+      "name": "Stitch",
+      "provider": "workable",
+      "token": "stitchmoney",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "stitch"
+    },
+    {
+      "name": "Clickatell",
+      "provider": "workable",
+      "token": "clickatell",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "clickatell"
+    },
+    {
+      "name": "Shoprite / ShopriteX",
+      "provider": "breezy_hr",
+      "token": "shopritex",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "shopritex"
+    },
+    {
+      "name": "Mukuru",
+      "provider": "breezy_hr",
+      "token": "mukuru",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "mukuru"
     }
   ]
 }

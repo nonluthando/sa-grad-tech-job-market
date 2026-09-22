@@ -325,7 +325,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "tfg",
@@ -370,7 +370,7 @@
       "remote_scope": "africa",
       "graduate_programme": "unknown",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "canonical",
@@ -617,6 +617,38 @@
       "listed_company": true,
       "remote_scope": "global",
       "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "stitch",
+      "name": "Stitch",
+      "parent_company": "Stitch Holdings",
+      "brands": [
+        "Stitch"
+      ],
+      "industry": "Fintech and payments",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "clickatell",
+      "name": "Clickatell",
+      "parent_company": null,
+      "brands": [
+        "Clickatell"
+      ],
+      "industry": "Communications and messaging",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "no",
       "priority": "tier_2",
       "collection_status": "active"
     }
