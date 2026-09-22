@@ -1,8 +1,9 @@
 # Source and Tech-Role Expansion Research
 
-**Status:** Phase 1 implemented (see [Phase 1 implementation log](#phase-1-implementation-log)
-at the end of this document). Parts 1–3 below are the original research; Part 2
-(role taxonomy) remains research only — no classification rules were changed yet.
+**Status:** Phase 1 and Part 2 (tech-role taxonomy) implemented.
+- Phase 1: 9 employers added to config (3 Greenhouse, 5 Workday, 1 SuccessFactors) — see [Phase 1 implementation log](#phase-1-implementation-log).
+- Part 2: 7 new/expanded role categories added to `src/transformation/classification.py` — see [Part 2 implementation log](#part-2-implementation-log).
+- Parts 1 and 3 below are the original research.
 
 **Scope constraints carried over from the existing project policy:**
 
@@ -288,3 +289,26 @@ outright:
 These three remain open items for a follow-up pass once endpoint details
 are confirmed. Phase 1's other three original candidates (Oracle SA aside)
 were already covered by the nine added above.
+
+## Part 2 Implementation Log
+
+All 7 new/expanded tech-role categories from Part 2b were added to
+`src/transformation/classification.py`'s `_TECH_TITLE_RULES` and 2 new
+false-positive guards were added to `_TECH_FALSE_POSITIVES`:
+
+| Category | Status | Evidence from dataset |
+|---|---|---|
+| `architecture` | Added | Solutions Architect, Data Architect, Security Solutions Architect |
+| `cloud_devops` (expanded) | Added | Observability Engineer, Senior Observability Specialist |
+| `product` (expanded) | Added | Product Owner, Platform Owner |
+| `systems` (expanded) | Added | Systems Administrator |
+| `engineering_leadership` | Added | Engineering Manager, Engineering Lead, Lead Engineer: AI |
+| `language_and_framework_stack` | Added | Flutter Engineer, Senior Java Engineer, React Native, GoLang, .NET, Kotlin, Swift |
+| `erp_and_core_platform` | Added | SAP Basis Consultant, SAP FSCM Consultant, Postilion, T24/Core Banking |
+| **False-positive guards** | | |
+| `technical_accountant` | Added | |
+| `technical_production` | Added | |
+
+All changes deployed to the classification engine with full test coverage
+(144 tests pass). The taxonomy is now grounded in real SA job titles already
+collected in `data/processed/dashboard_jobs.parquet`, as documented in Part 2a.
