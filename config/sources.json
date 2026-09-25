@@ -399,6 +399,34 @@
       "enabled": true,
       "priority": "experimental",
       "employer_id": "mtn"
+    },
+    {
+      "name": "Telkom",
+      "provider": "successfactors",
+      "token": "telkom",
+      "url": "https://jobs.telkom.co.za/",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "telkom"
+    },
+    {
+      "name": "Synthesis",
+      "provider": "workday",
+      "token": "synthesis",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "synthesis"
+    },
+    {
+      "name": "Superbalist",
+      "provider": "lever",
+      "token": "superbalist",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "superbalist"
     }
   ]
 }

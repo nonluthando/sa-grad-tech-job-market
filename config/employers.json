@@ -651,6 +651,48 @@
       "graduate_programme": "no",
       "priority": "tier_2",
       "collection_status": "active"
+    },
+    {
+      "id": "telkom",
+      "name": "Telkom South Africa",
+      "parent_company": "Telkom Limited",
+      "brands": [],
+      "industry": "Telecoms, cloud and infrastructure",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "synthesis",
+      "name": "Synthesis Software Technologies",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Software consultancies and engineering firms",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "superbalist",
+      "name": "Superbalist",
+      "parent_company": "Blank Canvas Capital",
+      "brands": [],
+      "industry": "Product, software and e-commerce",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
     }
   ]
 }
