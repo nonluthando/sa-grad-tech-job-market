@@ -143,7 +143,7 @@ _TECH_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
             r"\bfront[- ]?end\b",
             r"\bback[- ]?end\b",
             r"\bfull[- ]?stack\b",
-            r"\bweb\s+development\b",
+            r"\bweb\s+(?:development|engineer)\b",
             r"\bmobile\b",
             r"\bandroid\s+engineer\b",
             r"\bios\s+engineer\b",
@@ -152,7 +152,9 @@ _TECH_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
         "data",
         (
-            r"\bdata\s+(?:analyst|analytics|engineer|engineering|scientist|science|platform|warehouse|lead)\b",
+            r"\bdata\s+(?:analyst|analytics|engineer|engineering|scientist|science|platform|warehouse|lead|principal)\b",
+            r"\bquantitative\s+analyst\b",
+            r"\bmetadata\b",
             r"\banalytics?\b",
             r"\bdatabase\s+administrator\b",
         ),
@@ -169,7 +171,7 @@ _TECH_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     ("automation", (r"\bautomation\b", r"\brpa\b")),
-    ("security", (r"\bcyber(?:security)?\b", r"\binformation\s+security\b", r"\bsecurity\s+(?:analyst|engineer|operations)\b")),
+    ("security", (r"\bcyber(?:security)?\b", r"\binformation\s+security\b", r"\bsecurity\s+(?:analyst|engineer|operations|specialist)\b")),
     (
         "architecture",
         (
@@ -198,6 +200,7 @@ _TECH_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         "systems",
         (
             r"\bsystems?\s+(?:analyst|engineer|administrator)\b",
+            r"\bprincipal\s+(?:\w+\s+)?engineer\b",
             r"\b(?:integration|implementation|solutions?|support)\s+engineer\b",
             r"\btechnical\s+services?\s+engineer\b",
             r"\bit\s+(?:analyst|support|engineer|technician|auditor)\b",
