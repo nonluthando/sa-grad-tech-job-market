@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -77,7 +78,7 @@ class BreezyHRClient:
             content_type = response.headers.get("Content-Type", "")
             try:
                 payload = response.json()
-            except requests.JSONDecodeError as error:
+            except (requests.JSONDecodeError, json.JSONDecodeError, ValueError) as error:
                 raise ValueError(
                     f"Breezy HR returned invalid JSON for company {slug} offset {offset}."
                 ) from error

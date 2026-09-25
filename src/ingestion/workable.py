@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -78,7 +79,7 @@ class WorkableClient:
             content_type = response.headers.get("Content-Type", "")
             try:
                 payload = response.json()
-            except requests.JSONDecodeError as error:
+            except (requests.JSONDecodeError, json.JSONDecodeError, ValueError) as error:
                 raise ValueError(
                     f"Workable returned invalid JSON for company {slug} page {page}."
                 ) from error
