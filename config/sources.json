@@ -351,6 +351,38 @@
       "enabled": true,
       "priority": "experimental",
       "employer_id": "mukuru"
+    },
+    {
+      "name": "IBM",
+      "provider": "workday",
+      "token": "ibmglobal",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "ibm"
+    },
+    {
+      "name": "Oracle",
+      "provider": "oracle_hcm",
+      "token": "oracle",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "oracle"
+    },
+    {
+      "name": "Investec",
+      "provider": "workday",
+      "token": "investec",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "investec"
+    },
+    {
+      "name": "Capitec",
+      "provider": "workday",
+      "token": "capitec",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "capitec"
     }
   ]
 }
