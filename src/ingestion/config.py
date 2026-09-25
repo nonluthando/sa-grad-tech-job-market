@@ -19,6 +19,7 @@ SUPPORTED_COLLECTION_PROVIDERS = (
     "workable",
     "breezy_hr",
     "smartrecruiters",
+    "ashby",
 )
 
 
@@ -126,6 +127,15 @@ class WorkableSource:
 @dataclass(frozen=True)
 class BreezyHRSource:
     """A configured public Breezy HR careers site."""
+
+    name: str
+    token: str
+    employer_id: str = ""
+
+
+@dataclass(frozen=True)
+class AshbySource:
+    """A configured public Ashby job board."""
 
     name: str
     token: str
@@ -390,6 +400,22 @@ def load_breezy_hr_sources(
         for name, token, employer_id in _load_provider_sources(
             config_path,
             provider="breezy_hr",
+            requested_tokens=requested_tokens,
+        )
+    ]
+
+
+def load_ashby_sources(
+    config_path: Path,
+    requested_tokens: set[str] | None = None,
+) -> list[AshbySource]:
+    """Return enabled Ashby sources, optionally filtered by job board name."""
+
+    return [
+        AshbySource(name=name, token=token, employer_id=employer_id)
+        for name, token, employer_id in _load_provider_sources(
+            config_path,
+            provider="ashby",
             requested_tokens=requested_tokens,
         )
     ]

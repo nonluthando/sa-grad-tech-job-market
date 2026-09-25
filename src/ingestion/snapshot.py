@@ -18,6 +18,7 @@ from src.ingestion.wp_job_manager import WPJobManagerResponse
 from src.ingestion.workable import WorkableResponse
 from src.ingestion.breezy_hr import BreezyHRResponse
 from src.ingestion.smartrecruiters import SmartRecruitersResponse
+from src.ingestion.ashby import AshbyResponse
 
 
 @dataclass(frozen=True)
@@ -247,6 +248,26 @@ class RawSnapshotStore:
                 "listing_page_count": response.listing_page_count,
                 "detail_page_count": response.detail_page_count,
             },
+        )
+
+    def write_ashby_snapshot(
+        self,
+        source_name: str,
+        response: AshbyResponse,
+        collected_at: datetime | None = None,
+        employer_id: str | None = None,
+    ) -> SnapshotWriteResult:
+        return self._write_snapshot(
+            provider="ashby",
+            source_name=source_name,
+            source_token=response.job_board_name,
+            endpoint=response.endpoint,
+            status_code=response.status_code,
+            content_type=response.content_type,
+            raw_bytes=response.raw_bytes,
+            job_count=response.job_count,
+            collected_at=collected_at,
+            employer_id=employer_id,
         )
 
     def _write_snapshot(

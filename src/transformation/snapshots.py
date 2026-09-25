@@ -15,7 +15,7 @@ from src.transformation.successfactors import parse_successfactors_detail
 
 SUPPORTED_SNAPSHOT_PROVIDERS = (
     "greenhouse", "lever", "successfactors", "workday", "oracle_hcm",
-    "wp_job_manager", "smartrecruiters",
+    "wp_job_manager", "smartrecruiters", "ashby",
 )
 
 
@@ -140,6 +140,18 @@ def read_lever_snapshot(metadata_path: Path) -> LeverSnapshot:
     return SourceSnapshot(metadata_path, raw_path, metadata, jobs)
 
 
+AshbySnapshot = SourceSnapshot
+
+
+def read_ashby_snapshot(metadata_path: Path) -> AshbySnapshot:
+    metadata = _read_metadata(metadata_path, "ashby")
+    raw_path, payload = _read_verified_payload(metadata_path, metadata)
+    if not isinstance(payload, dict):
+        raise SnapshotReadError(f"Ashby snapshot must be an object: {raw_path}")
+    jobs = _validate_jobs(payload.get("jobs"), raw_path, metadata.get("source_job_count"))
+    return SourceSnapshot(metadata_path, raw_path, metadata, jobs)
+
+
 def _decode_page(page: Any, raw_path: Path, provider: str) -> bytes:
     if not isinstance(page, dict):
         raise SnapshotReadError(f"{provider} page must be an object: {raw_path}")
@@ -256,6 +268,7 @@ def load_snapshots(raw_root: Path) -> list[SourceSnapshot]:
         "oracle_hcm": read_oracle_hcm_snapshot,
         "wp_job_manager": read_wp_job_manager_snapshot,
         "smartrecruiters": read_smartrecruiters_snapshot,
+        "ashby": read_ashby_snapshot,
     }
     snapshots = []
     for path in metadata_paths:
