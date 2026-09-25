@@ -24,6 +24,8 @@ from src.ingestion.config import (
     WorkdaySource,
     OracleHCMSource,
     WPJobManagerSource,
+    WorkableSource,
+    BreezyHRSource,
     SUPPORTED_COLLECTION_PROVIDERS,
     load_collection_sources,
 )
@@ -34,6 +36,8 @@ from src.ingestion.successfactors import SuccessFactorsClient
 from src.ingestion.workday import WorkdayClient
 from src.ingestion.oracle_hcm import OracleHCMClient
 from src.ingestion.wp_job_manager import WPJobManagerClient
+from src.ingestion.workable import WorkableClient
+from src.ingestion.breezy_hr import BreezyHRClient
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -76,6 +80,14 @@ class OracleHCMFetcher(Protocol):
 
 class WPJobManagerFetcher(Protocol):
     def fetch_source(self, source: WPJobManagerSource): ...
+
+
+class WorkableFetcher(Protocol):
+    def fetch(self, company_slug: str): ...
+
+
+class BreezyHRFetcher(Protocol):
+    def fetch(self, company_slug: str): ...
 
 
 def _failed_result(source_name: str, provider: str, token: str, error: Exception) -> CollectionResult:
@@ -262,6 +274,73 @@ def collect_wp_job_manager_source(
     except (requests.RequestException, ValueError, OSError) as error:
         return _failed_result(source.name, "wp_job_manager", source.token, error)
 
+
+def collect_workable_source(
+    source: WorkableSource,
+    client: WorkableFetcher,
+    store: RawSnapshotStore,
+    collected_at: datetime,
+) -> CollectionResult:
+    """Collect all Workable pages for a company."""
+
+    try:
+        responses = client.fetch(source.token)
+        total_jobs = sum(r.job_count for r in responses)
+        snapshots = [
+            store.write_workable_snapshot(
+                source_name=source.name,
+                response=response,
+                collected_at=collected_at,
+                employer_id=source.employer_id or None,
+            )
+            for response in responses
+        ]
+        status = snapshots[0].status if snapshots else "failed"
+        return CollectionResult(
+            source_name=source.name, source_provider="workable",
+            source_token=source.token, status=status,
+            job_count=total_jobs,
+            raw_path=str(snapshots[0].raw_path) if snapshots else None,
+            metadata_path=str(snapshots[0].metadata_path) if snapshots else None,
+            error=None,
+        )
+    except (requests.RequestException, ValueError, OSError) as error:
+        return _failed_result(source.name, "workable", source.token, error)
+
+
+def collect_breezy_hr_source(
+    source: BreezyHRSource,
+    client: BreezyHRFetcher,
+    store: RawSnapshotStore,
+    collected_at: datetime,
+) -> CollectionResult:
+    """Collect all Breezy HR pages for a company."""
+
+    try:
+        responses = client.fetch(source.token)
+        total_jobs = sum(r.job_count for r in responses)
+        snapshots = [
+            store.write_breezy_hr_snapshot(
+                source_name=source.name,
+                response=response,
+                collected_at=collected_at,
+                employer_id=source.employer_id or None,
+            )
+            for response in responses
+        ]
+        status = snapshots[0].status if snapshots else "failed"
+        return CollectionResult(
+            source_name=source.name, source_provider="breezy_hr",
+            source_token=source.token, status=status,
+            job_count=total_jobs,
+            raw_path=str(snapshots[0].raw_path) if snapshots else None,
+            metadata_path=str(snapshots[0].metadata_path) if snapshots else None,
+            error=None,
+        )
+    except (requests.RequestException, ValueError, OSError) as error:
+        return _failed_result(source.name, "breezy_hr", source.token, error)
+
+
 def collect_configured_source(
     source: ConfiguredSource,
     greenhouse_client: GreenhouseFetcher,
@@ -270,6 +349,8 @@ def collect_configured_source(
     workday_client: WorkdayFetcher,
     oracle_hcm_client: OracleHCMFetcher,
     wp_job_manager_client: WPJobManagerFetcher,
+    workable_client: WorkableFetcher,
+    breezy_hr_client: BreezyHRFetcher,
     store: RawSnapshotStore,
     collected_at: datetime,
 ) -> CollectionResult:
@@ -346,6 +427,28 @@ def collect_configured_source(
                 max_pages=source.max_pages, request_delay_seconds=source.request_delay_seconds,
                 employer_id=source.employer_id,
             ), wp_job_manager_client, store, collected_at,
+        )
+    if source.provider == "workable":
+        return collect_workable_source(
+            WorkableSource(
+                name=source.name,
+                token=source.token,
+                employer_id=source.employer_id,
+            ),
+            workable_client,
+            store,
+            collected_at,
+        )
+    if source.provider == "breezy_hr":
+        return collect_breezy_hr_source(
+            BreezyHRSource(
+                name=source.name,
+                token=source.token,
+                employer_id=source.employer_id,
+            ),
+            breezy_hr_client,
+            store,
+            collected_at,
         )
     raise ValueError(f"Unsupported collection provider: {source.provider}")
 
@@ -440,6 +543,8 @@ def main() -> int:
         workday_client = WorkdayClient(timeout_seconds=args.timeout)
         oracle_hcm_client = OracleHCMClient(timeout_seconds=args.timeout)
         wp_job_manager_client = WPJobManagerClient(timeout_seconds=args.timeout)
+        workable_client = WorkableClient(timeout_seconds=args.timeout)
+        breezy_hr_client = BreezyHRClient(timeout_seconds=args.timeout)
     except (OSError, json.JSONDecodeError, ValueError) as error:
         print(f"Configuration error: {error}", file=sys.stderr)
         return 2
@@ -455,6 +560,8 @@ def main() -> int:
             workday_client,
             oracle_hcm_client,
             wp_job_manager_client,
+            workable_client,
+            breezy_hr_client,
             store,
             collected_at,
         )

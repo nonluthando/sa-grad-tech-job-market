@@ -16,6 +16,8 @@ SUPPORTED_COLLECTION_PROVIDERS = (
     "workday",
     "oracle_hcm",
     "wp_job_manager",
+    "workable",
+    "breezy_hr",
 )
 
 
@@ -108,6 +110,24 @@ class WPJobManagerSource:
     page_size: int = 100
     max_pages: int = 10
     request_delay_seconds: float = 0.1
+    employer_id: str = ""
+
+
+@dataclass(frozen=True)
+class WorkableSource:
+    """A configured public Workable jobs board."""
+
+    name: str
+    token: str
+    employer_id: str = ""
+
+
+@dataclass(frozen=True)
+class BreezyHRSource:
+    """A configured public Breezy HR careers site."""
+
+    name: str
+    token: str
     employer_id: str = ""
 
 
@@ -309,6 +329,38 @@ def load_lever_sources(
         for name, token, employer_id in _load_provider_sources(
             config_path,
             provider="lever",
+            requested_tokens=requested_tokens,
+        )
+    ]
+
+
+def load_workable_sources(
+    config_path: Path,
+    requested_tokens: set[str] | None = None,
+) -> list[WorkableSource]:
+    """Return enabled Workable sources, optionally filtered by company slug."""
+
+    return [
+        WorkableSource(name=name, token=token, employer_id=employer_id)
+        for name, token, employer_id in _load_provider_sources(
+            config_path,
+            provider="workable",
+            requested_tokens=requested_tokens,
+        )
+    ]
+
+
+def load_breezy_hr_sources(
+    config_path: Path,
+    requested_tokens: set[str] | None = None,
+) -> list[BreezyHRSource]:
+    """Return enabled Breezy HR sources, optionally filtered by company slug."""
+
+    return [
+        BreezyHRSource(name=name, token=token, employer_id=employer_id)
+        for name, token, employer_id in _load_provider_sources(
+            config_path,
+            provider="breezy_hr",
             requested_tokens=requested_tokens,
         )
     ]

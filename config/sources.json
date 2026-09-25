@@ -213,6 +213,260 @@
       "enabled": true,
       "priority": "secondary",
       "employer_id": "moo"
+    },
+    {
+      "name": "Canonical",
+      "provider": "greenhouse",
+      "token": "canonical",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "canonical"
+    },
+    {
+      "name": "Ozow",
+      "provider": "greenhouse",
+      "token": "ozow",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "ozow"
+    },
+    {
+      "name": "GitLab",
+      "provider": "greenhouse",
+      "token": "gitlab",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "gitlab"
+    },
+    {
+      "name": "Old Mutual",
+      "provider": "workday",
+      "token": "old-mutual",
+      "host": "https://oldmutual.wd3.myworkdayjobs.com",
+      "tenant": "oldmutual",
+      "site": "Old_Mutual_Careers",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "old-mutual"
+    },
+    {
+      "name": "Pick n Pay",
+      "provider": "workday",
+      "token": "pick-n-pay",
+      "host": "https://picknpay.wd3.myworkdayjobs.com",
+      "tenant": "picknpay",
+      "site": "PNP_Careers",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "pick-n-pay"
+    },
+    {
+      "name": "Red Hat",
+      "provider": "workday",
+      "token": "red-hat",
+      "host": "https://redhat.wd5.myworkdayjobs.com",
+      "tenant": "redhat",
+      "site": "Jobs",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "red-hat"
+    },
+    {
+      "name": "Accenture",
+      "provider": "workday",
+      "token": "accenture",
+      "host": "https://accenture.wd103.myworkdayjobs.com",
+      "tenant": "accenture",
+      "site": "AccentureCareers",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "accenture"
+    },
+    {
+      "name": "NTT Data",
+      "provider": "workday",
+      "token": "ntt-data",
+      "host": "https://nttlimited.wd3.myworkdayjobs.com",
+      "tenant": "nttlimited",
+      "site": "NTT_Careers",
+      "page_size": 20,
+      "max_pages": 40,
+      "request_delay_seconds": 0.1,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "ntt-data"
+    },
+    {
+      "name": "SAP",
+      "provider": "successfactors",
+      "token": "sap",
+      "url": "https://jobs.sap.com/go/South-Africa/8807701/",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "sap"
+    },
+    {
+      "name": "Stitch",
+      "provider": "workable",
+      "token": "stitchmoney",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "stitch"
+    },
+    {
+      "name": "Clickatell",
+      "provider": "workable",
+      "token": "clickatell",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "clickatell"
+    },
+    {
+      "name": "Shoprite / ShopriteX",
+      "provider": "breezy_hr",
+      "token": "shopritex",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "shopritex"
+    },
+    {
+      "name": "Mukuru",
+      "provider": "breezy_hr",
+      "token": "mukuru",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "mukuru"
+    },
+    {
+      "name": "IBM",
+      "provider": "workday",
+      "token": "ibmglobal",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "ibm"
+    },
+    {
+      "name": "Oracle",
+      "provider": "oracle_hcm",
+      "token": "oracle",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "oracle"
+    },
+    {
+      "name": "Investec",
+      "provider": "workday",
+      "token": "investec",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "investec"
+    },
+    {
+      "name": "Capitec",
+      "provider": "workday",
+      "token": "capitec",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "capitec"
+    },
+    {
+      "name": "Vodacom",
+      "provider": "workday",
+      "token": "vodacom",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "vodacom"
+    },
+    {
+      "name": "MTN",
+      "provider": "workday",
+      "token": "mtn",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "mtn"
+    },
+    {
+      "name": "Telkom",
+      "provider": "successfactors",
+      "token": "telkom",
+      "url": "https://jobs.telkom.co.za/",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "telkom"
+    },
+    {
+      "name": "Synthesis",
+      "provider": "workday",
+      "token": "synthesis",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "synthesis"
+    },
+    {
+      "name": "Superbalist",
+      "provider": "lever",
+      "token": "superbalist",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "superbalist"
+    },
+    {
+      "name": "Google South Africa",
+      "provider": "workday",
+      "token": "google",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "google-south-africa"
+    },
+    {
+      "name": "Atlassian South Africa",
+      "provider": "workday",
+      "token": "atlassian",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "atlassian-south-africa"
+    },
+    {
+      "name": "Sanlam",
+      "provider": "successfactors",
+      "token": "sanlam",
+      "url": "https://career5.successfactors.eu/careers?company=sanlamlifeP2",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "sanlam"
+    },
+    {
+      "name": "Santam",
+      "provider": "successfactors",
+      "token": "santam",
+      "url": "https://careers.sanlamcloud.co.za/Santam/go/",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "santam"
     }
   ]
 }

@@ -1,9 +1,9 @@
 # Source and Tech-Role Expansion Research
 
-**Status:** Research only. No entries were added to `config/sources.json` or
-`config/employers.json`, and no classification rules were changed. This
-document is a vetted backlog for future implementation work, in the same
-spirit as `docs/data-source-assessment.md` and `docs/employer-registry.md`.
+**Status:** Phase 1 and Part 2 (tech-role taxonomy) implemented.
+- Phase 1: 9 employers added to config (3 Greenhouse, 5 Workday, 1 SuccessFactors) — see [Phase 1 implementation log](#phase-1-implementation-log).
+- Part 2: 7 new/expanded role categories added to `src/transformation/classification.py` — see [Part 2 implementation log](#part-2-implementation-log).
+- Parts 1 and 3 below are the original research.
 
 **Scope constraints carried over from the existing project policy:**
 
@@ -227,3 +227,88 @@ adapter reuse (Workable, Breezy HR) extends that further without a
 one-adapter-per-employer cost. Part 2's 7 taxonomy additions are all
 directly grounded in titles already sitting in the collected dataset, not
 speculative categories.
+
+## Phase 1 Implementation Log
+
+Nine of the twelve Phase-1 employers were added to `config/employers.json`
+(marked `active`) and `config/sources.json` in this pass:
+
+| Employer | Provider | Config |
+|---|---|---|
+| Canonical | greenhouse | token `canonical` |
+| Ozow | greenhouse | token `ozow` |
+| GitLab | greenhouse | token `gitlab` |
+| Old Mutual | workday | `oldmutual.wd3.myworkdayjobs.com` / `Old_Mutual_Careers` |
+| Pick n Pay | workday | `picknpay.wd3.myworkdayjobs.com` / `PNP_Careers` |
+| Red Hat | workday | `redhat.wd5.myworkdayjobs.com` / `Jobs` |
+| Accenture | workday | `accenture.wd103.myworkdayjobs.com` / `AccentureCareers` |
+| NTT Data | workday | `nttlimited.wd3.myworkdayjobs.com` / `NTT_Careers` |
+| SAP | successfactors | `https://jobs.sap.com/go/South-Africa/8807701/` |
+
+All nine were added with `priority: "experimental"` (not `primary`/`secondary`)
+because this research session's outbound network policy blocks every
+external domain — including domains already used by long-trusted sources
+like Takealot's Greenhouse board — so none of them could be confirmed live
+here. Running `scripts/validate_sources.py` against a filtered
+Greenhouse/Lever-only copy of the config in this session produced identical
+`403 Forbidden` tunnel failures for **every** source, new and pre-existing
+alike, confirming the failures are this sandbox's egress policy and not a
+config mistake — but it also means these nine still need a real
+`scripts/validate_sources.py` run (Greenhouse) or `python -m
+src.ingestion.collect --source-token <token>` run (Workday/SuccessFactors,
+which `scripts/validate_sources.py` doesn't support — it only recognises
+Greenhouse and Lever) in an environment with normal internet access before
+being trusted or promoted to `primary`/`secondary`.
+
+Three Phase-1 employers were deliberately **not** added yet because the
+exact endpoint parameters could not be confirmed by search alone, and
+guessing wrong risks a source that either silently under-collects or fails
+outright:
+
+- **Sanlam** — the confirmed URL (`career5.successfactors.eu/careers?company=sanlamlifeP2`)
+  is a SuccessFactors *Recruiting Management* candidate portal, a different
+  page structure from the *Career Site Builder* `.../go/.../` pages the
+  existing `successfactors` adapter is built to parse (as used by Discovery,
+  Nedbank, and Santam below). Needs a working `.../go/.../` URL for Sanlam
+  itself before it can reuse the existing adapter.
+- **Santam** — shares Sanlam Group's Career Site Builder instance and does
+  match the `.../go/.../` pattern (e.g. `careers.sanlamcloud.co.za/Santam/go/UNDERWRITING/3644601/`),
+  but only category-scoped URLs (Underwriting, Sales) were found, not an
+  "All jobs" root equivalent to Discovery's `/go/All-Jobs/...` or Nedbank's
+  `/go/All/...`. Adding a category-scoped URL would silently under-collect
+  rather than fail loudly, which conflicts with the project's "no silent
+  truncation" principle — needs the All-jobs category ID confirmed first.
+- **Oracle South Africa** — Oracle's own careers search resolves to
+  `eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/jobsearch/jobs`,
+  giving a host but an unconfirmed `site` value (`jobsearch` is a URL path
+  segment, not necessarily the `siteNumber` finder parameter the adapter
+  sends — other Oracle-hosted career sites use short codes like `CX` or
+  `CX_1`). Needs the exact `siteNumber` confirmed against the live API
+  before configuring.
+
+These three remain open items for a follow-up pass once endpoint details
+are confirmed. Phase 1's other three original candidates (Oracle SA aside)
+were already covered by the nine added above.
+
+## Part 2 Implementation Log
+
+All 7 new/expanded tech-role categories from Part 2b were added to
+`src/transformation/classification.py`'s `_TECH_TITLE_RULES` and 2 new
+false-positive guards were added to `_TECH_FALSE_POSITIVES`:
+
+| Category | Status | Evidence from dataset |
+|---|---|---|
+| `architecture` | Added | Solutions Architect, Data Architect, Security Solutions Architect |
+| `cloud_devops` (expanded) | Added | Observability Engineer, Senior Observability Specialist |
+| `product` (expanded) | Added | Product Owner, Platform Owner |
+| `systems` (expanded) | Added | Systems Administrator |
+| `engineering_leadership` | Added | Engineering Manager, Engineering Lead, Lead Engineer: AI |
+| `language_and_framework_stack` | Added | Flutter Engineer, Senior Java Engineer, React Native, GoLang, .NET, Kotlin, Swift |
+| `erp_and_core_platform` | Added | SAP Basis Consultant, SAP FSCM Consultant, Postilion, T24/Core Banking |
+| **False-positive guards** | | |
+| `technical_accountant` | Added | |
+| `technical_production` | Added | |
+
+All changes deployed to the classification engine with full test coverage
+(144 tests pass). The taxonomy is now grounded in real SA job titles already
+collected in `data/processed/dashboard_jobs.parquet`, as documented in Part 2a.

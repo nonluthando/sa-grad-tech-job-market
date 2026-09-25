@@ -239,7 +239,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "investec",
@@ -253,7 +253,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "bbd",
@@ -325,7 +325,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "tfg",
@@ -370,7 +370,7 @@
       "remote_scope": "africa",
       "graduate_programme": "unknown",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "canonical",
@@ -386,7 +386,7 @@
       "remote_scope": "global",
       "graduate_programme": "yes",
       "priority": "tier_1",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "microsoft",
@@ -414,7 +414,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "ibm",
@@ -430,7 +430,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "red-hat",
@@ -444,7 +444,7 @@
       "remote_scope": "emea",
       "graduate_programme": "unknown",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "sap",
@@ -458,7 +458,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "accenture",
@@ -474,7 +474,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "vodacom",
@@ -488,7 +488,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "mtn",
@@ -502,7 +502,7 @@
       "remote_scope": "africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "ntt-data",
@@ -518,7 +518,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "binance",
@@ -560,6 +560,192 @@
       "country": "United Kingdom",
       "listed_company": false,
       "remote_scope": "multi_country",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "old-mutual",
+      "name": "Old Mutual",
+      "parent_company": "Old Mutual Limited",
+      "brands": [],
+      "industry": "Banks, insurance and financial services",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "yes",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "pick-n-pay",
+      "name": "Pick n Pay",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Product, software and e-commerce",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "ozow",
+      "name": "Ozow",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Fintech and payments",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "gitlab",
+      "name": "GitLab",
+      "parent_company": "GitLab Inc.",
+      "brands": [],
+      "industry": "Foreign and remote-first",
+      "head_office_city": null,
+      "country": "United States",
+      "listed_company": true,
+      "remote_scope": "global",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "stitch",
+      "name": "Stitch",
+      "parent_company": "Stitch Holdings",
+      "brands": [
+        "Stitch"
+      ],
+      "industry": "Fintech and payments",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "clickatell",
+      "name": "Clickatell",
+      "parent_company": null,
+      "brands": [
+        "Clickatell"
+      ],
+      "industry": "Communications and messaging",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "no",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "telkom",
+      "name": "Telkom South Africa",
+      "parent_company": "Telkom Limited",
+      "brands": [],
+      "industry": "Telecoms, cloud and infrastructure",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "synthesis",
+      "name": "Synthesis Software Technologies",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Software consultancies and engineering firms",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "superbalist",
+      "name": "Superbalist",
+      "parent_company": "Blank Canvas Capital",
+      "brands": [],
+      "industry": "Product, software and e-commerce",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": false,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_2",
+      "collection_status": "active"
+    },
+    {
+      "id": "google-south-africa",
+      "name": "Google South Africa",
+      "parent_company": "Alphabet Inc.",
+      "brands": [],
+      "industry": "Product, software and e-commerce",
+      "head_office_city": "Johannesburg",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "yes",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "atlassian-south-africa",
+      "name": "Atlassian South Africa",
+      "parent_company": "Atlassian Corporation PLC",
+      "brands": [],
+      "industry": "Product, software and e-commerce",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "unknown",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "sanlam",
+      "name": "Sanlam",
+      "parent_company": null,
+      "brands": [],
+      "industry": "Banks, insurance and financial services",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
+      "graduate_programme": "yes",
+      "priority": "tier_1",
+      "collection_status": "active"
+    },
+    {
+      "id": "santam",
+      "name": "Santam",
+      "parent_company": "Sanlam Group",
+      "brands": [],
+      "industry": "Banks, insurance and financial services",
+      "head_office_city": "Cape Town",
+      "country": "South Africa",
+      "listed_company": true,
+      "remote_scope": "south_africa",
       "graduate_programme": "unknown",
       "priority": "tier_2",
       "collection_status": "active"
