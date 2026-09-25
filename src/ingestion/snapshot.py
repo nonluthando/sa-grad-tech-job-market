@@ -17,6 +17,7 @@ from src.ingestion.oracle_hcm import OracleHCMResponse
 from src.ingestion.wp_job_manager import WPJobManagerResponse
 from src.ingestion.workable import WorkableResponse
 from src.ingestion.breezy_hr import BreezyHRResponse
+from src.ingestion.smartrecruiters import SmartRecruitersResponse
 
 
 @dataclass(frozen=True)
@@ -222,6 +223,30 @@ class RawSnapshotStore:
             job_count=response.job_count,
             collected_at=collected_at,
             employer_id=employer_id,
+        )
+
+    def write_smartrecruiters_snapshot(
+        self,
+        source_name: str,
+        response: SmartRecruitersResponse,
+        collected_at: datetime | None = None,
+        employer_id: str | None = None,
+    ) -> SnapshotWriteResult:
+        return self._write_snapshot(
+            provider="smartrecruiters",
+            source_name=source_name,
+            source_token=response.source_token,
+            endpoint=response.endpoint,
+            status_code=response.status_code,
+            content_type=response.content_type,
+            raw_bytes=response.raw_bytes,
+            job_count=response.job_count,
+            collected_at=collected_at,
+            employer_id=employer_id,
+            extra_metadata={
+                "listing_page_count": response.listing_page_count,
+                "detail_page_count": response.detail_page_count,
+            },
         )
 
     def _write_snapshot(

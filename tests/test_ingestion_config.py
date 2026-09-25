@@ -246,6 +246,59 @@ def test_load_collection_sources_includes_new_provider_settings(tmp_path):
     assert sources[2].api_url == "https://bet.test/ajax"
 
 
+def test_load_collection_sources_includes_smartrecruiters_settings(tmp_path):
+    from src.ingestion.config import load_collection_sources
+
+    config_path = tmp_path / "sources.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "sources": [
+                    {
+                        "name": "Standard Bank",
+                        "provider": "smartrecruiters",
+                        "token": "standardbankgroup",
+                        "employer_id": "standard-bank",
+                        "host": "https://api.smartrecruiters.com",
+                        "site": "StandardBankGroup",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    sources = load_collection_sources(config_path)
+    assert sources[0].provider == "smartrecruiters"
+    assert sources[0].site == "StandardBankGroup"
+    assert sources[0].page_size == 100
+
+
+def test_smartrecruiters_source_requires_https_host(tmp_path):
+    from src.ingestion.config import load_collection_sources
+
+    config_path = tmp_path / "sources.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "sources": [
+                    {
+                        "name": "Standard Bank",
+                        "provider": "smartrecruiters",
+                        "token": "standardbankgroup",
+                        "employer_id": "standard-bank",
+                        "host": "not-a-url",
+                        "site": "StandardBankGroup",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="absolute HTTPS"):
+        load_collection_sources(config_path)
+
+
 def test_load_collection_sources_requires_employer_id(tmp_path):
     from src.ingestion.config import load_collection_sources
 

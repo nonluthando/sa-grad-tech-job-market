@@ -15,7 +15,7 @@ from src.transformation.successfactors import parse_successfactors_detail
 
 SUPPORTED_SNAPSHOT_PROVIDERS = (
     "greenhouse", "lever", "successfactors", "workday", "oracle_hcm",
-    "wp_job_manager",
+    "wp_job_manager", "smartrecruiters",
 )
 
 
@@ -41,6 +41,7 @@ SuccessFactorsSnapshot = SourceSnapshot
 WorkdaySnapshot = SourceSnapshot
 OracleHCMSnapshot = SourceSnapshot
 WPJobManagerSnapshot = SourceSnapshot
+SmartRecruitersSnapshot = SourceSnapshot
 
 
 def discover_metadata_paths(raw_root: Path, provider: str) -> list[Path]:
@@ -235,6 +236,10 @@ def read_wp_job_manager_snapshot(path: Path) -> WPJobManagerSnapshot:
     return _read_bundle(path, "wp_job_manager", _html_detail)
 
 
+def read_smartrecruiters_snapshot(path: Path) -> SmartRecruitersSnapshot:
+    return _read_bundle(path, "smartrecruiters", _json_detail)
+
+
 def _sort_snapshots(snapshots: list[SourceSnapshot]) -> list[SourceSnapshot]:
     return sorted(snapshots, key=lambda s: (parse_datetime(s.metadata.get("collected_at")), s.provider, str(s.metadata_path)))
 
@@ -250,6 +255,7 @@ def load_snapshots(raw_root: Path) -> list[SourceSnapshot]:
         "workday": read_workday_snapshot,
         "oracle_hcm": read_oracle_hcm_snapshot,
         "wp_job_manager": read_wp_job_manager_snapshot,
+        "smartrecruiters": read_smartrecruiters_snapshot,
     }
     snapshots = []
     for path in metadata_paths:

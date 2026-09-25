@@ -26,6 +26,7 @@ from src.ingestion.config import (
     WPJobManagerSource,
     WorkableSource,
     BreezyHRSource,
+    SmartRecruitersSource,
     SUPPORTED_COLLECTION_PROVIDERS,
     load_collection_sources,
 )
@@ -38,6 +39,7 @@ from src.ingestion.oracle_hcm import OracleHCMClient
 from src.ingestion.wp_job_manager import WPJobManagerClient
 from src.ingestion.workable import WorkableClient
 from src.ingestion.breezy_hr import BreezyHRClient
+from src.ingestion.smartrecruiters import SmartRecruitersClient
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -88,6 +90,10 @@ class WorkableFetcher(Protocol):
 
 class BreezyHRFetcher(Protocol):
     def fetch(self, company_slug: str): ...
+
+
+class SmartRecruitersFetcher(Protocol):
+    def fetch_source(self, source: SmartRecruitersSource): ...
 
 
 def _failed_result(source_name: str, provider: str, token: str, error: Exception) -> CollectionResult:
@@ -341,6 +347,32 @@ def collect_breezy_hr_source(
         return _failed_result(source.name, "breezy_hr", source.token, error)
 
 
+def collect_smartrecruiters_source(
+    source: SmartRecruitersSource,
+    client: SmartRecruitersFetcher,
+    store: RawSnapshotStore,
+    collected_at: datetime,
+) -> CollectionResult:
+    """Collect one complete SmartRecruiters posting-board bundle."""
+
+    try:
+        response = client.fetch_source(source)
+        snapshot = store.write_smartrecruiters_snapshot(
+            source_name=source.name,
+            response=response,
+            collected_at=collected_at,
+            employer_id=source.employer_id or None,
+        )
+        return CollectionResult(
+            source_name=source.name, source_provider="smartrecruiters",
+            source_token=source.token, status=snapshot.status,
+            job_count=response.job_count, raw_path=str(snapshot.raw_path),
+            metadata_path=str(snapshot.metadata_path), error=None,
+        )
+    except (requests.RequestException, ValueError, OSError) as error:
+        return _failed_result(source.name, "smartrecruiters", source.token, error)
+
+
 def collect_configured_source(
     source: ConfiguredSource,
     greenhouse_client: GreenhouseFetcher,
@@ -351,6 +383,7 @@ def collect_configured_source(
     wp_job_manager_client: WPJobManagerFetcher,
     workable_client: WorkableFetcher,
     breezy_hr_client: BreezyHRFetcher,
+    smartrecruiters_client: SmartRecruitersFetcher,
     store: RawSnapshotStore,
     collected_at: datetime,
 ) -> CollectionResult:
@@ -450,6 +483,17 @@ def collect_configured_source(
             store,
             collected_at,
         )
+    if source.provider == "smartrecruiters":
+        if not source.host or not source.site:
+            raise ValueError(f"SmartRecruiters source {source.token} is incomplete.")
+        return collect_smartrecruiters_source(
+            SmartRecruitersSource(
+                name=source.name, token=source.token, host=source.host, site=source.site,
+                page_size=source.page_size, max_pages=source.max_pages,
+                request_delay_seconds=source.request_delay_seconds,
+                employer_id=source.employer_id,
+            ), smartrecruiters_client, store, collected_at,
+        )
     raise ValueError(f"Unsupported collection provider: {source.provider}")
 
 
@@ -545,6 +589,7 @@ def main() -> int:
         wp_job_manager_client = WPJobManagerClient(timeout_seconds=args.timeout)
         workable_client = WorkableClient(timeout_seconds=args.timeout)
         breezy_hr_client = BreezyHRClient(timeout_seconds=args.timeout)
+        smartrecruiters_client = SmartRecruitersClient(timeout_seconds=args.timeout)
     except (OSError, json.JSONDecodeError, ValueError) as error:
         print(f"Configuration error: {error}", file=sys.stderr)
         return 2
@@ -562,6 +607,7 @@ def main() -> int:
             wp_job_manager_client,
             workable_client,
             breezy_hr_client,
+            smartrecruiters_client,
             store,
             collected_at,
         )

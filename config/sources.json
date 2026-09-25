@@ -467,6 +467,19 @@
       "enabled": true,
       "priority": "experimental",
       "employer_id": "santam"
+    },
+    {
+      "name": "Standard Bank",
+      "provider": "smartrecruiters",
+      "token": "standardbankgroup",
+      "host": "https://api.smartrecruiters.com",
+      "site": "StandardBankGroup",
+      "page_size": 100,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "standard-bank"
     }
   ]
 }
