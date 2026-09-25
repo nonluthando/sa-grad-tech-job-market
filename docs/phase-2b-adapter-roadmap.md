@@ -1,6 +1,8 @@
 # Phase 2b: New Provider Adapter Roadmap
 
-**Status:** In progress — SmartRecruiters and Ashby adapters shipped; Freshteam, eRecruit and Teamtailor blocked pending live endpoint inspection (see Blockers section)  
+**Status:** SmartRecruiters and Ashby adapters shipped. Freshteam, eRecruit and
+Teamtailor deprioritized (25 Sep 2026) — blocked on live endpoint inspection this
+sandbox can't perform; revisit if/when that information becomes available.  
 **Date:** 25 September 2026
 
 ## Overview
