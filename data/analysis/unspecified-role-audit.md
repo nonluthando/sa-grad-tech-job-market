@@ -4,28 +4,29 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 80
+**Roles audited:** 95
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 24 |
-| likely_mid_level | 41 |
-| likely_senior | 15 |
+| ambiguous | 28 |
+| likely_early_career | 1 |
+| likely_mid_level | 43 |
+| likely_senior | 23 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 25 |
-| Discovery | 23 |
+| Nedbank | 35 |
+| Discovery | 26 |
 | Takealot Group | 16 |
-| Impact.com | 9 |
+| Impact.com | 10 |
 | Yassir | 3 |
 | Theodo | 2 |
+| Bash | 2 |
 | Luno | 1 |
-| Bash | 1 |
 
 ## Roles
 
@@ -48,13 +49,19 @@ do not overwrite the production classification.
 | ambiguous | Impact.com | Software Quality Engineer (Java using Selenium) | description: At least 3 years \| description: At least 2 years |
 | ambiguous | Luno | Backend Engineer | No explicit evidence |
 | ambiguous | Nedbank | Title: Data Analyst - Recons and Control | description: 3 – 5 Years \| description: 1 – 3 Years |
+| ambiguous | Nedbank | Title: Enterprise Metadata Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
+| ambiguous | Nedbank | Title: Product Owner: Service Enablement | description: 6 – 10 years \| description: 2 – 4 years |
+| ambiguous | Nedbank | Title: Quantitative Analyst | description: 1 - 3 years |
+| ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Takealot Group | Android Software Engineer | description: minimum of 3 years \| description: minimum of 6 years \| description: at least 2 years \| description: 3+ years |
 | ambiguous | Takealot Group | Zendesk Platform Software Engineer | description: 2–4 years |
 | ambiguous | Theodo | Frontend Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Theodo | Full Stack Software Engineer - Cape Town | No explicit evidence |
 | ambiguous | Yassir | Data Scientist | No explicit evidence |
 | ambiguous | Yassir | Data Scientist - Pricing | description: at least 2 years |
+| likely_early_career | Impact.com | Associate Platform Infrastructure Engineer | title: Associate |
+| likely_mid_level | Bash | Flutter Engineer | description: 3-5 years |
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
 | likely_mid_level | Discovery | AI Developer | description: 3+ years |
 | likely_mid_level | Discovery | Business Analyst | description: 3 – 5 years |
@@ -64,6 +71,7 @@ do not overwrite the production classification.
 | likely_mid_level | Discovery | Information Security Analyst | description: 3-5 years |
 | likely_mid_level | Discovery | Java Developer | description: 4-5 years |
 | likely_mid_level | Discovery | Java Developer (Intermediate) | description: Minimum 3 years |
+| likely_mid_level | Discovery | Observability Engineer | description: 5+ years \| description: 3+ years |
 | likely_mid_level | Discovery | RPA Developer | description: 3 – 5 years |
 | likely_mid_level | Impact.com | Android Developer | description: 3+ years |
 | likely_mid_level | Impact.com | Email & Marketing Automation Developer | description: 3–5 years of experience |
@@ -96,6 +104,8 @@ do not overwrite the production classification.
 | likely_mid_level | Takealot Group | iOS Software Engineer | description: 3-5 years of experience \| description: 8+ years of experience |
 | likely_mid_level | Takealot Group | iOS Software Engineer | description: minimum of 5 years \| description: minimum of 8 years \| description: at least 3 years \| description: 5+ years |
 | likely_mid_level | Yassir | Data Scientist (Personalization) | description: at least 3 years |
+| likely_senior | Discovery | Observability Engineer Specialist | title: Specialist \| description: 5+ years of experience |
+| likely_senior | Discovery | SAP Basis Consultant | title: Consultant \| description: 6 years of experience |
 | likely_senior | Discovery | Security DevOps Specialist | title: Specialist \| description: 5+ years |
 | likely_senior | Discovery | Security DevOps Specialist | title: Specialist \| description: 5+ years |
 | likely_senior | Discovery | Security DevOps Specialist | title: Specialist \| description: 5+ years |
@@ -107,6 +117,12 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: Cloud Engineer | description: 8-10 Years |
 | likely_senior | Nedbank | Title: Data Engineer | description: 5+ years |
 | likely_senior | Nedbank | Title: Front Arena Developer | description: Min 5 years |
+| likely_senior | Nedbank | Title: Platform Owner | description: 12+ years |
+| likely_senior | Nedbank | Title: Platform Owner | description: 5 - 10 years |
+| likely_senior | Nedbank | Title: Platform Owner - Postilion | description: 10+ years \| description: 8+ years |
+| likely_senior | Nedbank | Title: Postilion Technical Specialist | title: Specialist \| description: Min 8 years |
+| likely_senior | Nedbank | Title: SAP Consultant-Functional | title: Consultant \| description: 5-8 years |
+| likely_senior | Nedbank | Title: TPO: T24 Core Banking, Credit, Card & Payments, ATM & POS | description: 6-7 Years |
 | likely_senior | Takealot Group | Python Software Engineer | description: 5+ years |
 | likely_senior | Takealot Group | Search Software Engineer | description: 5 to 10 years |
 | likely_senior | Takealot Group | Search Software Engineer | description: 5 to 10 years |
