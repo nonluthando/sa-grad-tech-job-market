@@ -26,6 +26,8 @@ from src.transformation.oracle_hcm import transform_oracle_hcm_job
 from src.transformation.wp_job_manager import transform_wp_job_manager_job
 from src.transformation.smartrecruiters import transform_smartrecruiters_job
 from src.transformation.ashby import transform_ashby_job
+from src.transformation.workable import transform_workable_job
+from src.transformation.breezy_hr import transform_breezy_hr_job
 from src.transformation.snapshots import SourceSnapshot, load_snapshots
 
 
@@ -244,6 +246,10 @@ def _transform_snapshot_job(
         transformed = transform_smartrecruiters_job(job, snapshot.metadata, raw_path)
     elif snapshot.provider == "ashby":
         transformed = transform_ashby_job(job, snapshot.metadata, raw_path)
+    elif snapshot.provider == "workable":
+        transformed = transform_workable_job(job, snapshot.metadata, raw_path)
+    elif snapshot.provider == "breezy_hr":
+        transformed = transform_breezy_hr_job(job, snapshot.metadata, raw_path)
     else:
         raise ValueError(f"Unsupported snapshot provider: {snapshot.provider}")
 

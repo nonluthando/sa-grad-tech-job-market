@@ -15,7 +15,7 @@ from src.transformation.successfactors import parse_successfactors_detail
 
 SUPPORTED_SNAPSHOT_PROVIDERS = (
     "greenhouse", "lever", "successfactors", "workday", "oracle_hcm",
-    "wp_job_manager", "smartrecruiters", "ashby",
+    "wp_job_manager", "smartrecruiters", "ashby", "workable", "breezy_hr",
 )
 
 
@@ -252,6 +252,30 @@ def read_smartrecruiters_snapshot(path: Path) -> SmartRecruitersSnapshot:
     return _read_bundle(path, "smartrecruiters", _json_detail)
 
 
+WorkableSnapshot = SourceSnapshot
+BreezyHRSnapshot = SourceSnapshot
+
+
+def read_workable_snapshot(metadata_path: Path) -> WorkableSnapshot:
+    metadata = _read_metadata(metadata_path, "workable")
+    raw_path, payload = _read_verified_payload(metadata_path, metadata)
+    if not isinstance(payload, dict):
+        raise SnapshotReadError(f"Workable snapshot must be an object: {raw_path}")
+    jobs = _validate_jobs(payload.get("jobs"), raw_path, metadata.get("source_job_count"))
+    return SourceSnapshot(metadata_path, raw_path, metadata, jobs)
+
+
+def read_breezy_hr_snapshot(metadata_path: Path) -> BreezyHRSnapshot:
+    metadata = _read_metadata(metadata_path, "breezy_hr")
+    raw_path, payload = _read_verified_payload(metadata_path, metadata)
+    if not isinstance(payload, dict):
+        raise SnapshotReadError(f"Breezy HR snapshot must be an object: {raw_path}")
+    jobs = _validate_jobs(
+        payload.get("positions"), raw_path, metadata.get("source_job_count")
+    )
+    return SourceSnapshot(metadata_path, raw_path, metadata, jobs)
+
+
 def _sort_snapshots(snapshots: list[SourceSnapshot]) -> list[SourceSnapshot]:
     return sorted(snapshots, key=lambda s: (parse_datetime(s.metadata.get("collected_at")), s.provider, str(s.metadata_path)))
 
@@ -269,6 +293,8 @@ def load_snapshots(raw_root: Path) -> list[SourceSnapshot]:
         "wp_job_manager": read_wp_job_manager_snapshot,
         "smartrecruiters": read_smartrecruiters_snapshot,
         "ashby": read_ashby_snapshot,
+        "workable": read_workable_snapshot,
+        "breezy_hr": read_breezy_hr_snapshot,
     }
     snapshots = []
     for path in metadata_paths:
