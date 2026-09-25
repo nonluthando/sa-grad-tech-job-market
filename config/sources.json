@@ -383,6 +383,22 @@
       "enabled": true,
       "priority": "experimental",
       "employer_id": "capitec"
+    },
+    {
+      "name": "Vodacom",
+      "provider": "workday",
+      "token": "vodacom",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "vodacom"
+    },
+    {
+      "name": "MTN",
+      "provider": "workday",
+      "token": "mtn",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "mtn"
     }
   ]
 }

@@ -488,7 +488,7 @@
       "remote_scope": "south_africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "mtn",
@@ -502,7 +502,7 @@
       "remote_scope": "africa",
       "graduate_programme": "yes",
       "priority": "tier_2",
-      "collection_status": "candidate"
+      "collection_status": "active"
     },
     {
       "id": "ntt-data",
