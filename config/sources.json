@@ -427,6 +427,46 @@
       "enabled": true,
       "priority": "experimental",
       "employer_id": "superbalist"
+    },
+    {
+      "name": "Google South Africa",
+      "provider": "workday",
+      "token": "google",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "google-south-africa"
+    },
+    {
+      "name": "Atlassian South Africa",
+      "provider": "workday",
+      "token": "atlassian",
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "atlassian-south-africa"
+    },
+    {
+      "name": "Sanlam",
+      "provider": "successfactors",
+      "token": "sanlam",
+      "url": "https://career5.successfactors.eu/careers?company=sanlamlifeP2",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "sanlam"
+    },
+    {
+      "name": "Santam",
+      "provider": "successfactors",
+      "token": "santam",
+      "url": "https://careers.sanlamcloud.co.za/Santam/go/",
+      "page_size": 25,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "santam"
     }
   ]
 }
