@@ -1,0 +1,16 @@
+{
+  "source": "smartrecruiters",
+  "source_name": "Standard Bank",
+  "source_token": "standardbankgroup",
+  "endpoint": "https://api.smartrecruiters.com/v1/companies/StandardBankGroup/postings",
+  "collected_at": "2026-09-26T09:21:50.196038+00:00",
+  "http_status": 200,
+  "content_type": "application/vnd.sa-tech-job-market.smartrecruiters+json",
+  "content_sha256": "00365e69cbf786ff24338c9c0503815ee39ff7a91d04922921d06da18260c357",
+  "byte_count": 1881815,
+  "source_job_count": 127,
+  "raw_file": "20260926T092150196038Z.json",
+  "employer_id": "standard-bank",
+  "listing_page_count": 2,
+  "detail_page_count": 127
+}

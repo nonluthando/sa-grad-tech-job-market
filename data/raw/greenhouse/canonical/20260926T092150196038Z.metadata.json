@@ -1,0 +1,14 @@
+{
+  "source": "greenhouse",
+  "source_name": "Canonical",
+  "source_token": "canonical",
+  "endpoint": "https://boards-api.greenhouse.io/v1/boards/canonical/jobs?content=true",
+  "collected_at": "2026-09-26T09:21:50.196038+00:00",
+  "http_status": 200,
+  "content_type": "application/json",
+  "content_sha256": "36ce6694162708aeceafa59ded0741065ac5d1d4fb336c22f3c151d18864be6e",
+  "byte_count": 3401004,
+  "source_job_count": 306,
+  "raw_file": "20260926T011653568505Z.json",
+  "employer_id": "canonical"
+}
