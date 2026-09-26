@@ -1,0 +1,14 @@
+{
+  "source": "greenhouse",
+  "source_name": "Impact.com",
+  "source_token": "impact",
+  "endpoint": "https://boards-api.greenhouse.io/v1/boards/impact/jobs?content=true",
+  "collected_at": "2026-09-26T01:16:53.568505+00:00",
+  "http_status": 200,
+  "content_type": "application/json",
+  "content_sha256": "9964d0eba24f46dc3fee802fc814a4eacfa23ab083a23fe6b821b259912a679f",
+  "byte_count": 951340,
+  "source_job_count": 78,
+  "raw_file": "20260926T011653568505Z.json",
+  "employer_id": "impact-com"
+}
