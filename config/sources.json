@@ -356,7 +356,7 @@
       "name": "IBM",
       "provider": "workday",
       "token": "ibmglobal",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "ibm"
     },
@@ -364,7 +364,7 @@
       "name": "Oracle",
       "provider": "oracle_hcm",
       "token": "oracle",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "oracle"
     },
@@ -372,7 +372,7 @@
       "name": "Investec",
       "provider": "workday",
       "token": "investec",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "investec"
     },
@@ -380,7 +380,7 @@
       "name": "Capitec",
       "provider": "workday",
       "token": "capitec",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "capitec"
     },
@@ -388,7 +388,7 @@
       "name": "Vodacom",
       "provider": "workday",
       "token": "vodacom",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "vodacom"
     },
@@ -396,7 +396,7 @@
       "name": "MTN",
       "provider": "workday",
       "token": "mtn",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "mtn"
     },
@@ -416,7 +416,7 @@
       "name": "Synthesis",
       "provider": "workday",
       "token": "synthesis",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "synthesis"
     },
@@ -432,7 +432,7 @@
       "name": "Google South Africa",
       "provider": "workday",
       "token": "google",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "google-south-africa"
     },
@@ -440,7 +440,7 @@
       "name": "Atlassian South Africa",
       "provider": "workday",
       "token": "atlassian",
-      "enabled": true,
+      "enabled": false,
       "priority": "experimental",
       "employer_id": "atlassian-south-africa"
     },
@@ -467,6 +467,19 @@
       "enabled": true,
       "priority": "experimental",
       "employer_id": "santam"
+    },
+    {
+      "name": "Standard Bank",
+      "provider": "smartrecruiters",
+      "token": "standardbankgroup",
+      "host": "https://api.smartrecruiters.com",
+      "site": "StandardBankGroup",
+      "page_size": 100,
+      "max_pages": 20,
+      "request_delay_seconds": 0.2,
+      "enabled": true,
+      "priority": "experimental",
+      "employer_id": "standard-bank"
     }
   ]
 }

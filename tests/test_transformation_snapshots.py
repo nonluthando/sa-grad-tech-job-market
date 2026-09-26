@@ -132,3 +132,89 @@ def test_load_snapshots_allows_mixed_providers(tmp_path: Path) -> None:
     snapshots = load_snapshots(tmp_path)
 
     assert [snapshot.provider for snapshot in snapshots] == ["greenhouse", "lever"]
+
+
+def _write_bare_snapshot(
+    raw_root: Path,
+    *,
+    provider: str,
+    payload: dict,
+    jobs_key: str,
+    source_token: str = "example",
+) -> Path:
+    source_directory = raw_root / provider / source_token
+    source_directory.mkdir(parents=True)
+    raw_bytes = json.dumps(payload).encode("utf-8")
+    raw_path = source_directory / "snapshot.json"
+    raw_path.write_bytes(raw_bytes)
+    metadata_path = source_directory / "snapshot.metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "source": provider,
+                "source_name": "Example",
+                "source_token": source_token,
+                "collected_at": "2026-07-23T12:00:00+00:00",
+                "content_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+                "source_job_count": len(payload[jobs_key]),
+                "raw_file": raw_path.name,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return metadata_path
+
+
+def test_read_workable_snapshot_verifies_hash_and_count(tmp_path: Path) -> None:
+    from src.transformation.snapshots import read_workable_snapshot
+
+    metadata_path = _write_bare_snapshot(
+        tmp_path,
+        provider="workable",
+        payload={"jobs": [{"id": "1", "title": "Engineer"}, {"id": "2", "title": "Analyst"}]},
+        jobs_key="jobs",
+    )
+
+    snapshot = read_workable_snapshot(metadata_path)
+
+    assert snapshot.provider == "workable"
+    assert len(snapshot.jobs) == 2
+
+
+def test_read_breezy_hr_snapshot_verifies_hash_and_count(tmp_path: Path) -> None:
+    from src.transformation.snapshots import read_breezy_hr_snapshot
+
+    metadata_path = _write_bare_snapshot(
+        tmp_path,
+        provider="breezy_hr",
+        payload={"positions": [{"id": "1", "name": "Engineer"}]},
+        jobs_key="positions",
+    )
+
+    snapshot = read_breezy_hr_snapshot(metadata_path)
+
+    assert snapshot.provider == "breezy_hr"
+    assert len(snapshot.jobs) == 1
+
+
+def test_load_snapshots_includes_workable_and_breezy_hr(tmp_path: Path) -> None:
+    from src.transformation.snapshots import load_snapshots
+
+    _write_bare_snapshot(
+        tmp_path,
+        provider="workable",
+        payload={"jobs": [{"id": "1", "title": "Engineer"}]},
+        jobs_key="jobs",
+        source_token="stitch",
+    )
+    _write_bare_snapshot(
+        tmp_path,
+        provider="breezy_hr",
+        payload={"positions": [{"id": "1", "name": "Engineer"}]},
+        jobs_key="positions",
+        source_token="mukuru",
+    )
+
+    snapshots = load_snapshots(tmp_path)
+
+    assert {snapshot.provider for snapshot in snapshots} == {"workable", "breezy_hr"}

@@ -18,6 +18,8 @@ SUPPORTED_COLLECTION_PROVIDERS = (
     "wp_job_manager",
     "workable",
     "breezy_hr",
+    "smartrecruiters",
+    "ashby",
 )
 
 
@@ -131,6 +133,29 @@ class BreezyHRSource:
     employer_id: str = ""
 
 
+@dataclass(frozen=True)
+class AshbySource:
+    """A configured public Ashby job board."""
+
+    name: str
+    token: str
+    employer_id: str = ""
+
+
+@dataclass(frozen=True)
+class SmartRecruitersSource:
+    """A configured public SmartRecruiters company posting board."""
+
+    name: str
+    token: str
+    host: str
+    site: str
+    page_size: int = 100
+    max_pages: int = 20
+    request_delay_seconds: float = 0.2
+    employer_id: str = ""
+
+
 def _read_raw_sources(config_path: Path) -> list[dict[str, Any]]:
     payload: Any = json.loads(config_path.read_text(encoding="utf-8"))
     raw_sources = payload.get("sources")
@@ -232,6 +257,20 @@ def _oracle_hcm_settings(raw_source: dict[str, Any]) -> tuple[str, str, int, int
         default_page_size=25,
         default_max_pages=20,
         default_delay=0.1,
+    )
+    return host, site, page_size, max_pages, delay
+
+
+def _smartrecruiters_settings(raw_source: dict[str, Any]) -> tuple[str, str, int, int, float]:
+    host = _https_url(raw_source.get("host"), "host", "smartrecruiters")
+    site = str(raw_source.get("site") or "").strip()
+    if not site:
+        raise ValueError("Enabled smartrecruiters sources require site.")
+    page_size, max_pages, delay = _pagination_settings(
+        raw_source,
+        default_page_size=100,
+        default_max_pages=20,
+        default_delay=0.2,
     )
     return host, site, page_size, max_pages, delay
 
@@ -366,6 +405,22 @@ def load_breezy_hr_sources(
     ]
 
 
+def load_ashby_sources(
+    config_path: Path,
+    requested_tokens: set[str] | None = None,
+) -> list[AshbySource]:
+    """Return enabled Ashby sources, optionally filtered by job board name."""
+
+    return [
+        AshbySource(name=name, token=token, employer_id=employer_id)
+        for name, token, employer_id in _load_provider_sources(
+            config_path,
+            provider="ashby",
+            requested_tokens=requested_tokens,
+        )
+    ]
+
+
 def load_successfactors_sources(
     config_path: Path,
     requested_tokens: set[str] | None = None,
@@ -491,6 +546,23 @@ def load_collection_sources(
                     employer_id=employer_id,
                     listing_url=listing_url,
                     api_url=api_url,
+                    page_size=page_size,
+                    max_pages=max_pages,
+                    request_delay_seconds=delay,
+                )
+            )
+        elif provider == "smartrecruiters":
+            host, site, page_size, max_pages, delay = _smartrecruiters_settings(
+                raw_source
+            )
+            sources.append(
+                ConfiguredSource(
+                    name=name,
+                    provider=provider,
+                    token=token,
+                    employer_id=employer_id,
+                    host=host,
+                    site=site,
                     page_size=page_size,
                     max_pages=max_pages,
                     request_delay_seconds=delay,

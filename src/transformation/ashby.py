@@ -1,4 +1,4 @@
-"""Transform Breezy HR position objects into the canonical schema."""
+"""Transform Ashby job-board postings into the canonical job schema."""
 
 from __future__ import annotations
 
@@ -26,23 +26,11 @@ from src.transformation.schema import CanonicalJob
 _EARLY_CAREER_ROLE_LEVELS = {"internship", "graduate", "junior"}
 
 
-def _location_text(value: Any) -> str:
-    if isinstance(value, Mapping):
-        parts = [
-            clean_display_text(value.get("city")),
-            clean_display_text(value.get("state")),
-            clean_display_text(value.get("country")),
-        ]
-        return ", ".join(part for part in parts if part)
-    return clean_display_text(value)
-
-
-def _first(position: Mapping[str, Any], *keys: str) -> Any:
-    for key in keys:
-        value = position.get(key)
-        if value not in (None, "", [], {}):
-            return value
-    return None
+def _description_text(job: Mapping[str, Any]) -> str:
+    plain = clean_display_text(job.get("descriptionPlain"))
+    if plain:
+        return normalize_whitespace(plain)
+    return html_to_text(clean_display_text(job.get("descriptionHtml")))
 
 
 def _stable_job_key(
@@ -57,15 +45,15 @@ def _stable_job_key(
         identity = "url-" + hashlib.sha256(application_url.encode("utf-8")).hexdigest()[:24]
     else:
         identity = "content-" + hashlib.sha256(fallback_content.encode("utf-8")).hexdigest()[:24]
-    return f"breezy_hr:{source_token}:{identity}"
+    return f"ashby:{source_token}:{identity}"
 
 
-def transform_breezy_hr_job(
-    position: Mapping[str, Any],
+def transform_ashby_job(
+    job: Mapping[str, Any],
     metadata: Mapping[str, Any],
     raw_path: Path,
 ) -> CanonicalJob:
-    """Create one fully classified canonical Breezy HR observation."""
+    """Create one fully classified canonical Ashby observation."""
 
     source_name = clean_display_text(metadata.get("source_name"))
     source_token = clean_display_text(metadata.get("source_token"))
@@ -74,22 +62,25 @@ def transform_breezy_hr_job(
     if collected_at is None:
         raise ValueError("Snapshot metadata contains an invalid collected_at value.")
 
-    source_job_id = clean_display_text(_first(position, "id", "_id"))
-    title = clean_display_text(_first(position, "name", "title"))
+    source_job_id = clean_display_text(job.get("id"))
+    title = clean_display_text(job.get("title"))
     title_normalized = normalized_key(title)
-    application_url = clean_display_text(
-        _first(position, "application_url", "candidate_url", "url")
-    )
+    application_url = clean_display_text(job.get("applyUrl"))
+    if not application_url:
+        application_url = clean_display_text(job.get("jobUrl"))
 
-    department = clean_display_text(
-        _first(position, "department", "category")
-    ) or None
-    location_raw = _location_text(position.get("location"))
-    description_text = html_to_text(clean_display_text(position.get("description")))
+    department = clean_display_text(job.get("department")) or None
+    team = clean_display_text(job.get("team")) or None
+    if department is None:
+        department = team
+    office = team if team and team != department else None
+
+    location_raw = clean_display_text(job.get("location"))
+    description_text = _description_text(job)
 
     location = classify_location(location_raw, description_text)
-    remote_flag = _first(position, "is_remote", "remote")
-    explicit_workplace = "remote" if remote_flag is True else ""
+    is_remote = job.get("isRemote")
+    explicit_workplace = "remote" if is_remote is True else ""
     workplace = classify_workplace(
         title,
         location_raw,
@@ -114,9 +105,7 @@ def transform_breezy_hr_job(
     if not description_text:
         issues.append("missing_description")
 
-    source_updated_at = parse_datetime(
-        _first(position, "updated_at", "published_date", "created_at")
-    )
+    source_updated_at = parse_datetime(job.get("updatedAt") or job.get("publishedAt"))
     fallback_content = "|".join(
         (source_name, title_normalized, normalized_key(location_raw), description_text[:500])
     )
@@ -128,7 +117,7 @@ def transform_breezy_hr_job(
             application_url,
             fallback_content,
         ),
-        source_provider="breezy_hr",
+        source_provider="ashby",
         source_name=source_name,
         source_token=source_token,
         source_job_id=source_job_id,
@@ -142,7 +131,7 @@ def transform_breezy_hr_job(
         title_normalized=title_normalized,
         company=source_name,
         department=department,
-        office=None,
+        office=office,
         location_raw=location_raw,
         city=location.city,
         province=location.province,
@@ -156,7 +145,7 @@ def transform_breezy_hr_job(
         technology_evidence=technology.evidence,
         is_early_career=is_early_career,
         is_target_market=is_target_market,
-        description_text=normalize_whitespace(description_text),
+        description_text=description_text,
         application_url=application_url,
         data_quality_issues=unique_strings(issues),
     )

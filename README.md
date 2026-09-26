@@ -44,6 +44,10 @@ The current pipeline includes collectors for:
 - SAP SuccessFactors
 - Oracle HCM
 - WordPress Job Manager
+- Workable
+- Breezy HR
+- SmartRecruiters
+- Ashby
 
 The provider-adapter architecture is designed so that additional recruitment platforms and custom employer APIs can be added without rewriting the full pipeline.
 
