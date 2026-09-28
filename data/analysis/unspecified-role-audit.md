@@ -4,13 +4,13 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 96
+**Roles audited:** 97
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 29 |
+| ambiguous | 30 |
 | likely_early_career | 1 |
 | likely_mid_level | 43 |
 | likely_senior | 23 |
@@ -19,7 +19,7 @@ do not overwrite the production classification.
 
 | Company | Count |
 |---|---|
-| Nedbank | 35 |
+| Nedbank | 36 |
 | Discovery | 26 |
 | Takealot Group | 16 |
 | Impact.com | 10 |
@@ -54,6 +54,7 @@ do not overwrite the production classification.
 | ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
 | ambiguous | Nedbank | Title: Product Owner: Service Enablement | description: 6 – 10 years \| description: 2 – 4 years |
 | ambiguous | Nedbank | Title: Quantitative Analyst | description: 1 - 3 years |
+| ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Ozow | Technical Support Engineer | description: 2-4 years |
 | ambiguous | Takealot Group | Android Software Engineer | description: minimum of 3 years \| description: minimum of 6 years \| description: at least 2 years \| description: 3+ years |
