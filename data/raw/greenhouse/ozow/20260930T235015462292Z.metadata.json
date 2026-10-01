@@ -1,0 +1,14 @@
+{
+  "source": "greenhouse",
+  "source_name": "Ozow",
+  "source_token": "ozow",
+  "endpoint": "https://boards-api.greenhouse.io/v1/boards/ozow/jobs?content=true",
+  "collected_at": "2026-09-30T23:50:15.462292+00:00",
+  "http_status": 200,
+  "content_type": "application/json",
+  "content_sha256": "5e00b542dcf337d874a27e7535594f3647e6f0971ea2bf0c9ca76601369bf00a",
+  "byte_count": 174383,
+  "source_job_count": 8,
+  "raw_file": "20260929T180552465734Z.json",
+  "employer_id": "ozow"
+}
