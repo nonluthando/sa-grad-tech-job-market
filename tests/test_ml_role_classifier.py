@@ -98,6 +98,13 @@ def test_train_and_evaluate_produces_a_usable_pipeline():
     assert "classification_report" in result.report
     assert "confusion_matrix" in result.report
 
+    assert 0.0 <= result.report["accuracy"] <= 1.0
+    assert 0.0 <= result.report["macro_f1"] <= 1.0
+    assert 0.0 <= result.report["weighted_f1"] <= 1.0
+    assert set(result.report["per_class"]) == set(_TRAINING_TEXTS)
+    for metrics in result.report["per_class"].values():
+        assert set(metrics) == {"precision", "recall", "f1", "support"}
+
     prediction = result.pipeline.predict(
         ["Senior Principal Engineer leading the platform team."]
     )

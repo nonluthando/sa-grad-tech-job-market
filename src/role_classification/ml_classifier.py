@@ -131,17 +131,36 @@ def train_and_evaluate(
 
     predictions = pipeline.predict(X_test)
     labels_seen = sorted(label_counts)
+    full_report = classification_report(
+        y_test,
+        predictions,
+        labels=labels_seen,
+        output_dict=True,
+        zero_division=0,
+    )
+
+    # Classes like "graduate" or "internship" are typically far rarer than
+    # "junior" or "senior". Accuracy would hide the model doing badly on
+    # them, so macro-F1 (each class weighted equally) is the headline
+    # metric, with the per-class breakdown surfaced alongside it rather
+    # than left nested inside the raw sklearn report.
     report = {
         "training_examples": len(X_train),
         "test_examples": len(X_test),
         "label_counts": label_counts,
-        "classification_report": classification_report(
-            y_test,
-            predictions,
-            labels=labels_seen,
-            output_dict=True,
-            zero_division=0,
-        ),
+        "accuracy": full_report["accuracy"],
+        "macro_f1": full_report["macro avg"]["f1-score"],
+        "weighted_f1": full_report["weighted avg"]["f1-score"],
+        "per_class": {
+            label: {
+                "precision": full_report[label]["precision"],
+                "recall": full_report[label]["recall"],
+                "f1": full_report[label]["f1-score"],
+                "support": full_report[label]["support"],
+            }
+            for label in labels_seen
+        },
+        "classification_report": full_report,
         "confusion_matrix": {
             "labels": labels_seen,
             "matrix": confusion_matrix(

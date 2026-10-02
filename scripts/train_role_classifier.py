@@ -101,7 +101,23 @@ def main() -> int:
     print(f"Training examples:          {result.report['training_examples']}")
     print(f"Test examples:              {result.report['test_examples']}")
     print(f"Label counts:               {result.report['label_counts']}")
-    print(f"Model:                      {args.model_path}")
+    print(f"Accuracy (held-out):        {result.report['accuracy']:.3f}")
+    # Headline metric, not accuracy: classes are imbalanced (e.g. "graduate"
+    # and "internship" are much rarer than "junior"/"senior"), so macro-F1
+    # weights every class equally instead of letting the common ones hide
+    # poor performance on the rare ones.
+    print(f"Macro-F1 (held-out):        {result.report['macro_f1']:.3f}")
+    print(f"Weighted-F1 (held-out):     {result.report['weighted_f1']:.3f}")
+    print("\nPer-class precision / recall / F1 / support:")
+    for label, metrics in result.report["per_class"].items():
+        print(
+            f"  {label:<12} "
+            f"precision={metrics['precision']:.3f}  "
+            f"recall={metrics['recall']:.3f}  "
+            f"f1={metrics['f1']:.3f}  "
+            f"support={metrics['support']}"
+        )
+    print(f"\nModel:                      {args.model_path}")
     print(f"Evaluation report:          {args.report_path}")
     print(f"Unspecified jobs suggested: {len(suggestions)}")
     print(f"Suggestions:                {args.suggestions_path}")
