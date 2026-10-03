@@ -1,33 +1,33 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-10-03T09:53:11.315175+00:00",
-  "dashboard_job_count": 2612,
-  "dashboard_skill_row_count": 7310,
+  "source_window_end": "2026-10-03T11:45:05.037966+00:00",
+  "dashboard_job_count": 2613,
+  "dashboard_skill_row_count": 7029,
   "target_market_job_count": 225,
   "non_talent_pool_target_market_job_count": 220,
-  "early_career_target_job_count": 29,
+  "early_career_target_job_count": 30,
   "talent_pool_job_count": 52,
-  "jobs_with_skills_count": 1590,
-  "jobs_without_skills_count": 1022,
-  "target_jobs_with_skills_count": 193,
-  "target_skill_coverage_rate": 0.8577777777777778,
+  "jobs_with_skills_count": 1528,
+  "jobs_without_skills_count": 1085,
+  "target_jobs_with_skills_count": 192,
+  "target_skill_coverage_rate": 0.8533333333333334,
   "unique_technology_count": 90,
   "employer_count": 15,
   "industry_count": 5,
   "role_level_counts": {
-    "graduate": 21,
-    "internship": 129,
-    "junior": 337,
-    "mid_level": 193,
-    "senior": 1355,
-    "unspecified": 577
+    "graduate": 23,
+    "internship": 128,
+    "junior": 339,
+    "mid_level": 196,
+    "senior": 1345,
+    "unspecified": 582
   },
   "workplace_type_counts": {
     "hybrid": 374,
     "on_site": 244,
     "remote": 964,
-    "unspecified": 1030
+    "unspecified": 1031
   },
   "employer_counts": {
     "Binance": 489,
@@ -39,7 +39,7 @@
     "Mama Money": 18,
     "Nedbank": 469,
     "Ozow": 9,
-    "Standard Bank": 230,
+    "Standard Bank": 231,
     "TFG": 22,
     "Takealot Group": 59,
     "Theodo": 164,
@@ -47,7 +47,7 @@
     "impact.com": 126
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 925,
+    "Banks, insurance and financial services": 926,
     "Fintech and payments": 531,
     "Foreign and remote-first": 546,
     "Product, software and e-commerce": 446,
@@ -59,7 +59,7 @@
     "Gauteng": 522,
     "KwaZulu-Natal": 29,
     "Western Cape": 235,
-    "unspecified": 1811
+    "unspecified": 1812
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 1432,
@@ -74,7 +74,7 @@
     "Enterprise Technology": 127,
     "Frontend Development": 225,
     "Mobile Development": 104,
-    "Programming": 1311,
+    "Programming": 1030,
     "Quality Engineering": 155,
     "Software Delivery": 566
   },
@@ -87,7 +87,7 @@
     "Azure": 104,
     "Bash": 69,
     "BigQuery": 33,
-    "C": 286,
+    "C": 5,
     "C#": 14,
     "C++": 71,
     "CI/CD": 190,
@@ -171,13 +171,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 1811,
-    "workplace_type": 1030,
-    "effective_role_level": 577,
+    "province": 1812,
+    "workplace_type": 1031,
+    "effective_role_level": 582,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 372,
-  "jobs_with_extraction_warnings_count": 1022,
+  "jobs_with_extraction_warnings_count": 1085,
   "warnings": [
     "high_unknown_workplace_share"
   ]
