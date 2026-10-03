@@ -9,7 +9,12 @@ SKILL_RULES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("TypeScript", "programming_language", (r"\btypescript\b", r"\btype\s*script\b")),
     ("C#", "programming_language", (r"(?<!\w)c\s*#(?!\w)", r"\bcsharp\b")),
     ("C++", "programming_language", (r"(?<!\w)c\s*\+\+(?!\w)",)),
-    ("C", "programming_language", (r"(?<![\w+#])c(?![\w+#])",)),
+    ("C", "programming_language", (
+        r"\bc\s+programming\b(?!\+)",
+        r"\bc\s+programming\s+language\b(?!\+)",
+        r"\busing\s+c\b(?!\+)",
+        r"\bc\s+language\b(?!\+)",
+    )),
     ("Go", "programming_language", (r"\bgolang\b", r"\bgo\s+programming\b")),
     ("Kotlin", "programming_language", (r"\bkotlin\b",)),
     ("Swift", "programming_language", (r"\bswift\b",)),

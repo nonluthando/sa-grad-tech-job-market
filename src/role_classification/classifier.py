@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from src.role_classification.evidence import (
     detect_talent_pool,
     extract_description_text_evidence,
@@ -9,11 +11,41 @@ from src.role_classification.evidence import (
     extract_experience_evidence,
     extract_title_evidence,
 )
-from src.role_classification.models import RoleClassificationResult
+from src.role_classification.models import ClassificationEvidence, RoleClassificationResult
 from src.role_classification.scorer import confidence_for, score_evidence
 
 
-_AUTHORITATIVE_TITLE_LEVELS = ("senior", "internship", "graduate", "junior")
+_AUTHORITATIVE_EARLY_CAREER_LEVELS = ("internship", "graduate", "junior")
+
+# Mirrors transformation/classification.py's unambiguous/overloaded senior
+# split: "senior", "director", "vp" etc. are unambiguous, but "manager",
+# "lead", "architect" and "head of" are overloaded - they also show up in
+# genuinely early-career titles ("Junior Product Manager"), so an explicit
+# early-career word in the same title wins over these specifically.
+_UNAMBIGUOUS_SENIOR_VALUES = frozenset(
+    {"senior", "staff", "principal", "director", "vice president", "vp", "chief"}
+)
+
+# "Graduate Programme Manager" is a senior role managing an early-career
+# programme - the early-career word describes the programme, not this
+# role's own seniority, so an overloaded senior word here still wins.
+_PROGRAMME_LED_BY_SENIOR = re.compile(
+    r"\b(?:graduate|intern(?:ship)?|trainee)\s+(?:programme|program)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_weak_associate_evidence(item: ClassificationEvidence) -> bool:
+    """True for the "associate"-rule's junior evidence specifically.
+
+    "Associate" is a weaker, more overloaded signal than "Junior"/"Graduate"/
+    "Intern" - some industries use it for a genuinely senior grade (e.g.
+    "Associate Data Architect"). Unlike those other early-career words, it
+    should lose to an overloaded senior word (manager/lead/architect/head
+    of) elsewhere in the same title, rather than beating it.
+    """
+
+    return item.category == "junior" and item.value.casefold().startswith("associate")
 
 
 def classify_role(
@@ -36,16 +68,55 @@ def classify_role(
 
     # Explicit title/source evidence takes priority over numeric thresholds.
     authoritative = title_evidence + source_evidence
+    senior_items: list[ClassificationEvidence] = [
+        item for item in authoritative if item.category == "senior"
+    ]
+    unambiguous_senior = any(
+        item.value.casefold() in _UNAMBIGUOUS_SENIOR_VALUES for item in senior_items
+    )
+    overloaded_senior = [
+        item
+        for item in senior_items
+        if item.value.casefold() not in _UNAMBIGUOUS_SENIOR_VALUES
+    ]
+    programme_led_by_senior = bool(overloaded_senior) and bool(
+        _PROGRAMME_LED_BY_SENIOR.search(title)
+    )
+
+    strong_early_career = [
+        item for item in authoritative if not _is_weak_associate_evidence(item)
+    ]
+
     level = "ambiguous"
-    for candidate in _AUTHORITATIVE_TITLE_LEVELS:
-        if any(item.category == candidate for item in authoritative):
-            level = candidate
-            break
+    if unambiguous_senior or programme_led_by_senior:
+        level = "senior"
+    else:
+        for candidate in _AUTHORITATIVE_EARLY_CAREER_LEVELS:
+            if any(item.category == candidate for item in strong_early_career):
+                level = candidate
+                break
+        else:
+            if overloaded_senior:
+                level = "senior"
+            elif any(_is_weak_associate_evidence(item) for item in authoritative):
+                level = "junior"
 
     if level == "ambiguous":
-        if any(item.category == "graduate" for item in description_evidence):
+        # A vague description phrase like "no experience required" is weaker
+        # evidence than an explicit numeric experience range, and can be
+        # badly decontextualized (e.g. "Management experience: no
+        # experience required" alongside "7-10 years" overall experience).
+        # When the description also states 5+ years, trust the number.
+        high_experience_conflict = (
+            experience.minimum_years is not None and experience.minimum_years >= 5
+        )
+        if not high_experience_conflict and any(
+            item.category == "graduate" for item in description_evidence
+        ):
             level = "graduate"
-        elif any(item.category == "junior" for item in description_evidence):
+        elif not high_experience_conflict and any(
+            item.category == "junior" for item in description_evidence
+        ):
             level = "junior"
         elif experience.minimum_years is not None:
             minimum = experience.minimum_years

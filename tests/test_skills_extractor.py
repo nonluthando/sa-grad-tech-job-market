@@ -33,6 +33,18 @@ def test_extracts_data_and_ai_skills():
     } <= names
 
 
+def test_bare_capital_c_does_not_false_match_as_the_c_language():
+    names = skill_names(
+        "Director of Sales, Greater China. Strategic Programs Manager role."
+    )
+    assert "C" not in names
+
+
+def test_c_programming_phrase_is_still_recognised():
+    names = skill_names("Strong C programming experience and embedded systems.")
+    assert "C" in names
+
+
 def test_extracts_degree_requirement_and_fields():
     required, fields = extract_degree_requirements(
         "A bachelor's degree in Computer Science, Statistics or Mathematics is required."
@@ -54,6 +66,22 @@ def test_extracts_plus_years():
         "At least 3+ years' experience is expected."
     )
     assert minimum == 3
+    assert maximum is None
+
+
+def test_age_eligibility_is_not_read_as_years_of_experience():
+    minimum, maximum = extract_experience_years(
+        "Applicants must be between the ages of 18 and 25 years to qualify."
+    )
+    assert minimum is None
+    assert maximum is None
+
+
+def test_years_old_is_not_read_as_years_of_experience():
+    minimum, maximum = extract_experience_years(
+        "You must be at least 18 years old to apply for this learnership."
+    )
+    assert minimum is None
     assert maximum is None
 
 

@@ -1,6 +1,7 @@
 import pytest
 
 from src.transformation.classification import (
+    _minimum_experience_years,
     classify_location,
     classify_role_level,
     classify_technology_role,
@@ -152,6 +153,86 @@ def test_senior_title_overrides_early_career_description_and_source_level() -> N
 
     assert result.label == "senior"
     assert result.evidence == ("title: Senior",)
+
+
+def test_overloaded_senior_word_loses_to_explicit_junior_in_same_title() -> None:
+    result = classify_role_level("Junior Product Manager (Marketplace)", "")
+
+    assert result.label == "junior"
+    assert result.evidence == ("title: Junior",)
+
+
+def test_overloaded_senior_word_loses_to_explicit_junior_regardless_of_order() -> None:
+    result = classify_role_level("Project Manager (Junior)", "")
+
+    assert result.label == "junior"
+
+
+def test_unambiguous_senior_word_still_wins_over_explicit_junior() -> None:
+    result = classify_role_level("Junior Director of Engineering", "")
+
+    assert result.label == "senior"
+
+
+def test_graduate_programme_manager_is_still_senior() -> None:
+    result = classify_role_level("Graduate Programme Manager", "")
+
+    assert result.label == "senior"
+
+
+def test_manager_with_no_early_career_word_is_still_senior() -> None:
+    result = classify_role_level("Engineering Manager", "")
+
+    assert result.label == "senior"
+
+
+def test_associate_platform_infrastructure_engineer_is_junior() -> None:
+    result = classify_role_level("Associate Platform Infrastructure Engineer", "")
+
+    assert result.label == "junior"
+
+
+def test_associate_architect_title_is_senior_not_junior() -> None:
+    """"Associate" is a weaker signal than "Junior"/"Graduate"/"Intern" -
+
+    some industries use it for a senior grade. An overloaded senior word
+    ("Architect") elsewhere in the title should win over it.
+    """
+    result = classify_role_level(
+        "Associate Data Architect",
+        "At least 8 years of relevant experience is required.",
+    )
+
+    assert result.label == "senior"
+
+
+def test_explicit_high_experience_overrides_decontextualized_no_experience_phrase() -> None:
+    """A real Nedbank posting: "No experience required" answers a specific
+
+    "management experience" sub-question, not the job's overall
+    requirement, which is stated explicitly as 7-10 years elsewhere in the
+    same description. The vague phrase must not win over the number.
+    """
+    result = classify_role_level(
+        "Software Quality Engineer II",
+        "Minimum Experience Level Total number of years of experience: "
+        "7 - 10 years. Management experience as part of the above years: "
+        "No experience required.",
+    )
+
+    assert result.label == "unspecified"
+
+
+def test_age_eligibility_is_not_read_as_years_of_experience() -> None:
+    assert _minimum_experience_years(
+        "Be between the ages of 18 and 25 years; have a valid matric certificate."
+    ) is None
+    assert _minimum_experience_years(
+        "You must be at least 18 years old to apply."
+    ) is None
+    assert _minimum_experience_years(
+        "At least 5 years of relevant experience is required."
+    ) == 5
 
 
 def test_explicit_source_level_is_used_before_description() -> None:
