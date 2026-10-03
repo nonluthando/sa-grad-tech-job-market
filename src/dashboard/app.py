@@ -26,6 +26,7 @@ WORKFLOW_URL = (
     "actions/workflows/refresh-dashboard.yml"
 )
 UNSPECIFIED_AUDIT_PATH = PROJECT_ROOT / "data" / "analysis" / "unspecified-role-audit.csv"
+ML_SUGGESTIONS_PATH = PROJECT_ROOT / "data" / "analysis" / "ml-role-suggestions.csv"
 
 
 @st.cache_data(show_spinner=False)
@@ -55,6 +56,23 @@ def load_unspecified_audit(path: str) -> pd.DataFrame:
         return pd.DataFrame()
     try:
         return pd.read_csv(audit_path)
+    except (OSError, UnicodeDecodeError, pd.errors.ParserError):
+        return pd.DataFrame()
+
+
+@st.cache_data(show_spinner=False)
+def load_ml_suggestions(path: str) -> pd.DataFrame:
+    """Load the optional scikit-learn suggestions, if the model has been trained.
+
+    Produced by ``scripts/train_role_classifier.py``. Absent by default — the
+    audit view works the same with or without it.
+    """
+
+    suggestions_path = Path(path)
+    if not suggestions_path.is_file():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(suggestions_path)
     except (OSError, UnicodeDecodeError, pd.errors.ParserError):
         return pd.DataFrame()
 
@@ -531,10 +549,22 @@ def _render_unspecified_audit(jobs: pd.DataFrame) -> None:
         if column in audit.columns:
             audit[column] = pd.to_datetime(audit[column], errors="coerce", utc=True)
 
+    ml_suggestions = load_ml_suggestions(str(ML_SUGGESTIONS_PATH))
+    if not ml_suggestions.empty and "job_key" in ml_suggestions.columns:
+        audit = audit.merge(
+            ml_suggestions[
+                ["job_key", "ml_suggested_role_level", "ml_role_level_confidence"]
+            ],
+            on="job_key",
+            how="left",
+        )
+
     display_columns = [
         "title",
         "employer_name",
         "likely_level",
+        "ml_suggested_role_level",
+        "ml_role_level_confidence",
         "minimum_experience_years",
         "maximum_experience_years",
         "audit_evidence",
@@ -550,6 +580,8 @@ def _render_unspecified_audit(jobs: pd.DataFrame) -> None:
             "title": "Role",
             "employer_name": "Employer",
             "likely_level": "Audit suggestion",
+            "ml_suggested_role_level": "ML suggestion",
+            "ml_role_level_confidence": "ML confidence",
             "minimum_experience_years": "Minimum experience",
             "maximum_experience_years": "Maximum experience",
             "audit_evidence": "Audit evidence",

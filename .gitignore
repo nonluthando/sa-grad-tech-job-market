@@ -17,3 +17,11 @@ prosple_jobs.xml
 # Generated canonical datasets and quality reports.
 data/processed/*
 !data/processed/.gitkeep
+
+# Trained model artifacts and ML-generated reports (rebuilt by
+# scripts/train_role_classifier.py from whatever jobs.parquet currently is;
+# committing them would go stale immediately).
+data/models/*
+!data/models/.gitkeep
+data/analysis/ml-role-classifier-report.json
+data/analysis/ml-role-suggestions.csv
