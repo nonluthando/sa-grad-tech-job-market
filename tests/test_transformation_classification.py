@@ -1,6 +1,7 @@
 import pytest
 
 from src.transformation.classification import (
+    _minimum_experience_years,
     classify_location,
     classify_role_level,
     classify_technology_role,
@@ -220,6 +221,18 @@ def test_explicit_high_experience_overrides_decontextualized_no_experience_phras
     )
 
     assert result.label == "unspecified"
+
+
+def test_age_eligibility_is_not_read_as_years_of_experience() -> None:
+    assert _minimum_experience_years(
+        "Be between the ages of 18 and 25 years; have a valid matric certificate."
+    ) is None
+    assert _minimum_experience_years(
+        "You must be at least 18 years old to apply."
+    ) is None
+    assert _minimum_experience_years(
+        "At least 5 years of relevant experience is required."
+    ) == 5
 
 
 def test_explicit_source_level_is_used_before_description() -> None:

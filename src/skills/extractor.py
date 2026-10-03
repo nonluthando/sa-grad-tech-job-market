@@ -14,14 +14,29 @@ from src.skills.taxonomy import (
     SOFT_SKILL_RULES,
 )
 
+# The (?!...) guard excludes age phrasing ("between 18 and 25 years old")
+# from being read as a years-of-experience requirement - without it, a
+# bare "<N> years" matches regardless of what follows, since the "of
+# experience" suffix below is optional. It only catches "old"/"of age"
+# trailing the number; "between the ages of 18 and 25 years" puts the age
+# cue *before* the number instead, at a variable distance a fixed-width
+# regex lookbehind can't reach - _is_age_context below checks that case.
+_NOT_AN_AGE = r"(?!\s*(?:old\b|of\s+age\b))"
+_AGE_CONTEXT_PATTERN = re.compile(r"\bage[sd]?\b", re.IGNORECASE)
+
+
+def _is_age_context(text: str, match_start: int, window: int = 40) -> bool:
+    preceding = text[max(0, match_start - window):match_start]
+    return bool(_AGE_CONTEXT_PATTERN.search(preceding))
+
 _RANGE_YEARS_PATTERN = re.compile(
-    r"\b(\d+)\s*(?:-|–|—|to)\s*(\d+)\s*(?:years?|yrs?)"
+    r"\b(\d+)\s*(?:-|–|—|to)\s*(\d+)\s*(?:years?|yrs?)" + _NOT_AN_AGE +
     r"(?:\s*(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?\b",
     re.IGNORECASE,
 )
 _SINGLE_YEARS_PATTERN = re.compile(
     r"\b(?:(?:at\s+least|minimum(?:\s+of)?|min\.?)\s+)?"
-    r"(\d+)\s*(?:\+|plus)?\s*(?:years?|yrs?)"
+    r"(\d+)\s*(?:\+|plus)?\s*(?:years?|yrs?)" + _NOT_AN_AGE +
     r"(?:['’]?\s*(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?\b",
     re.IGNORECASE,
 )
@@ -80,6 +95,8 @@ def extract_experience_years(text: str) -> tuple[int | None, int | None]:
         return any(start < e and end > s for s, e in occupied)
 
     for match in _RANGE_YEARS_PATTERN.finditer(text):
+        if _is_age_context(text, match.start()):
+            continue
         lower = min(int(match.group(1)), int(match.group(2)))
         upper = max(int(match.group(1)), int(match.group(2)))
         minimums.append(lower)
@@ -87,7 +104,7 @@ def extract_experience_years(text: str) -> tuple[int | None, int | None]:
         occupied.append(match.span())
 
     for match in _SINGLE_YEARS_PATTERN.finditer(text):
-        if overlaps(*match.span()):
+        if overlaps(*match.span()) or _is_age_context(text, match.start()):
             continue
         minimums.append(int(match.group(1)))
         occupied.append(match.span())

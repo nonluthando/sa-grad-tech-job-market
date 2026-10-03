@@ -131,3 +131,26 @@ def test_experience_parser_avoids_nested_duplicate_matches():
     assert result.minimum_years == 1
     assert result.maximum_years == 2
     assert len(result.evidence) == 1
+
+
+def test_age_eligibility_is_not_read_as_years_of_experience():
+    result = extract_experience_evidence(
+        "Be between the ages of 18 and 25 years; have a valid matric certificate."
+    )
+
+    assert result.minimum_years is None
+    assert result.evidence == ()
+
+
+def test_graduate_title_with_age_eligibility_stays_graduate_not_senior():
+    """A real-world shape: a Learnership/graduate posting with an age
+
+    eligibility clause must not have that age read as 25 years of
+    experience and pushed toward senior.
+    """
+    result = classify_role(
+        "Learnership - Short Term Insurance",
+        "Be between the ages of 18 and 30 years; Grade 12 with Mathematics.",
+    )
+
+    assert result.level != "senior"

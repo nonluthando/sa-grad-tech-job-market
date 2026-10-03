@@ -69,6 +69,22 @@ def test_extracts_plus_years():
     assert maximum is None
 
 
+def test_age_eligibility_is_not_read_as_years_of_experience():
+    minimum, maximum = extract_experience_years(
+        "Applicants must be between the ages of 18 and 25 years to qualify."
+    )
+    assert minimum is None
+    assert maximum is None
+
+
+def test_years_old_is_not_read_as_years_of_experience():
+    minimum, maximum = extract_experience_years(
+        "You must be at least 18 years old to apply for this learnership."
+    )
+    assert minimum is None
+    assert maximum is None
+
+
 def test_job_enrichment_reports_missing_description():
     result = extract_job_enrichment("Software Engineer", "")
     assert "missing_description" in result.extraction_warnings

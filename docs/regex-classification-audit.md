@@ -229,18 +229,38 @@ in either system.
   explicit years), so extending the experience-years veto to title-level
   evidence is a bigger, more invasive change than the other fixes here.
   Left as a known residual case rather than patched under time pressure.
-- **Age ranges mis-parsed as years of experience.** Several "Learnership"
-  postings require applicants to be "between 18 and 25 years old," and the
-  experience-years regex (duplicated across `role_classification/evidence.py`,
-  `skills/extractor.py`, and now also `transformation/classification.py`)
-  has no guard against "years old" phrasing — it reads this as a 25-year
-  experience requirement. It caused no wrong label in the current dataset
-  only because "Learnership" in the title is unambiguous and authoritative
-  on its own, resolving before experience is ever consulted — but the same
-  regex, hit on a job with a more neutral title, would produce a badly wrong
-  `senior` classification from an age requirement. This is a distinct bug
-  in the shared experience-years pattern, not the role-level precedence
-  logic, and is out of scope for this pass.
+- ~~**Age ranges mis-parsed as years of experience.**~~ **Fixed** — see #6 below.
+
+### 6. Age ranges mis-parsed as years of experience — CONFIRMED, FIXED
+
+Several "Learnership" postings require applicants to be "between the ages
+of 18 and 25 years" or "at least 18 years old." The experience-years regex —
+duplicated across `role_classification/evidence.py`, `skills/extractor.py`,
+and (as of fix #5) `transformation/classification.py` — had no guard against
+age phrasing, so it read these as a 25-year (or 18-year) *experience*
+requirement. It caused no wrong role-level label in the current dataset only
+because "Learnership" in the title is unambiguous and authoritative on its
+own, resolving before experience is ever consulted — but the same bogus
+25-year figure would produce a badly wrong `senior` classification on any
+job with a more neutral title that relies on the experience-years fallback.
+
+Two distinct phrasings needed two distinct guards, since a regex lookbehind
+in Python's `re` must be fixed-width and the age cue sits at a variable
+distance in one of the two shapes:
+
+- **"18 years old"** / **"25 years of age"** — the age cue trails the
+  number at a fixed, short distance, so a `(?!\s*(?:old\b|of\s+age\b))`
+  negative-lookahead guard on the regex itself is enough.
+- **"between the ages of 18 and 25 years"** — the age cue (`"ages of"`)
+  precedes the number at a *variable* distance, which a regex lookbehind
+  can't express. Fixed with a small code-level check (`_is_age_context`)
+  that inspects the 40 characters immediately before each match for
+  `age`/`ages`/`aged`, added to all three experience-extraction functions.
+
+Re-verified against the live dataset: all 15 age-eligibility matches across
+every "Learnership"/"Skills Programme" posting are now correctly suppressed,
+and a scan of every suppressed match confirmed zero were genuine experience
+phrases wrongly dropped (no false negatives introduced).
 
 ## Design risks (not yet confirmed as causing bad labels, worth tracking)
 
