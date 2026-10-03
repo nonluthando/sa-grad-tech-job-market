@@ -8,6 +8,32 @@ from typing import Iterable
 
 from src.transformation.cleaning import normalize_whitespace, unique_strings
 
+_RANGE_YEARS_PATTERN = re.compile(
+    r"\b(\d+)\s*(?:-|–|—|to)\s*(\d+)\s*(?:years?|yrs?)"
+    r"(?:\s*(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?\b",
+    re.IGNORECASE,
+)
+_SINGLE_YEARS_PATTERN = re.compile(
+    r"\b(?:(?:at\s+least|minimum(?:\s+of)?|min\.?)\s+)?"
+    r"(\d+)\s*(?:\+|plus)?\s*(?:years?|yrs?)"
+    r"(?:['’]?\s*(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?\b",
+    re.IGNORECASE,
+)
+
+
+def _minimum_experience_years(description_text: str) -> int | None:
+    """Lowest explicit "X years" / "X-Y years" minimum stated anywhere."""
+
+    minimums = [
+        min(int(match.group(1)), int(match.group(2)))
+        for match in _RANGE_YEARS_PATTERN.finditer(description_text)
+    ]
+    minimums.extend(
+        int(match.group(1))
+        for match in _SINGLE_YEARS_PATTERN.finditer(description_text)
+    )
+    return min(minimums) if minimums else None
+
 
 @dataclass(frozen=True)
 class LocationClassification:
@@ -113,9 +139,22 @@ _EARLY_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         (
             r"\bjunior\b",
             r"\bentry[- ]level\b",
-            r"\bassociate\s+(?:software|data|qa|test|cloud|devops|security|business\s+intelligence|platform|infrastructure)\b",
             r"\b(?:software|data|qa|test|cloud|devops|security)\s+engineer\s+i\b",
             r"\b(?:software|web|backend|front[- ]?end|full[- ]?stack)\s+developer\s+i\b",
+        ),
+    ),
+)
+
+# "Associate" is a weaker, more overloaded signal than "Junior"/"Graduate"/
+# "Intern" - some industries use it for a genuinely senior grade (e.g.
+# "Associate Data Architect"). So unlike the rules above, this one loses to
+# an overloaded senior word (manager/lead/architect/head of) found
+# elsewhere in the same title, rather than beating it.
+_WEAK_EARLY_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "junior",
+        (
+            r"\bassociate\s+(?:software|data|qa|test|cloud|devops|security|business\s+intelligence|platform|infrastructure)\b",
         ),
     ),
 )
@@ -444,6 +483,14 @@ def classify_role_level(
             evidence=_tag_evidence("title", overloaded_senior_matches),
         )
 
+    for label, patterns in _WEAK_EARLY_TITLE_RULES:
+        matches = _match_rules(title, patterns)
+        if matches:
+            return LabelClassification(
+                label=label,
+                evidence=_tag_evidence("title", matches),
+            )
+
     explicit_text = normalize_whitespace(explicit_level)
     if explicit_text:
         for label, patterns in _EXPLICIT_LEVEL_RULES:
@@ -454,7 +501,17 @@ def classify_role_level(
                     evidence=_tag_evidence("source_level", matches),
                 )
 
+    # A vague phrase like "no experience required" is weaker evidence than
+    # an explicit numeric experience range, and can be badly
+    # decontextualized (e.g. "Management experience: no experience
+    # required" alongside "7-10 years" overall experience elsewhere in the
+    # same description). When an explicit 5+ year requirement is also
+    # present, don't let the weak phrase decide - stay unspecified rather
+    # than guess wrong.
+    high_experience_minimum = _minimum_experience_years(description_text)
     for label, patterns in _DESCRIPTION_LEVEL_RULES:
+        if high_experience_minimum is not None and high_experience_minimum >= 5:
+            continue
         matches = _match_rules(description_text, patterns)
         if matches:
             return LabelClassification(

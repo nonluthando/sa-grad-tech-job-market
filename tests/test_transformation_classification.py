@@ -191,6 +191,37 @@ def test_associate_platform_infrastructure_engineer_is_junior() -> None:
     assert result.label == "junior"
 
 
+def test_associate_architect_title_is_senior_not_junior() -> None:
+    """"Associate" is a weaker signal than "Junior"/"Graduate"/"Intern" -
+
+    some industries use it for a senior grade. An overloaded senior word
+    ("Architect") elsewhere in the title should win over it.
+    """
+    result = classify_role_level(
+        "Associate Data Architect",
+        "At least 8 years of relevant experience is required.",
+    )
+
+    assert result.label == "senior"
+
+
+def test_explicit_high_experience_overrides_decontextualized_no_experience_phrase() -> None:
+    """A real Nedbank posting: "No experience required" answers a specific
+
+    "management experience" sub-question, not the job's overall
+    requirement, which is stated explicitly as 7-10 years elsewhere in the
+    same description. The vague phrase must not win over the number.
+    """
+    result = classify_role_level(
+        "Software Quality Engineer II",
+        "Minimum Experience Level Total number of years of experience: "
+        "7 - 10 years. Management experience as part of the above years: "
+        "No experience required.",
+    )
+
+    assert result.label == "unspecified"
+
+
 def test_explicit_source_level_is_used_before_description() -> None:
     result = classify_role_level(
         "Software Engineer",

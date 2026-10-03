@@ -170,6 +170,78 @@ both systems, agreeing for the first time.
 
 ---
 
+## Follow-up: mid/senior roles classified as junior
+
+The three fixes above addressed junior-labeled-as-senior. The live dataset
+also contains the reverse direction — genuinely mid/senior roles labeled
+junior. Two confirmed, fixed; two flagged but left open.
+
+### 4. "Associate X" beats an overloaded senior word the wrong way — CONFIRMED, FIXED
+
+Widening the "Associate" compound pattern (fix #3) introduced a new instance
+of the same precedence conflict as fix #1, just inverted: **"Associate Data
+Architect"** (Discovery, 8 years' experience required) matched the
+associate-junior pattern and was labeled `junior`, even though "Architect" —
+an overloaded senior word — was sitting right there in the same title.
+
+**Why this one's different from "Junior Product Manager":** "Junior" is an
+explicit, unambiguous seniority word when a company uses it; "Associate" is
+not — some industries (and this looks like one of them) use "Associate" as a
+senior-track grade. So the fix isn't a flat precedence flip: "Associate"
+specifically now loses to an overloaded senior word in the same title, while
+"Junior"/"Graduate"/"Intern" still win. Re-verified: `"Associate Data
+Architect"` now classifies `senior` in both systems, while `"Associate
+Software Engineer"` (no competing senior word) is still correctly `junior`.
+
+### 5. A decontextualized "no experience required" phrase beats an explicit experience range — CONFIRMED, FIXED
+
+A real Nedbank posting, **"Software Quality Engineer II"**, states "Total
+number of years of experience: **7 - 10 years**. Management experience as
+part of the above years: **No experience required**." The second sentence
+answers a specific sub-question ("how much *management* experience"), not
+the job's overall requirement — but both systems' generic "no experience
+required" pattern matched it anyway and used it to label the whole job
+`junior`, ignoring the explicit 7-10 year requirement one sentence earlier.
+
+**Fixed** by adding a numeric-experience sanity check: when an explicit 5+
+year requirement is found anywhere in the description, the weak
+"no experience required"/"recent graduate"-style phrase patterns are no
+longer trusted to decide the label on their own. `role_classification`
+(which already extracts experience years) falls through to its existing,
+correct numeric-years branch (→ `senior`, medium confidence). The canonical
+`transformation.classification` module had no experience-years extraction
+of its own in this code path at all — added one (mirroring the same regex
+already used in `role_classification/evidence.py` and
+`skills/extractor.py`) so it can detect the conflict and fall back to the
+conservative `unspecified` rather than guess. Re-verified: this job is now
+`senior` (medium confidence) / `unspecified`, not `junior` (high confidence)
+in either system.
+
+### Flagged, not fixed — lower confidence or out of scope for now
+
+- **"Associate Engineer I"** (5 years required): `role_classification`
+  still returns `junior`, because "Engineer I" is matched as *title*
+  evidence (immediately authoritative, before the experience-years sanity
+  check ever runs — that check only applies to the weaker *description*-phrase
+  fallback). Only one job in the live dataset hits this, and it's genuinely
+  ambiguous — "Engineer I" is an authoritative-by-design signal elsewhere
+  in the same rule table (deliberately so, same as "Senior" titles beating
+  explicit years), so extending the experience-years veto to title-level
+  evidence is a bigger, more invasive change than the other fixes here.
+  Left as a known residual case rather than patched under time pressure.
+- **Age ranges mis-parsed as years of experience.** Several "Learnership"
+  postings require applicants to be "between 18 and 25 years old," and the
+  experience-years regex (duplicated across `role_classification/evidence.py`,
+  `skills/extractor.py`, and now also `transformation/classification.py`)
+  has no guard against "years old" phrasing — it reads this as a 25-year
+  experience requirement. It caused no wrong label in the current dataset
+  only because "Learnership" in the title is unambiguous and authoritative
+  on its own, resolving before experience is ever consulted — but the same
+  regex, hit on a job with a more neutral title, would produce a badly wrong
+  `senior` classification from an age requirement. This is a distinct bug
+  in the shared experience-years pattern, not the role-level precedence
+  logic, and is out of scope for this pass.
+
 ## Design risks (not yet confirmed as causing bad labels, worth tracking)
 
 - **`EXPLICIT_LEVEL_RULES` in `role_classification/patterns.py` is missing

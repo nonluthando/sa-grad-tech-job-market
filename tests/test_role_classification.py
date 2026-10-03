@@ -95,6 +95,27 @@ def test_bare_associate_alone_is_no_longer_authoritative_junior_evidence():
     assert result.level == "ambiguous"
 
 
+def test_associate_architect_title_is_senior_not_junior():
+    result = classify_role(
+        "Associate Data Architect",
+        "At least 8 years of relevant experience is required.",
+    )
+
+    assert result.level == "senior"
+
+
+def test_explicit_high_experience_overrides_decontextualized_no_experience_phrase():
+    result = classify_role(
+        "Software Quality Engineer II",
+        "Minimum Experience Level Total number of years of experience: "
+        "7 - 10 years. Management experience as part of the above years: "
+        "No experience required.",
+    )
+
+    assert result.level == "senior"
+    assert result.confidence == "medium"
+
+
 def test_talent_pool_is_independent_metadata():
     result = classify_role(
         "Android Developer - Talent Pool",

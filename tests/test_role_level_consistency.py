@@ -42,3 +42,11 @@ def test_role_level_systems_agree_on_title_only_cases(title: str) -> None:
         f"{title!r}: role_classification said {scored.level!r}, "
         f"transformation.classification said {canonical.label!r}"
     )
+
+
+def test_associate_architect_agrees_once_experience_is_considered() -> None:
+    title = "Associate Data Architect"
+    description = "At least 8 years of relevant experience is required."
+
+    assert classify_role(title, description).level == "senior"
+    assert classify_role_level(title, description).label == "senior"
