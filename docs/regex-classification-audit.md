@@ -1,5 +1,9 @@
 # Regex-Based Classification Audit
 
+> **Status: all three confirmed bugs below are fixed** (commit following this
+> audit). Findings are kept as-written for the record; each one now ends with
+> a "Fixed" note describing the change and the re-verified numbers.
+
 Every classification in this pipeline is a deterministic regex match, not a model —
 that's a deliberate, explainable-by-design choice. This audit inventories every
 regex-driven classifier in the codebase, verifies each one against the live
@@ -74,8 +78,22 @@ the early-career label — these are weaker, overloaded signals (any people
 manager has "manager" in the title) compared to unambiguous senior markers
 (`senior`, `staff`, `principal`, `director`, `vp`, `chief`), which should
 legitimately still win even over an explicit junior word (a title is
-unlikely to combine those honestly). This needs a genuine design decision, not
-just a patch — happy to implement once you confirm the precedence you want.
+unlikely to combine those honestly).
+
+**Fixed.** Both systems now split senior title words into an unambiguous set
+(always wins) and an overloaded set (`manager`, `lead`, `head of`,
+`architect` — loses to an explicit early-career word in the same title). One
+case needed a guard rather than a flat precedence flip: "Graduate Programme
+Manager" must stay `senior` (the title's own pre-existing docstring called
+this out), because "Graduate" there describes the *programme*, not this
+role's seniority. A new pattern (`"graduate|internship|trainee" + "programme/
+program"`) detects that shape and lets the overloaded senior word win only
+then. Re-verified against the live dataset: `"Junior Product Manager
+(Marketplace)"` and `"Project Manager (Junior)"` now correctly classify as
+`junior` in both systems, while `"Graduate Programme Manager"` and
+`"Engineering Manager"` still correctly classify as `senior`. A new
+parametrized consistency test (`tests/test_role_level_consistency.py`) checks
+both systems agree across these cases so this can't silently regress.
 
 ### 2. Bare single-letter "C" skill pattern — HIGH, confirmed false-positive at scale
 
@@ -115,6 +133,15 @@ rigor applied within the same rule table.
 (not C++/C#) is rare enough in real SA grad-tech postings that a stricter
 pattern won't cost meaningful recall.
 
+**Fixed.** Replaced the bare pattern with `c programming`, `c programming
+language`, `using c`, and `c language`, each with a `(?!\+)` guard so "using
+C" can't match inside "using C++". Re-verified against the live dataset: the
+167 false positives are gone and the match count is now **0/1,661** (the one
+residual case — "Android Engineer (C++)" matching via "using C" — was caught
+and closed by the `(?!\+)` guard). "C" alone essentially never appears this
+way in the current dataset; if a genuine case ever does, the stricter pattern
+will still catch `"C programming"`/`"C language"` phrasing.
+
 ### 3. "Associate" role-level split between the two systems — MEDIUM, confirmed
 
 Already surfaced in conversation via the real job *"Associate Platform
@@ -131,6 +158,15 @@ separate scored opinion), but the two patterns weren't deliberately designed
 to diverge this way — they drifted, because the same rule is hand-maintained
 in two files. It's a real instance of the duplication risk flagged above, not
 just a hypothetical one.
+
+**Fixed.** Widened both patterns to the same compound set, adding `platform`
+and `infrastructure` so the real Impact.com job is covered, and removed the
+bare `\bassociate\b` match from `role_classification/patterns.py` (bare
+"Associate" alone is genuinely ambiguous across industries — academic/consulting
+seniority vs. tech junior level — so it shouldn't be authoritative, high-confidence
+evidence on its own). Re-verified: `"Associate Platform Infrastructure
+Engineer"` now gets `role_level=junior` and `inferred_role_level=junior` in
+both systems, agreeing for the first time.
 
 ---
 
@@ -196,4 +232,6 @@ just a hypothetical one.
    `classify_role_level` on a shared fixture list, to catch future drift
    between the two hand-maintained rule tables automatically.
 
-Want me to implement fixes 1–3 and the consistency test now?
+All four items are done as of this update: fixes 1–3 above, plus
+`tests/test_role_level_consistency.py`. The design risks and "what's working
+well" sections below are left as open observations, not yet acted on.

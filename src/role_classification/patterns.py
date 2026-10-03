@@ -20,7 +20,10 @@ TITLE_RULES: tuple[tuple[str, int, str, tuple[str, ...]], ...] = (
         r"\bentry[- ]level\b",
         r"\btrainee\b",
     )),
-    ("associate", 6, "junior", (r"\bassociate\b",)),
+    ("associate", 6, "junior", (
+        r"\bassociate\s+(?:software|data|qa|test|cloud|devops|security|"
+        r"business\s+intelligence|platform|infrastructure)\b",
+    )),
     ("engineer_i", 6, "junior", (
         r"\b(?:engineer|developer|analyst)\s+i\b",
         r"\b(?:engineer|developer|analyst)\s+1\b",

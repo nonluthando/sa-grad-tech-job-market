@@ -51,6 +51,50 @@ def test_senior_title_overrides_early_career_description():
     assert result.confidence == "high"
 
 
+def test_overloaded_senior_word_loses_to_explicit_junior_in_same_title():
+    result = classify_role("Junior Product Manager (Marketplace)", "")
+
+    assert result.level == "junior"
+    assert result.confidence == "high"
+
+
+def test_overloaded_senior_word_loses_to_explicit_junior_regardless_of_order():
+    result = classify_role("Project Manager (Junior)", "")
+
+    assert result.level == "junior"
+
+
+def test_unambiguous_senior_word_still_wins_over_explicit_junior():
+    result = classify_role("Junior Director of Engineering", "")
+
+    assert result.level == "senior"
+
+
+def test_graduate_programme_manager_is_still_senior():
+    result = classify_role("Graduate Programme Manager", "")
+
+    assert result.level == "senior"
+
+
+def test_manager_with_no_early_career_word_is_still_senior():
+    result = classify_role("Engineering Manager", "")
+
+    assert result.level == "senior"
+
+
+def test_associate_platform_infrastructure_engineer_is_junior():
+    result = classify_role("Associate Platform Infrastructure Engineer", "")
+
+    assert result.level == "junior"
+    assert result.confidence == "high"
+
+
+def test_bare_associate_alone_is_no_longer_authoritative_junior_evidence():
+    result = classify_role("Associate", "")
+
+    assert result.level == "ambiguous"
+
+
 def test_talent_pool_is_independent_metadata():
     result = classify_role(
         "Android Developer - Talent Pool",

@@ -154,6 +154,43 @@ def test_senior_title_overrides_early_career_description_and_source_level() -> N
     assert result.evidence == ("title: Senior",)
 
 
+def test_overloaded_senior_word_loses_to_explicit_junior_in_same_title() -> None:
+    result = classify_role_level("Junior Product Manager (Marketplace)", "")
+
+    assert result.label == "junior"
+    assert result.evidence == ("title: Junior",)
+
+
+def test_overloaded_senior_word_loses_to_explicit_junior_regardless_of_order() -> None:
+    result = classify_role_level("Project Manager (Junior)", "")
+
+    assert result.label == "junior"
+
+
+def test_unambiguous_senior_word_still_wins_over_explicit_junior() -> None:
+    result = classify_role_level("Junior Director of Engineering", "")
+
+    assert result.label == "senior"
+
+
+def test_graduate_programme_manager_is_still_senior() -> None:
+    result = classify_role_level("Graduate Programme Manager", "")
+
+    assert result.label == "senior"
+
+
+def test_manager_with_no_early_career_word_is_still_senior() -> None:
+    result = classify_role_level("Engineering Manager", "")
+
+    assert result.label == "senior"
+
+
+def test_associate_platform_infrastructure_engineer_is_junior() -> None:
+    result = classify_role_level("Associate Platform Infrastructure Engineer", "")
+
+    assert result.label == "junior"
+
+
 def test_explicit_source_level_is_used_before_description() -> None:
     result = classify_role_level(
         "Software Engineer",

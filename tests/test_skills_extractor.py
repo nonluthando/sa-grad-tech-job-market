@@ -33,6 +33,18 @@ def test_extracts_data_and_ai_skills():
     } <= names
 
 
+def test_bare_capital_c_does_not_false_match_as_the_c_language():
+    names = skill_names(
+        "Director of Sales, Greater China. Strategic Programs Manager role."
+    )
+    assert "C" not in names
+
+
+def test_c_programming_phrase_is_still_recognised():
+    names = skill_names("Strong C programming experience and embedded systems.")
+    assert "C" in names
+
+
 def test_extracts_degree_requirement_and_fields():
     required, fields = extract_degree_requirements(
         "A bachelor's degree in Computer Science, Statistics or Mathematics is required."

@@ -67,21 +67,42 @@ _REMOTE_SOUTH_AFRICA_PATTERNS = (
     r"candidates?\s+(?:must\s+be\s+)?(?:located|based)\s+in\s+south\s+africa",
 )
 
-# Senior title evidence is deliberately authoritative. A role such as
-# "Graduate Programme Manager" must not be downgraded because the title also
-# contains the word "graduate".
-_SENIOR_TITLE_PATTERNS = (
+# Unambiguous senior terms always win, even over an explicit early-career
+# word in the same title (nobody titles a genuinely junior role "VP" or
+# "Director").
+_UNAMBIGUOUS_SENIOR_TITLE_PATTERNS = (
     r"\bsenior\b",
     r"\bstaff\b",
     r"\bprincipal\b",
-    r"\blead\b",
-    r"\bmanager\b",
     r"\bdirector\b",
-    r"\bhead\s+of\b",
-    r"\barchitect\b",
     r"\bvice\s+president\b",
     r"\bvp\b",
     r"\bchief\b",
+)
+
+# These terms are overloaded: "Manager", "Lead", "Architect" and "Head of"
+# are senior signals on their own, but they also appear in genuinely
+# early-career titles ("Junior Product Manager", "Project Manager
+# (Junior)"). An explicit early-career word in the same title takes
+# priority over these specifically - see _PROGRAMME_LED_BY_SENIOR_PATTERNS
+# for the one case where that still isn't right.
+_OVERLOADED_SENIOR_TITLE_PATTERNS = (
+    r"\blead\b",
+    r"\bmanager\b",
+    r"\bhead\s+of\b",
+    r"\barchitect\b",
+)
+
+_SENIOR_TITLE_PATTERNS = (
+    _UNAMBIGUOUS_SENIOR_TITLE_PATTERNS + _OVERLOADED_SENIOR_TITLE_PATTERNS
+)
+
+# "Graduate Programme Manager" or "Internship Program Lead" are senior roles
+# that manage an early-career programme - the early-career word describes
+# the programme, not this role's own seniority, so an overloaded senior word
+# here still wins over the early-career title rules below.
+_PROGRAMME_LED_BY_SENIOR_PATTERNS = (
+    r"\b(?:graduate|intern(?:ship)?|trainee)\s+(?:programme|program)\b",
 )
 
 _EARLY_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -92,7 +113,7 @@ _EARLY_TITLE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         (
             r"\bjunior\b",
             r"\bentry[- ]level\b",
-            r"\bassociate\s+(?:software|data|qa|test|cloud|devops|security|business\s+intelligence)\b",
+            r"\bassociate\s+(?:software|data|qa|test|cloud|devops|security|business\s+intelligence|platform|infrastructure)\b",
             r"\b(?:software|data|qa|test|cloud|devops|security)\s+engineer\s+i\b",
             r"\b(?:software|web|backend|front[- ]?end|full[- ]?stack)\s+developer\s+i\b",
         ),
@@ -384,15 +405,29 @@ def classify_role_level(
 ) -> LabelClassification:
     """Classify seniority using authoritative title-first rules.
 
-    Senior title terms always win. Early-career description evidence is only
-    consulted when the title and any explicit source level are inconclusive.
+    Unambiguous senior title terms always win. Overloaded senior terms
+    ("Manager", "Lead", "Architect", "Head of") lose to an explicit
+    early-career word in the same title - "Junior Product Manager" is
+    junior, not senior - unless the title is about managing an early-career
+    programme itself ("Graduate Programme Manager" stays senior). Early-career
+    description evidence is only consulted when the title and any explicit
+    source level are inconclusive.
     """
 
-    senior_matches = _match_rules(title, _SENIOR_TITLE_PATTERNS)
-    if senior_matches:
+    unambiguous_senior_matches = _match_rules(title, _UNAMBIGUOUS_SENIOR_TITLE_PATTERNS)
+    if unambiguous_senior_matches:
         return LabelClassification(
             label="senior",
-            evidence=_tag_evidence("title", senior_matches),
+            evidence=_tag_evidence("title", unambiguous_senior_matches),
+        )
+
+    overloaded_senior_matches = _match_rules(title, _OVERLOADED_SENIOR_TITLE_PATTERNS)
+    if overloaded_senior_matches and _match_rules(
+        title, _PROGRAMME_LED_BY_SENIOR_PATTERNS
+    ):
+        return LabelClassification(
+            label="senior",
+            evidence=_tag_evidence("title", overloaded_senior_matches),
         )
 
     for label, patterns in _EARLY_TITLE_RULES:
@@ -402,6 +437,12 @@ def classify_role_level(
                 label=label,
                 evidence=_tag_evidence("title", matches),
             )
+
+    if overloaded_senior_matches:
+        return LabelClassification(
+            label="senior",
+            evidence=_tag_evidence("title", overloaded_senior_matches),
+        )
 
     explicit_text = normalize_whitespace(explicit_level)
     if explicit_text:
