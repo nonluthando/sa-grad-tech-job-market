@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-10-03T23:05:26.708641+00:00",
-  "dashboard_job_count": 2613,
+  "source_window_end": "2026-10-04T10:35:55.889740+00:00",
+  "dashboard_job_count": 2614,
   "dashboard_skill_row_count": 7029,
-  "target_market_job_count": 225,
-  "non_talent_pool_target_market_job_count": 220,
+  "target_market_job_count": 226,
+  "non_talent_pool_target_market_job_count": 221,
   "early_career_target_job_count": 30,
   "talent_pool_job_count": 52,
   "jobs_with_skills_count": 1528,
-  "jobs_without_skills_count": 1085,
+  "jobs_without_skills_count": 1086,
   "target_jobs_with_skills_count": 192,
-  "target_skill_coverage_rate": 0.8533333333333334,
+  "target_skill_coverage_rate": 0.8495575221238938,
   "unique_technology_count": 90,
   "employer_count": 15,
   "industry_count": 5,
@@ -20,19 +20,19 @@
     "internship": 128,
     "junior": 339,
     "mid_level": 196,
-    "senior": 1345,
+    "senior": 1346,
     "unspecified": 582
   },
   "workplace_type_counts": {
     "hybrid": 374,
     "on_site": 244,
     "remote": 964,
-    "unspecified": 1031
+    "unspecified": 1032
   },
   "employer_counts": {
     "Binance": 489,
     "Canonical": 310,
-    "Discovery": 226,
+    "Discovery": 227,
     "GitLab": 236,
     "Luno": 15,
     "MOO": 44,
@@ -47,7 +47,7 @@
     "impact.com": 126
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 926,
+    "Banks, insurance and financial services": 927,
     "Fintech and payments": 531,
     "Foreign and remote-first": 546,
     "Product, software and e-commerce": 446,
@@ -56,7 +56,7 @@
   "province_counts": {
     "Eastern Cape": 8,
     "Free State": 7,
-    "Gauteng": 522,
+    "Gauteng": 523,
     "KwaZulu-Natal": 29,
     "Western Cape": 235,
     "unspecified": 1812
@@ -172,12 +172,12 @@
   },
   "missing_value_counts": {
     "province": 1812,
-    "workplace_type": 1031,
+    "workplace_type": 1032,
     "effective_role_level": 582,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 372,
-  "jobs_with_extraction_warnings_count": 1085,
+  "jobs_with_extraction_warnings_count": 1086,
   "warnings": [
     "high_unknown_workplace_share"
   ]
