@@ -25,3 +25,9 @@ data/models/*
 !data/models/.gitkeep
 data/analysis/ml-role-classifier-report.json
 data/analysis/ml-role-suggestions.csv
+
+# Gemini-generated suggestions (rebuilt by scripts/classify_with_gemini.py;
+# costs real API calls to regenerate, but still goes stale the moment
+# jobs.parquet changes, same as the scikit-learn suggestions above).
+data/analysis/gemini-classification-suggestions.csv
+data/analysis/gemini-classification-report.json

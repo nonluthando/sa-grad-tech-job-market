@@ -27,6 +27,9 @@ WORKFLOW_URL = (
 )
 UNSPECIFIED_AUDIT_PATH = PROJECT_ROOT / "data" / "analysis" / "unspecified-role-audit.csv"
 ML_SUGGESTIONS_PATH = PROJECT_ROOT / "data" / "analysis" / "ml-role-suggestions.csv"
+GEMINI_SUGGESTIONS_PATH = (
+    PROJECT_ROOT / "data" / "analysis" / "gemini-classification-suggestions.csv"
+)
 
 
 @st.cache_data(show_spinner=False)
@@ -66,6 +69,23 @@ def load_ml_suggestions(path: str) -> pd.DataFrame:
 
     Produced by ``scripts/train_role_classifier.py``. Absent by default — the
     audit view works the same with or without it.
+    """
+
+    suggestions_path = Path(path)
+    if not suggestions_path.is_file():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(suggestions_path)
+    except (OSError, UnicodeDecodeError, pd.errors.ParserError):
+        return pd.DataFrame()
+
+
+@st.cache_data(show_spinner=False)
+def load_gemini_suggestions(path: str) -> pd.DataFrame:
+    """Load the optional Gemini suggestions, if the script has been run.
+
+    Produced by ``scripts/classify_with_gemini.py``. Absent by default -
+    the audit view works the same with or without it.
     """
 
     suggestions_path = Path(path)
@@ -559,12 +579,37 @@ def _render_unspecified_audit(jobs: pd.DataFrame) -> None:
             how="left",
         )
 
+    gemini_suggestions = load_gemini_suggestions(str(GEMINI_SUGGESTIONS_PATH))
+    if not gemini_suggestions.empty and "job_key" in gemini_suggestions.columns:
+        gemini_columns = [
+            column
+            for column in (
+                "job_key",
+                "llm_suggested_role_level",
+                "llm_role_level_confidence",
+                "llm_suggested_workplace_type",
+                "llm_workplace_confidence",
+                "llm_suggested_city",
+                "llm_city_confidence",
+            )
+            if column in gemini_suggestions.columns
+        ]
+        audit = audit.merge(
+            gemini_suggestions[gemini_columns], on="job_key", how="left"
+        )
+
     display_columns = [
         "title",
         "employer_name",
         "likely_level",
         "ml_suggested_role_level",
         "ml_role_level_confidence",
+        "llm_suggested_role_level",
+        "llm_role_level_confidence",
+        "llm_suggested_workplace_type",
+        "llm_workplace_confidence",
+        "llm_suggested_city",
+        "llm_city_confidence",
         "minimum_experience_years",
         "maximum_experience_years",
         "audit_evidence",
@@ -582,6 +627,12 @@ def _render_unspecified_audit(jobs: pd.DataFrame) -> None:
             "likely_level": "Audit suggestion",
             "ml_suggested_role_level": "ML suggestion",
             "ml_role_level_confidence": "ML confidence",
+            "llm_suggested_role_level": "Gemini role level",
+            "llm_role_level_confidence": "Gemini role confidence",
+            "llm_suggested_workplace_type": "Gemini workplace",
+            "llm_workplace_confidence": "Gemini workplace confidence",
+            "llm_suggested_city": "Gemini city",
+            "llm_city_confidence": "Gemini city confidence",
             "minimum_experience_years": "Minimum experience",
             "maximum_experience_years": "Maximum experience",
             "audit_evidence": "Audit evidence",
