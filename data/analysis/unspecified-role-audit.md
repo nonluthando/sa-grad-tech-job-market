@@ -4,13 +4,13 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 100
+**Roles audited:** 101
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 33 |
+| ambiguous | 34 |
 | likely_mid_level | 43 |
 | likely_senior | 24 |
 
@@ -19,7 +19,7 @@ do not overwrite the production classification.
 | Company | Count |
 |---|---|
 | Nedbank | 39 |
-| Discovery | 27 |
+| Discovery | 28 |
 | Takealot Group | 16 |
 | Impact.com | 9 |
 | Yassir | 3 |
@@ -41,6 +41,7 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Data Scientist | description: 3+ years \| description: 2+ years \| description: 5+ years |
 | ambiguous | Discovery | Data Scientist | No explicit evidence |
 | ambiguous | Discovery | Data Scientist (Intermediate) | description: 2-3 years |
+| ambiguous | Discovery | Developer | No explicit evidence |
 | ambiguous | Discovery | IT Auditor | description: 2+ years |
 | ambiguous | Discovery | Machine Learning Engineer | description: 1-3 years |
 | ambiguous | Discovery | iOS Developer - Talent Pool | description: 2+ years |
