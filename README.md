@@ -138,7 +138,16 @@ The pipeline classifies vacancies by:
 - Technology relevance
 - Early-career suitability
 
-Classification evidence is retained where possible so that labels remain explainable rather than operating as unsupported black-box predictions.
+Classification evidence is retained where possible so that labels remain explainable rather than operating as unsupported black-box predictions. See [`docs/role-classification-engine.md`](docs/role-classification-engine.md) for the title-word precedence rules this relies on.
+
+### Optional ML- and LLM-Assisted Classification Layers
+
+Two further, optional, manually-run layers suggest values for vacancies the deterministic rules leave `unspecified` — neither ever overwrites a canonical field, and both write to gitignored, regenerable output.
+
+- **Scikit-learn role-level classifier** (`scripts/train_role_classifier.py`): a TF-IDF + logistic regression model trained on the rules' own high-confidence labels, suggesting a level for everything still `unspecified`.
+- **Gemini-assisted classifier** (`scripts/classify_with_gemini.py`): asks Gemini to suggest role level, workplace type, and city for target-market vacancies still missing one or more of them — the only layer that also addresses workplace type and location, not just seniority.
+
+A regex-classification audit ([`docs/regex-classification-audit.md`](docs/regex-classification-audit.md)) verified every deterministic classifier against the live dataset and fixed six confirmed bugs, each re-verified against the real postings that exposed them.
 
 ### Requirements Filtering
 
@@ -236,6 +245,8 @@ Market analysis and dashboards
 │   ├── ingestion/
 │   ├── transformation/
 │   ├── skills/
+│   ├── role_classification/
+│   ├── llm_classification/
 │   └── analytics/
 ├── tests/
 ├── requirements.txt
@@ -261,6 +272,14 @@ Contains provider-specific collection logic.
 ### `src/transformation/`
 
 Contains cleaning, normalisation, extraction, classification, schema and dataset-building logic.
+
+### `src/role_classification/`
+
+Contains the scored, explainable role-level inference engine and the optional scikit-learn second-stage classifier.
+
+### `src/llm_classification/`
+
+Contains the optional Gemini-assisted classifier for role level, workplace type, and city.
 
 ### `scripts/`
 
@@ -375,6 +394,18 @@ python scripts/validate_sources.py
 pytest
 ```
 
+### Optional: ML- and LLM-Assisted Classification
+
+These are manually-run, optional suggestion layers — see [Optional ML- and LLM-Assisted Classification Layers](#optional-ml--and-llm-assisted-classification-layers) above.
+
+```bash
+python -m scripts.train_role_classifier
+
+# Requires a GEMINI_API_KEY environment variable (or a credential file
+# at ~/.config/gemini/api_key, outside the repo).
+python -m scripts.classify_with_gemini
+```
+
 ## Important Design Decisions
 
 ### Raw Data Remains Immutable
@@ -432,6 +463,9 @@ Recent improvements include:
 - Expanded automated tests for provider failures and incomplete responses
 - Improved technology and capability dimensions
 - Requirements filtering and classification improvements
+- A full audit of every regex-based classifier against the live dataset, fixing six confirmed bugs (title-word precedence, a skill-extraction false positive affecting 10% of the dataset, and others) — see [`docs/regex-classification-audit.md`](docs/regex-classification-audit.md)
+- An optional scikit-learn second-stage role-level classifier for vacancies the deterministic rules leave `unspecified`
+- An optional Gemini-assisted classifier covering role level, workplace type, and city — the first layer to address workplace type and location, not just seniority
 
 These changes are intended to improve collection success across employers using recruitment systems with different reliability and response behaviours.
 
@@ -471,6 +505,9 @@ The remaining work focuses mainly on reliability, validation and presentation.
 | Provider hardening | Improve retries, pagination, fallbacks and compatibility | In progress |
 | Dataset refresh | Re-run affected sources and publish updated datasets | Next |
 | Dashboard data marts | Validate and publish dashboard-ready Parquet tables | Complete |
+| Classification audit | Verify every regex classifier against real postings; fix confirmed bugs | Complete |
+| ML-assisted classification | Scikit-learn second-stage role-level suggestions | Complete |
+| LLM-assisted classification | Gemini-assisted role level, workplace type and city suggestions | Complete |
 | Market analysis | Analyse hiring, skills, levels and locations | Next |
 | Interactive dashboard | Publish visual labour-market insights | Next |
 | Employer expansion | Add more South African technology employers | Ongoing |
@@ -544,6 +581,9 @@ It does not:
 - HTML parsing
 - JSON APIs
 - Provider-specific recruitment APIs
+- scikit-learn (optional role-level classifier)
+- Gemini API via `google-genai` (optional classification layer)
+- Pydantic (structured LLM output)
 - pytest
 - Git and GitHub
 
@@ -565,6 +605,9 @@ This project demonstrates practical experience in:
 - Automated testing
 - Modular software architecture
 - Labour-market analytics
+- Applied machine learning (scikit-learn, macro-F1 evaluation on imbalanced classes)
+- LLM API integration with structured output (Gemini, Pydantic schemas)
+- Systematic correctness auditing against real production data
 
 ## Interactive Dashboard
 
