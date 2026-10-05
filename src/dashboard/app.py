@@ -598,6 +598,105 @@ def _render_unspecified_audit(jobs: pd.DataFrame) -> None:
             gemini_suggestions[gemini_columns], on="job_key", how="left"
         )
 
+    ml_role_present = (
+        "ml_suggested_role_level" in audit.columns
+        and audit["ml_suggested_role_level"].notna().any()
+    )
+    gemini_role_present = (
+        "llm_suggested_role_level" in audit.columns
+        and audit["llm_suggested_role_level"].notna().any()
+    )
+    gemini_workplace_present = (
+        "llm_suggested_workplace_type" in audit.columns
+        and audit["llm_suggested_workplace_type"].notna().any()
+    )
+    gemini_city_present = (
+        "llm_suggested_city" in audit.columns
+        and audit["llm_suggested_city"].notna().any()
+    )
+
+    if ml_role_present or gemini_role_present or gemini_workplace_present or gemini_city_present:
+        st.markdown("#### AI-assisted suggestions")
+        st.caption(
+            "Coverage of the optional scikit-learn and Gemini suggestion layers "
+            "over the audited vacancies above. Neither layer overwrites canonical "
+            "labels."
+        )
+
+        metric_columns = st.columns(4)
+        metric_columns[0].metric(
+            "ML role-level suggestions",
+            f"{audit['ml_suggested_role_level'].notna().sum():,}" if ml_role_present else "0",
+        )
+        metric_columns[1].metric(
+            "Gemini role-level suggestions",
+            f"{audit['llm_suggested_role_level'].notna().sum():,}" if gemini_role_present else "0",
+        )
+        metric_columns[2].metric(
+            "Gemini workplace suggestions",
+            f"{audit['llm_suggested_workplace_type'].notna().sum():,}"
+            if gemini_workplace_present
+            else "0",
+        )
+        metric_columns[3].metric(
+            "Gemini city suggestions",
+            f"{audit['llm_suggested_city'].notna().sum():,}" if gemini_city_present else "0",
+        )
+
+        chart_left, chart_right = st.columns(2)
+        with chart_left:
+            if ml_role_present:
+                st.plotly_chart(
+                    donut(
+                        _count_frame(
+                            audit.dropna(subset=["ml_suggested_role_level"]),
+                            "ml_suggested_role_level",
+                        ),
+                        label="label",
+                        value="count",
+                        title="ML-suggested role levels",
+                    ),
+                    use_container_width=True,
+                )
+            else:
+                st.info(
+                    "No ML suggestions yet. Run `python -m scripts.train_role_classifier`."
+                )
+        with chart_right:
+            if gemini_role_present:
+                st.plotly_chart(
+                    donut(
+                        _count_frame(
+                            audit.dropna(subset=["llm_suggested_role_level"]),
+                            "llm_suggested_role_level",
+                        ),
+                        label="label",
+                        value="count",
+                        title="Gemini-suggested role levels",
+                    ),
+                    use_container_width=True,
+                )
+            else:
+                st.info(
+                    "No Gemini role-level suggestions yet. Run "
+                    "`python -m scripts.classify_with_gemini`."
+                )
+
+        if gemini_workplace_present:
+            st.plotly_chart(
+                horizontal_bar(
+                    _count_frame(
+                        audit.dropna(subset=["llm_suggested_workplace_type"]),
+                        "llm_suggested_workplace_type",
+                    ),
+                    label="label",
+                    value="count",
+                    title="Gemini-suggested workplace type",
+                    height=320,
+                ),
+                use_container_width=True,
+            )
+
     display_columns = [
         "title",
         "employer_name",
