@@ -4,29 +4,29 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 102
+**Roles audited:** 105
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 34 |
+| ambiguous | 36 |
 | likely_mid_level | 44 |
-| likely_senior | 24 |
+| likely_senior | 25 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 39 |
+| Nedbank | 41 |
 | Discovery | 28 |
 | Takealot Group | 16 |
 | Impact.com | 10 |
 | Yassir | 3 |
+| Ozow | 2 |
 | Theodo | 2 |
 | Bash | 2 |
 | Luno | 1 |
-| Ozow | 1 |
 
 ## Roles
 
@@ -58,7 +58,9 @@ do not overwrite the production classification.
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
+| ambiguous | Nedbank | Title: Quantitative Analyst | description: 2+ years |
 | ambiguous | Nedbank | Title: Software Developer: ServiceNow | description: 5+ years \| description: 2+ years |
+| ambiguous | Ozow | Agentic AI Engineer | No explicit evidence |
 | ambiguous | Ozow | Technical Support Engineer | description: 2-4 years |
 | ambiguous | Takealot Group | Android Software Engineer | description: minimum of 3 years \| description: minimum of 6 years \| description: at least 2 years \| description: 3+ years |
 | ambiguous | Takealot Group | Zendesk Platform Software Engineer | description: 2–4 years |
@@ -122,6 +124,7 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: Business Analyst | description: 5 - 8 years |
 | likely_senior | Nedbank | Title: Cloud Engineer | description: 8-10 Years |
 | likely_senior | Nedbank | Title: Data Engineer | description: 5+ years |
+| likely_senior | Nedbank | Title: Financial Business Analyst | description: 8 - 10 years |
 | likely_senior | Nedbank | Title: Front Arena Developer | description: Min 5 years |
 | likely_senior | Nedbank | Title: Platform Owner | description: 12+ years |
 | likely_senior | Nedbank | Title: Platform Owner | description: 5 - 10 years |
