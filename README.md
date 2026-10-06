@@ -147,6 +147,8 @@ Two further, optional, manually-run layers suggest values for vacancies the dete
 - **Scikit-learn role-level classifier** (`scripts/train_role_classifier.py`): a TF-IDF + logistic regression model trained on the rules' own high-confidence labels, suggesting a level for everything still `unspecified`.
 - **Gemini-assisted classifier** (`scripts/classify_with_gemini.py`): asks Gemini to suggest role level, workplace type, and city for target-market vacancies still missing one or more of them — the only layer that also addresses workplace type and location, not just seniority.
 
+See [`docs/ml-and-llm-classification-impact.md`](docs/ml-and-llm-classification-impact.md) for measured coverage, accuracy, and real examples from both layers.
+
 A regex-classification audit ([`docs/regex-classification-audit.md`](docs/regex-classification-audit.md)) verified every deterministic classifier against the live dataset and fixed six confirmed bugs, each re-verified against the real postings that exposed them.
 
 ### Requirements Filtering
