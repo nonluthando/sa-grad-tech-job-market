@@ -5,6 +5,7 @@ follow-up Workday-specific research pass — findings only, no config changes.
 - Phase 1: 9 employers added to config (3 Greenhouse, 5 Workday, 1 SuccessFactors) — see [Phase 1 implementation log](#phase-1-implementation-log).
 - Part 2: 7 new/expanded role categories added to `src/transformation/classification.py` — see [Part 2 implementation log](#part-2-implementation-log).
 - Part 4: one new Workday host found (PwC, needs scoping question resolved before adding), plus two non-Workday bonus leads (Deloitte/SmartRecruiters, Liberty-Stanlib/SuccessFactors) — see [Part 4](#part-4--workday-specific-follow-up-research).
+- Part 5: second Workday pass — one more host found (Adcorp), three confirmed-but-host-unknown Workday customers (Altron, Dimension Data/NTT, Telesure) via Workday's own newsroom, thirteen employers with zero evidence — see [Part 5](#part-5--second-workday-research-pass).
 - Parts 1 and 3 below are the original research.
 
 **Scope constraints carried over from the existing project policy:**
@@ -410,3 +411,69 @@ exists as a mandatory gate rather than trusting search-result pattern-matching:
 most large SA employers' actual ATS choice simply isn't visible to a search
 engine, and guessing would risk configuring a source that silently returns
 the wrong country's jobs or nothing at all.
+
+## Part 5 — Second Workday Research Pass
+
+A further round continued the same method against another batch of large
+SA employers (Exxaro, Gold Fields, Harmony Gold, Hollard, OUTsurance,
+Clicks Group, Spar Group, Rand Merchant Bank, WesBank, Huawei SA,
+Salesforce SA, BDO SA, Grant Thornton SA). **All thirteen came back with no
+Workday evidence whatsoever** — not even the inconclusive partial signals
+Part 4 found for some employers. This confirms the method itself (generic
+web search, no working `site:` filter, `WebFetch` blocked for target
+domains) is reaching its ceiling for employers that don't already have
+job-aggregator pages explicitly mirroring a `myworkdayjobs.com` link.
+
+### 5a. A better source: Workday's own customer announcements
+
+Searching for Workday's own newsroom/press coverage instead of each
+employer's job postings surfaced a primary-source confirmed customer list,
+which is stronger evidence than any aggregator page — these are companies
+Workday itself names as customers, not inferred from a stray job-board
+link:
+
+> "Organisations of all sizes and from across diverse industries, including
+> ABSA, Pick n Pay, Old Mutual, Adcorp and many more, have selected
+> Workday's AI-powered HR and Finance platform... including South African
+> companies such as ABSA, Old Mutual, Pick n Pay, Telesure, Webber
+> Wentzel, FirstRand Limited and Adcorp." — Workday newsroom, June 2024
+
+Plus earlier (2018-2020) coverage naming **Dimension Data** (SA-headquartered,
+now part of NTT), **Altron**, and **Ampath Laboratories** as live Workday
+HCM customers.
+
+Cross-referencing against what's already configured: Absa, Pick n Pay,
+Old Mutual and FirstRand are already active sources. That leaves five
+confirmed-but-unconfigured Workday customers:
+
+| Employer | Tech relevance | Workday host found? |
+|---|---|---|
+| **Adcorp** (Adcorp Holdings) | Workforce/staffing group with an IT-recruitment arm | **Yes** — `adcorpgroup.wd3.myworkdayjobs.com` (confirmed via two independent job-aggregator links pointing to this exact host); exact `site` slug not found |
+| **Altron** | JSE-listed SA ICT group (Altron Systems, Netstar, Altron Digital Business) — directly tech-relevant | No host found |
+| **Dimension Data / NTT** | SA-headquartered global tech/IT services company — directly tech-relevant | No host found (may share a tenant with the already-configured `ntt-data` source — needs checking, not assumed) |
+| **Telesure** | Insurance group (1Life, Auto & General, Budget, Dialdirect) | No host found |
+| **Webber Wentzel** | Law firm — low tech-role relevance, lowest priority of the five | Not pursued further for this reason |
+
+**Adcorp is the one genuinely new, better-than-Part-4 lead**: unlike PwC's
+scoping problem (confirmed host, wrong-shaped tenant) or the Oracle/Sanlam/
+Santam gaps (unconfirmed parameter on an otherwise-right-shaped source),
+Adcorp has a primary-source confirmation that it's a Workday customer *and*
+a plausible host matching that company name — it just still needs the
+`site` slug before it's addable, the same single missing piece as PwC.
+
+### 5b. Honest summary of this pass
+
+Two research passes (Part 4 + Part 5) covered roughly 29 employer
+candidates targeting Workday specifically. Result: **two hosts found**
+(PwC, Adcorp), **zero clean adds** (both still need a `site` slug
+confirmed, and PwC additionally needs the multi-country scoping question
+resolved), and three confirmed-but-host-unknown customers (Altron,
+Dimension Data/NTT, Telesure) that are real leads but not actionable
+without either a working site-source search or a direct, unblocked fetch
+of the company's own careers page — neither available in this sandbox.
+The practical next step for either Adcorp or PwC is the same: a live
+`python -m src.ingestion.collect --source-token <token>` dry run against
+the confirmed host with a guessed common site slug (Workday tenants
+commonly use patterns like `<Company>_Careers`, `External_Careers`, or
+`Global_Experienced_Careers` as seen on PwC) in an environment with normal
+internet access, not further search-based guessing.
