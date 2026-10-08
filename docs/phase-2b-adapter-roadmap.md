@@ -2,8 +2,11 @@
 
 **Status:** SmartRecruiters and Ashby adapters shipped. Freshteam, eRecruit and
 Teamtailor deprioritized (25 Sep 2026) — blocked on live endpoint inspection this
-sandbox can't perform; revisit if/when that information becomes available.  
-**Date:** 25 September 2026
+sandbox can't perform; revisit if/when that information becomes available.
+Follow-up research on eRecruit (8 Oct 2026) confirmed it's a larger multi-employer
+platform than first scoped, but didn't change the ROI case or unblock the adapter —
+see the eRecruit section below.
+**Date:** 25 September 2026 (eRecruit section updated 8 October 2026)
 
 ## Overview
 
@@ -52,18 +55,48 @@ right approach instead).
 
 ---
 
-### eRecruit — ⛔ Blocked, not started
-**Employers:** Momentum Metropolitan (primary)  
-**Confidence:** Low–Medium  
-**SA Presence:** Momentum Metropolitan at `momentummetropolitan.erecruit.co`  
-**Adapter Complexity:** Medium–High (custom ATS, potentially HTML scraping)  
-**Projected Jobs:** 20–40  
+### eRecruit — ⛔ Still blocked, but now a multi-employer platform, not a one-off
 
-**Blocker (25 Sep 2026):** eRecruit is a smaller, custom ATS with no publicly
-documented API. Same constraint as Freshteam — this needs live inspection of
-`momentummetropolitan.erecruit.co` to determine whether it's JSON-backed or requires
-HTML parsing, which this sandboxed environment cannot do (no live browser/network
-access to the real site). **Needs:** the same manual inspection as Freshteam above.
+**Follow-up research (8 Oct 2026):** `erecruit.co` turns out to be a live,
+significant South African recruitment platform — one ranking placed it
+**3rd among South African jobs/career websites by traffic in July 2026**,
+behind Indeed and PNet — not the defunct product one third-party company
+database (Tracxn) claimed. It hosts real, currently-open job boards for at
+least ten named employers, each on its own subdomain with a consistent URL
+shape (`<company>.erecruit.co/candidateapp/jobs/categories/...` or
+`/candidateapp/jobs/browse`):
+
+| Employer | Subdomain | Tech-role relevance |
+|---|---|---|
+| **Momentum Metropolitan** (original target) | `momentummetropolitan.erecruit.co` | **Best fit** — Software Developer, Data Scientist, Cyber Security Analyst roles already referenced (Part 1 research) |
+| Exxaro | `exxaro.erecruit.co` | Low–unconfirmed (mining; categories seen were audit/admin/artisans, but Exxaro has a digital-mining push that might include IT roles — unconfirmed) |
+| Coca-Cola Beverages Africa (CCBA) | `ccba.erecruit.co` | Low (manufacturing/ops categories seen; no IT category confirmed) |
+| Isuzu Motors South Africa | `isuzu.erecruit.co` | Low (production/assembly categories seen) |
+| Omnia | `omnia.erecruit.co` | Low (agri-sciences, marketing, mining categories seen) |
+| Rand Water | `randwater.erecruit.co` | Unconfirmed, not a private tech employer |
+| eThekwini Municipality | `durbangov.erecruit.co` | Out of scope — municipal government, not a private employer |
+| CBH | `cbh.erecruit.co` | Low (agri/poultry/SHERQ categories seen) |
+| Moore South Africa | `moore-southafrica.erecruit.co` | Low (accounting/audit/tax categories seen) |
+| Group Five | via erecruit.co (construction) | Low — Careers24 shows no current openings |
+| PwC — graduate programme | `pwcza-graduate.erecruit.co` | Notable: **separate from** the Workday tenant (`pwc.wd3.myworkdayjobs.com`) found in the Workday research — PwC appears to split graduate hiring (eRecruit) from experienced/global hiring (Workday) |
+
+**Still blocked exactly as before:** direct fetch of any `*.erecruit.co`
+subdomain is blocked by this sandbox's egress proxy (confirmed again this
+session against `isuzu.erecruit.co` and `ccba.erecruit.co`), so it's still
+not possible to determine whether the platform is JSON-backed or
+server-rendered HTML from here. **Needs the same manual inspection as
+Freshteam** — someone with a browser needs to open dev tools → Network tab
+on `momentummetropolitan.erecruit.co` (the one employer actually worth
+building this adapter for, given the tech-role scan above) and capture the
+request shape.
+
+**What this pass changes:** it doesn't unblock the adapter, but it answers
+"is eRecruit worth building for just one employer?" — the honest answer is
+that **Momentum Metropolitan is still the only tech-relevant employer on
+this platform**; the other nine are mining/agri/manufacturing/municipal/
+accounting employers with little to no technology-role yield, so this
+doesn't change the adapter's projected ROI (still ~20-40 jobs from one
+employer) even though the platform itself is bigger than one company.
 
 ---
 
