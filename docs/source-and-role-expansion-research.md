@@ -1,8 +1,10 @@
 # Source and Tech-Role Expansion Research
 
-**Status:** Phase 1 and Part 2 (tech-role taxonomy) implemented.
+**Status:** Phase 1 and Part 2 (tech-role taxonomy) implemented. Part 4 is a
+follow-up Workday-specific research pass — findings only, no config changes.
 - Phase 1: 9 employers added to config (3 Greenhouse, 5 Workday, 1 SuccessFactors) — see [Phase 1 implementation log](#phase-1-implementation-log).
 - Part 2: 7 new/expanded role categories added to `src/transformation/classification.py` — see [Part 2 implementation log](#part-2-implementation-log).
+- Part 4: one new Workday host found (PwC, needs scoping question resolved before adding), plus two non-Workday bonus leads (Deloitte/SmartRecruiters, Liberty-Stanlib/SuccessFactors) — see [Part 4](#part-4--workday-specific-follow-up-research).
 - Parts 1 and 3 below are the original research.
 
 **Scope constraints carried over from the existing project policy:**
@@ -312,3 +314,99 @@ false-positive guards were added to `_TECH_FALSE_POSITIVES`:
 All changes deployed to the classification engine with full test coverage
 (144 tests pass). The taxonomy is now grounded in real SA job titles already
 collected in `data/processed/dashboard_jobs.parquet`, as documented in Part 2a.
+
+## Part 4 — Workday-Specific Follow-up Research
+
+A further research pass targeted new Workday-hosted employers specifically
+(beyond the 8 already configured: DigiOutsource, FirstRand, Absa, Old
+Mutual, Pick n Pay, Red Hat, Accenture, NTT Data active; Investec, Capitec,
+Vodacom, MTN, Synthesis, Google SA, Atlassian SA, IBM disabled pending
+confirmation). This pass hit the same constraint as Phase 1: `WebFetch` is
+blocked for almost every target domain in this sandbox, and general web
+search does not reliably support a `site:myworkdayjobs.com` filter — most
+queries returned job-aggregator pages (MyJobMag, Careers24, Indeed, blogs)
+rather than the employer's own Workday tenant, so the majority of
+candidates below are **ruled inconclusive**, not ruled out.
+
+### 4a. One new Workday host confirmed: PwC South Africa
+
+Independent search snippets consistently point to the same Workday
+tenant — `pwc.wd3.myworkdayjobs.com` — for PwC job postings, and two site
+names were visible directly in real job-posting URLs:
+
+- `pwc.wd3.myworkdayjobs.com/en-US/Global_Experienced_Careers/job/...`
+- `pwc.wd3.myworkdayjobs.com/en-US/Global_Campus_Careers/job/...`
+
+This is a **global** PwC tenant, not a South-Africa-specific one — the
+example postings found were in Ljubljana and Gurugram, not Johannesburg or
+Cape Town — but other search results referenced South African content on
+the same host (a "Jump Start" graduate programme tied to PwC's "South
+Africa Technology and Innovation Centre", and local roles such as a Workday
+Integrations Consultant and a SAICA training contract routed through this
+portal). That makes this a **new category of open question**, distinct
+from the earlier Oracle/Sanlam/Santam gaps: it's not that the exact
+endpoint parameter is unconfirmed, it's that the site mixes every country
+PwC operates in, so configuring it risks either (a) if the adapter can
+filter by location server-side via a query parameter, fine — matches how
+other Workday sources already work, or (b) if not, pulling in a large
+volume of non-SA postings that the downstream `is_south_africa` filter
+would then have to correctly discard at individual-job-record scale rather
+than at source-configuration scale. **Needs a live
+`python -m src.ingestion.collect --source-token pwc` dry run (or manual
+inspection of the actual CXS response shape) before adding to
+`config/sources.json`**, specifically to check whether South Africa can be
+scoped at the request level the way `successfactors` sources already scope
+by `/go/<category>/` path.
+
+### 4b. Researched, no Workday evidence found (ruled out or inconclusive)
+
+| Employer | Finding |
+|---|---|
+| Sasol | No Workday tenant found; job aggregators only, several listings stale (2025 deadlines) |
+| Anglo American | No Workday tenant found; platinum/coal roles now sit with spun-off Valterra Platinum and Thungela Resources, not Anglo American itself |
+| MultiChoice | No Workday tenant found; appears to use its own portal (`hrfocus.multichoice.com`), unconfirmed if still active |
+| Bidvest | No Workday tenant found; recruitment is explicitly decentralised per division (Bidvest Bank, Logistics, McCarthy, etc.), so there is no single group-level source to configure |
+| Sibanye-Stillwater | No Workday tenant found; references only its own careers portal |
+| Momentum Metropolitan | Inconclusive — no confirmed ATS; a `job-boards.greenhouse.io/momentumcompany3`-style URL surfaced once but could not be reproduced on a repeat, targeted search, so it is **not** trustworthy evidence and is not being carried forward |
+| Mediclinic | No Workday tenant found |
+| Coca-Cola Beverages Africa | No Workday tenant found; references a separate "E-Recruitment portal" |
+| Massmart | No Workday tenant found |
+| Visa / Mastercard | No Workday tenant found for either; both appear to use their own careers sites |
+| EY / KPMG | No Workday tenant found for either |
+| ServiceNow / Cisco / Dell | No Workday tenant found for any of the three South Africa postings specifically |
+
+### 4c. Two non-Workday bonus leads surfaced incidentally
+
+- **Deloitte Southern Africa — SmartRecruiters** (existing-adapter-compatible,
+  no new code needed): `careers.smartrecruiters.com/Deloitte6/southern-africa`
+  shows real, current openings (Johannesburg + Midrand, ~40 jobs), including
+  technology-relevant roles (ServiceNow Developer – ITSA, Senior Manager –
+  Cyber Assurance, Senior Manager – AI Assurance). The project already has a
+  working `smartrecruiters` adapter (used for Standard Bank), so this is a
+  low-effort add — same confidence tier as Phase 1's existing-adapter-compatible
+  finds.
+- **Liberty Group / Stanlib — SuccessFactors-style, unconfirmed root**:
+  `careers.liberty.co.za/LibertyGroup/go/Liberty-Group-Jobs/...` and
+  `careers.liberty.co.za/Stanlib/go/Stanlib-Information-Technology-Jobs/...`
+  match the same Career Site Builder `.../go/.../` pattern already proven for
+  Discovery and Nedbank, with an explicit IT-jobs category for Stanlib. But
+  exactly like the Santam gap documented in Part 3, only category-scoped URLs
+  were found (`Liberty-Group-Jobs`, `Human-Resources`, `Stanlib-Information-Technology-Jobs`,
+  `Stanlib-Sales-and-Marketing-Jobs`) — no equivalent of Discovery's
+  `/go/All-Jobs/...` or Nedbank's `/go/All/...` root was found. Adding a
+  category-scoped URL risks the same silent under-collection the project's
+  "no silent truncation" principle rules out, so this needs the all-jobs
+  category ID confirmed first, not a direct add.
+
+### 4d. Honest summary
+
+Out of ~16 Workday-specific candidates researched, this pass produced
+**one** new host with real evidence (PwC), still blocked on the
+multi-country scoping question above, and **zero** clean new adds. The two
+non-Workday bonus leads (Deloitte/SmartRecruiters, Liberty-Stanlib/SuccessFactors)
+are more immediately actionable than anything found on Workday itself in
+this pass. This result is itself evidence for why `scripts/validate_sources.py`
+exists as a mandatory gate rather than trusting search-result pattern-matching:
+most large SA employers' actual ATS choice simply isn't visible to a search
+engine, and guessing would risk configuring a source that silently returns
+the wrong country's jobs or nothing at all.
