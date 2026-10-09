@@ -4,9 +4,14 @@
 Teamtailor deprioritized (25 Sep 2026) — blocked on live endpoint inspection this
 sandbox can't perform; revisit if/when that information becomes available.
 Follow-up research on eRecruit (8 Oct 2026) confirmed it's a larger multi-employer
-platform than first scoped, but didn't change the ROI case or unblock the adapter —
-see the eRecruit section below.
-**Date:** 25 September 2026 (eRecruit section updated 8 October 2026)
+platform than first scoped, but didn't change the ROI case or unblock the adapter.
+A further pass (9 Oct 2026), routed through claude.ai for real browser/network
+access, confirmed Freshteam (Peach Payments) is server-rendered HTML — technically
+unblocked, but currently just 1 open role — and found 9 real open SA tech roles on
+Yoco's Teamtailor page, making Teamtailor the highest-priority unbuilt adapter now.
+Momentum Metropolitan's eRecruit page refused the automated fetch even from that
+session, so it's still genuinely blocked on a human-driven browser.
+**Date:** 25 September 2026 (updated 8-9 October 2026)
 
 ## Overview
 
@@ -33,25 +38,33 @@ via the GitHub Actions data-refresh workflow before promoting past `experimental
 
 ---
 
-### Freshteam (by Freshworks) — ⛔ Blocked, not started
+### Freshteam (by Freshworks) — 🟡 Partially confirmed, low priority now
 **Employers:** Peach Payments (primary), 1–2 others  
 **Confidence:** Medium  
 **SA Presence:** Peach Payments confirmed at `peachpayments.freshteam.com/jobs`  
 **Adapter Complexity:** Medium (REST API, Freshworks ecosystem)  
-**Projected Jobs:** 30–50  
+**Projected Jobs:** 30–50 (original estimate — see finding below)
 
-**Blocker (25 Sep 2026):** Freshteam's authenticated recruitment API
-(`developers.freshteam.com`) is documented, but it's for internal HR management, not
-public candidate-facing career sites, and requires an API key we don't have. Whether
-Peach Payments' public careers page is backed by an unauthenticated JSON endpoint is
-unconfirmed — this has to be discovered by loading the real page and inspecting its
-network requests, which needs live browser access this environment doesn't have.
-Building a client against a guessed endpoint shape risks silently shipping wrong or
-broken parsing. **Needs:** someone with a browser to open
-`peachpayments.freshteam.com/jobs`, open dev tools → Network tab, and capture the
-request URL + response shape the page uses to load its job list, or confirm there is
-none (i.e., it's server-rendered HTML, in which case a CSS-selector scraper is the
-right approach instead).
+**Update (9 Oct 2026):** A page fetch (not a full Network-tab capture, but a
+direct page-content read via claude.ai, which has normal internet access
+this sandbox doesn't) confirmed `peachpayments.freshteam.com/jobs` is
+**server-rendered HTML**, not a client-side app pulling from a hidden JSON
+endpoint — the one open role ("Finance Business Partner", Cape Town) came
+back embedded directly in the page content, along with the filter-chip
+markup (department, job type, location, remote). Job detail links follow
+`https://peachpayments.freshteam.com/jobs/<id>/<slug>`, e.g.
+`/jobs/Q46VDM_WFJRm/finance-business-partner`. A direct probe of the
+common Freshteam widget endpoint `/hire/widgets/jobs.json` failed to
+connect, so that's still unconfirmed either way — but it doesn't matter
+for the adapter decision, since the page itself already has what's needed
+for a CSS-selector scraper.
+
+**This downgrades the blocker, but also downgrades the ROI**: Peach
+Payments currently has **only 1 open role**, far below the 30-50 projected
+in the original scoping. The technical blocker (confirm JSON vs. HTML) is
+resolved — it's HTML — but building a scraper for one single role right
+now isn't worth it until Peach Payments' hiring picks back up. Worth a
+periodic re-check rather than immediate adapter work.
 
 ---
 
@@ -90,6 +103,13 @@ on `momentummetropolitan.erecruit.co` (the one employer actually worth
 building this adapter for, given the tech-role scan above) and capture the
 request shape.
 
+**Update (9 Oct 2026):** Tried routing this through claude.ai, which has
+normal internet access this sandbox doesn't — no luck. `momentummetropolitan.erecruit.co`
+refused the automated fetch (site policy disallows automated access), so
+even a tool with real network access couldn't get past this one without
+an actual human-driven browser session. Still genuinely needs a person to
+open the page and check the Network tab.
+
 **What this pass changes:** it doesn't unblock the adapter, but it answers
 "is eRecruit worth building for just one employer?" — the honest answer is
 that **Momentum Metropolitan is still the only tech-relevant employer on
@@ -118,11 +138,11 @@ SmartRecruiters slug). Guessing one risks silently pointing at the wrong board o
 for a `jobs.ashbyhq.com/<slug>` link), then add one `config/sources.json` entry —
 no further code changes required.
 
-### Teamtailor — ⛔ Blocked, not started
+### Teamtailor — 🟢 Partially confirmed, now the highest-priority unbuilt adapter
 **Employer:** Yoco (fintech)  
 **Confidence:** Medium–High (public Teamtailor board: `yoco.teamtailor.com`)  
 **Adapter Complexity:** Medium  
-**Projected Jobs:** 15–25  
+**Projected Jobs:** 15–25 (original estimate — real count below is higher)
 
 **Blocker (25 Sep 2026):** Teamtailor's general REST API requires a per-company API
 token for all endpoints, including reading job listings — that's a structural
@@ -131,11 +151,29 @@ something a code fix works around. Individual Teamtailor-hosted career pages (li
 `yoco.teamtailor.com`) may separately expose job data via `JobPosting` structured
 data (schema.org JSON-LD) embedded in the page HTML for SEO, which this project
 already knows how to parse (see the WP Job Manager adapter). But confirming that
-requires loading the real page, which this sandbox can't do. **Needs:** either (a) an
-API token from Yoco (out of scope for a public-sources project), or (b) live
-confirmation that the career page embeds `JobPosting` JSON-LD, in which case a
-generic JSON-LD scraper — reusable across Teamtailor, and possibly Freshteam/eRecruit
-too — becomes the highest-leverage next adapter to build.
+requires loading the real page, which this sandbox can't do.
+
+**Update (9 Oct 2026):** Routed through claude.ai (normal internet access).
+A page-content fetch of `yoco.teamtailor.com` came back with **9 real,
+current open roles, all in South Africa** (Cape Town or Johannesburg) —
+and they're a strong tech-role match: Senior Frontend Engineer, Analytics
+Engineer, Staff Backend Engineer, Security Analyst, Senior Product
+Manager, among others. That's meaningfully better than the original
+15-25 projection suggested and the best per-employer yield of anything in
+this whole roadmap pass.
+
+**Still not fully confirmed**: the fetch returned extracted page text, not
+raw HTML, so it couldn't show link `href`s or confirm whether the 9 roles
+come from embedded `JobPosting` JSON-LD, a different inline JSON blob, or
+plain rendered markup — the one open question left. A direct probe of
+Teamtailor's common `/jobs.rss` endpoint also failed to connect from that
+session, so that's untested too, not ruled out. **Needs:** one more pass —
+view-source (not just extracted text) on `yoco.teamtailor.com`, specifically
+searching for a `<script type="application/ld+json">` block — to pick
+between a JSON-LD scraper (generic, reusable across Teamtailor and
+possibly Freshteam/eRecruit too) and a plain CSS-selector scraper. Given 9
+real SA tech roles are sitting right there, this is now the best next
+adapter to build once that's confirmed — ahead of eRecruit and Freshteam.
 
 ---
 

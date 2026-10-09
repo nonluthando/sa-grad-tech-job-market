@@ -386,18 +386,29 @@ by `/go/<category>/` path.
   working `smartrecruiters` adapter (used for Standard Bank), so this is a
   low-effort add — same confidence tier as Phase 1's existing-adapter-compatible
   finds.
-- **Liberty Group / Stanlib — SuccessFactors-style, unconfirmed root**:
-  `careers.liberty.co.za/LibertyGroup/go/Liberty-Group-Jobs/...` and
-  `careers.liberty.co.za/Stanlib/go/Stanlib-Information-Technology-Jobs/...`
-  match the same Career Site Builder `.../go/.../` pattern already proven for
-  Discovery and Nedbank, with an explicit IT-jobs category for Stanlib. But
-  exactly like the Santam gap documented in Part 3, only category-scoped URLs
-  were found (`Liberty-Group-Jobs`, `Human-Resources`, `Stanlib-Information-Technology-Jobs`,
-  `Stanlib-Sales-and-Marketing-Jobs`) — no equivalent of Discovery's
-  `/go/All-Jobs/...` or Nedbank's `/go/All/...` root was found. Adding a
-  category-scoped URL risks the same silent under-collection the project's
-  "no silent truncation" principle rules out, so this needs the all-jobs
-  category ID confirmed first, not a direct add.
+- **Liberty Group / Stanlib — superseded, this SuccessFactors source appears
+  retired.** The original finding (below, struck through) assumed the
+  `careers.liberty.co.za/.../go/.../` Career Site Builder URLs were just
+  missing an all-jobs root, the same gap already flagged for Santam. A
+  follow-up check (9 Oct 2026, routed through claude.ai for real network
+  access) found something more fundamental: `careers.liberty.co.za` and the
+  `/LibertyGroup/go/Liberty-Group-Jobs/` path **302-redirect to
+  `https://www.liberty.co.za/careers`**, a page with no `/go/` links at all.
+  That page's "View job openings" button leads to **Standard Bank Group's**
+  own careers site, and at least one live apply link resolves to
+  `jobs.smartrecruiters.com/StandardBankGroup/...` — i.e. Liberty's careers
+  infrastructure appears to have been absorbed into Standard Bank Group's
+  (consistent with Standard Bank Group's 2022 acquisition of Liberty
+  Holdings). **This likely means Liberty doesn't need a separate source at
+  all** — any Liberty roles are probably already reachable through the
+  `standard-bank` SmartRecruiters source already active in
+  `config/sources.json`, pending confirmation that Liberty postings actually
+  appear there. ~~Original finding: match the same Career Site Builder
+  `.../go/.../` pattern already proven for Discovery and Nedbank, with an
+  explicit IT-jobs category for Stanlib, but only category-scoped URLs were
+  found (`Liberty-Group-Jobs`, `Human-Resources`,
+  `Stanlib-Information-Technology-Jobs`, `Stanlib-Sales-and-Marketing-Jobs`)
+  — no all-jobs root, needing that confirmed before adding.~~
 
 ### 4d. Honest summary
 
