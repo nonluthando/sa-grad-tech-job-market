@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-10-10T23:34:23.941840+00:00",
-  "dashboard_job_count": 2837,
+  "source_window_end": "2026-10-11T10:50:24.332958+00:00",
+  "dashboard_job_count": 2838,
   "dashboard_skill_row_count": 7496,
   "target_market_job_count": 248,
   "non_talent_pool_target_market_job_count": 243,
   "early_career_target_job_count": 34,
   "talent_pool_job_count": 56,
   "jobs_with_skills_count": 1638,
-  "jobs_without_skills_count": 1199,
+  "jobs_without_skills_count": 1200,
   "target_jobs_with_skills_count": 211,
   "target_skill_coverage_rate": 0.8508064516129032,
   "unique_technology_count": 91,
@@ -20,12 +20,12 @@
     "internship": 132,
     "junior": 377,
     "mid_level": 208,
-    "senior": 1474,
+    "senior": 1475,
     "unspecified": 621
   },
   "workplace_type_counts": {
     "hybrid": 390,
-    "on_site": 256,
+    "on_site": 257,
     "remote": 1010,
     "unspecified": 1181
   },
@@ -43,14 +43,14 @@
     "TFG": 30,
     "Takealot Group": 61,
     "Theodo": 164,
-    "Yassir": 204,
+    "Yassir": 205,
     "impact.com": 138
   },
   "industry_counts": {
     "Banks, insurance and financial services": 1066,
     "Fintech and payments": 544,
     "Foreign and remote-first": 586,
-    "Product, software and e-commerce": 477,
+    "Product, software and e-commerce": 478,
     "Software consultancies and engineering firms": 164
   },
   "province_counts": {
@@ -59,7 +59,7 @@
     "Gauteng": 589,
     "KwaZulu-Natal": 36,
     "Western Cape": 257,
-    "unspecified": 1936
+    "unspecified": 1937
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 1520,
@@ -172,13 +172,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 1936,
+    "province": 1937,
     "workplace_type": 1181,
     "effective_role_level": 621,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 378,
-  "jobs_with_extraction_warnings_count": 1199,
+  "jobs_with_extraction_warnings_count": 1200,
   "warnings": [
     "high_unknown_workplace_share"
   ]
