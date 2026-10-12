@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 110
+**Roles audited:** 112
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 36 |
-| likely_mid_level | 47 |
+| likely_mid_level | 49 |
 | likely_senior | 27 |
 
 ## Employer distribution
@@ -20,7 +20,7 @@ do not overwrite the production classification.
 |---|---|
 | Nedbank | 45 |
 | Discovery | 28 |
-| Takealot Group | 16 |
+| Takealot Group | 18 |
 | Impact.com | 10 |
 | Ozow | 3 |
 | Yassir | 3 |
@@ -109,6 +109,8 @@ do not overwrite the production classification.
 | likely_mid_level | Takealot Group | DC Industrial Systems Engineer | description: Minimum 3 years |
 | likely_mid_level | Takealot Group | IT Support | description: 3-5 years of experience |
 | likely_mid_level | Takealot Group | IT Support | description: 3-5 years of experience |
+| likely_mid_level | Takealot Group | IT Support - Cape Town Distribution Centre | description: minimum of 3 years \| description: minimum of 6 years |
+| likely_mid_level | Takealot Group | IT Support - Cape Town Head Office | description: minimum of 3 years \| description: minimum of 6 years |
 | likely_mid_level | Takealot Group | Software Engineer (Python) | description: 3 to 6 years \| description: 5 to 10 years |
 | likely_mid_level | Takealot Group | Software Engineer (Python) - Supply Chain | description: 3 to 6 years \| description: 10+ years |
 | likely_mid_level | Takealot Group | Web Frontend Engineer | description: 3-4 years |
