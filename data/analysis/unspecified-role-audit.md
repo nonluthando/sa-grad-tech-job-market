@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 111
+**Roles audited:** 112
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 36 |
-| likely_mid_level | 49 |
+| likely_mid_level | 50 |
 | likely_senior | 26 |
 
 ## Employer distribution
@@ -27,6 +27,7 @@ do not overwrite the production classification.
 | Theodo | 2 |
 | Bash | 2 |
 | Luno | 1 |
+| Mama Money | 1 |
 
 ## Roles
 
@@ -85,6 +86,7 @@ do not overwrite the production classification.
 | likely_mid_level | Impact.com | Email & Marketing Automation Developer | description: 3–5 years of experience |
 | likely_mid_level | Impact.com | Site Reliability Engineer | description: 3+ years |
 | likely_mid_level | Impact.com | Software engineer | description: 4 + years |
+| likely_mid_level | Mama Money | System Administrator | description: 4+ years |
 | likely_mid_level | Nedbank | Title: ACE Software Developer | description: Min 3 years |
 | likely_mid_level | Nedbank | Title: BI Data Analyst | description: 3–5 Years |
 | likely_mid_level | Nedbank | Title: BI Data Analyst | description: 3-5 years |
