@@ -4,22 +4,22 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 110
+**Roles audited:** 112
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 35 |
+| ambiguous | 36 |
 | likely_mid_level | 49 |
-| likely_senior | 26 |
+| likely_senior | 27 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 42 |
-| Discovery | 28 |
+| Nedbank | 43 |
+| Discovery | 29 |
 | Takealot Group | 18 |
 | Impact.com | 10 |
 | Ozow | 3 |
@@ -38,6 +38,7 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | description: 3 – 4 years \| description: Minimum 2 years |
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
+| ambiguous | Discovery | Business Analyst | description: 2 – 3 years |
 | ambiguous | Discovery | Business Analyst (Talent Pool) | No explicit evidence |
 | ambiguous | Discovery | Data Scientist | description: 3+ years \| description: 2+ years \| description: 5+ years |
 | ambiguous | Discovery | Data Scientist | No explicit evidence |
@@ -136,6 +137,7 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: Platform Owner | description: 5 - 10 years |
 | likely_senior | Nedbank | Title: Platform Owner - Postilion | description: 10+ years \| description: 8+ years |
 | likely_senior | Nedbank | Title: Postilion Technical Specialist | title: Specialist \| description: Min 8 years |
+| likely_senior | Nedbank | Title: Product Owner - Insurance | description: Minimum 5 years |
 | likely_senior | Nedbank | Title: SAP Consultant-Functional | title: Consultant \| description: 5-8 years |
 | likely_senior | Nedbank | Title: Software Quality Engineer II | title: Engineer II \| description: 7 - 10 years |
 | likely_senior | Nedbank | Title: TPO: T24 Core Banking, Credit, Card & Payments, ATM & POS | description: 6-7 Years |
