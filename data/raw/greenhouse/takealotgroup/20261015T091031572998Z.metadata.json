@@ -1,0 +1,14 @@
+{
+  "source": "greenhouse",
+  "source_name": "Takealot Group",
+  "source_token": "takealotgroup",
+  "endpoint": "https://boards-api.greenhouse.io/v1/boards/takealotgroup/jobs?content=true",
+  "collected_at": "2026-10-15T09:10:31.572998+00:00",
+  "http_status": 200,
+  "content_type": "application/json",
+  "content_sha256": "e07f13dcb3774792444d6a5549eb7e43a7ed5dfb5d534e27459bc77216b85daf",
+  "byte_count": 251695,
+  "source_job_count": 22,
+  "raw_file": "20261015T091031572998Z.json",
+  "employer_id": "takealot-group"
+}

@@ -4,21 +4,21 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 112
+**Roles audited:** 110
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 36 |
-| likely_mid_level | 50 |
+| ambiguous | 35 |
+| likely_mid_level | 49 |
 | likely_senior | 26 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 44 |
+| Nedbank | 42 |
 | Discovery | 28 |
 | Takealot Group | 18 |
 | Impact.com | 10 |
@@ -41,7 +41,7 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Business Analyst (Talent Pool) | No explicit evidence |
 | ambiguous | Discovery | Data Scientist | description: 3+ years \| description: 2+ years \| description: 5+ years |
 | ambiguous | Discovery | Data Scientist | No explicit evidence |
-| ambiguous | Discovery | Data Scientist (Intermediate) | description: 2-3 years |
+| ambiguous | Discovery | Data Scientist (Intermediate) | No explicit evidence |
 | ambiguous | Discovery | Developer | No explicit evidence |
 | ambiguous | Discovery | IT Auditor | description: 2+ years |
 | ambiguous | Discovery | Machine Learning Engineer | description: 1-3 years |
@@ -59,7 +59,6 @@ do not overwrite the production classification.
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
-| ambiguous | Nedbank | Title: Quantitative Analyst | description: 2+ years |
 | ambiguous | Nedbank | Title: Software Developer: ServiceNow | description: 5+ years \| description: 2+ years |
 | ambiguous | Ozow | Agentic AI Engineer | No explicit evidence |
 | ambiguous | Ozow | Technical Support Engineer | description: 2-4 years |
@@ -95,7 +94,6 @@ do not overwrite the production classification.
 | likely_mid_level | Nedbank | Title: Data Engineer | description: 3 - 6 years |
 | likely_mid_level | Nedbank | Title: Database Administrator II (DBA II) | description: 4- 6 years |
 | likely_mid_level | Nedbank | Title: ML Engineer | description: 3-7 years |
-| likely_mid_level | Nedbank | Title: Relationship Banker: SBS (Mobile) | description: 3-5 years |
 | likely_mid_level | Nedbank | Title: ServiceNow Developer | description: Minimum 4 years |
 | likely_mid_level | Nedbank | Title: Software Developer | description: Min 3 years |
 | likely_mid_level | Nedbank | Title: Software Developer | description: Min 3 years |
