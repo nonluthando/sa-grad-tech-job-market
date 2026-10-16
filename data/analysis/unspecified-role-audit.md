@@ -4,13 +4,13 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 115
+**Roles audited:** 116
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 39 |
+| ambiguous | 40 |
 | likely_mid_level | 49 |
 | likely_senior | 27 |
 
@@ -18,7 +18,7 @@ do not overwrite the production classification.
 
 | Company | Count |
 |---|---|
-| Nedbank | 45 |
+| Nedbank | 46 |
 | Discovery | 29 |
 | Takealot Group | 18 |
 | Impact.com | 11 |
@@ -56,6 +56,7 @@ do not overwrite the production classification.
 | ambiguous | Nedbank | Title: Data Analyst - Recons and Control | description: 3 – 5 Years \| description: 1 – 3 Years |
 | ambiguous | Nedbank | Title: Enterprise Metadata Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
+| ambiguous | Nedbank | Title: Platform Engineer: Automation | description: At least 2 years |
 | ambiguous | Nedbank | Title: Product Owner: Service Enablement | description: 6 – 10 years \| description: 2 – 4 years |
 | ambiguous | Nedbank | Title: Quality Assurance Officer | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | description: 1 - 3 years |
