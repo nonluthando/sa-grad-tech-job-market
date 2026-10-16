@@ -4,13 +4,13 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 112
+**Roles audited:** 115
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 36 |
+| ambiguous | 39 |
 | likely_mid_level | 49 |
 | likely_senior | 27 |
 
@@ -18,10 +18,10 @@ do not overwrite the production classification.
 
 | Company | Count |
 |---|---|
-| Nedbank | 43 |
+| Nedbank | 45 |
 | Discovery | 29 |
 | Takealot Group | 18 |
-| Impact.com | 10 |
+| Impact.com | 11 |
 | Ozow | 3 |
 | Yassir | 3 |
 | Theodo | 2 |
@@ -48,6 +48,7 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Machine Learning Engineer | description: 1-3 years |
 | ambiguous | Discovery | iOS Developer - Talent Pool | description: 2+ years |
 | ambiguous | Impact.com | GenAI Engineer - Product Marketing & Adoption | description: At least 1 year |
+| ambiguous | Impact.com | GenAI Engineer, Marketing | No explicit evidence |
 | ambiguous | Impact.com | Platform Engineer | description: 2+ years \| description: 1+ year |
 | ambiguous | Impact.com | QA Engineer | No explicit evidence |
 | ambiguous | Impact.com | Software Quality Engineer (Java using Selenium) | description: At least 3 years \| description: At least 2 years |
@@ -56,7 +57,9 @@ do not overwrite the production classification.
 | ambiguous | Nedbank | Title: Enterprise Metadata Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
 | ambiguous | Nedbank | Title: Product Owner: Service Enablement | description: 6 – 10 years \| description: 2 – 4 years |
+| ambiguous | Nedbank | Title: Quality Assurance Officer | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | description: 1 - 3 years |
+| ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
