@@ -4,22 +4,22 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 116
+**Roles audited:** 119
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 40 |
-| likely_mid_level | 49 |
-| likely_senior | 27 |
+| ambiguous | 41 |
+| likely_mid_level | 50 |
+| likely_senior | 28 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 46 |
-| Discovery | 29 |
+| Nedbank | 48 |
+| Discovery | 30 |
 | Takealot Group | 18 |
 | Impact.com | 11 |
 | Ozow | 3 |
@@ -54,6 +54,7 @@ do not overwrite the production classification.
 | ambiguous | Impact.com | Software Quality Engineer (Java using Selenium) | description: At least 3 years \| description: At least 2 years |
 | ambiguous | Luno | Backend Engineer | No explicit evidence |
 | ambiguous | Nedbank | Title: Data Analyst - Recons and Control | description: 3 – 5 Years \| description: 1 – 3 Years |
+| ambiguous | Nedbank | Title: Data Analyst : AI | No explicit evidence |
 | ambiguous | Nedbank | Title: Enterprise Metadata Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: IDM Data Engineer | No explicit evidence |
 | ambiguous | Nedbank | Title: Platform Engineer: Automation | description: At least 2 years |
@@ -77,6 +78,7 @@ do not overwrite the production classification.
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
 | likely_mid_level | Discovery | AI Developer | description: 3+ years |
 | likely_mid_level | Discovery | Business Analyst | description: 3 – 5 years |
+| likely_mid_level | Discovery | Calypso Technical Developer | description: At least 6 years \| description: At least 4 years \| description: 6+ years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
@@ -132,6 +134,7 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: BI Data Analyst | description: Minimum of 5 years |
 | likely_senior | Nedbank | Title: BI Data Analyst II | title: Analyst II \| description: 5-7 years |
 | likely_senior | Nedbank | Title: Business Analyst | description: 5 - 8 years |
+| likely_senior | Nedbank | Title: Cloud Engineer | description: 8-10 Years |
 | likely_senior | Nedbank | Title: Cloud Engineer | description: 8-10 Years |
 | likely_senior | Nedbank | Title: Cloud Engineer | description: Minimum of 8 years |
 | likely_senior | Nedbank | Title: Data Engineer | description: 5+ years |
