@@ -10,8 +10,8 @@ do not overwrite the production classification.
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 42 |
-| likely_mid_level | 51 |
+| ambiguous | 41 |
+| likely_mid_level | 52 |
 | likely_senior | 28 |
 
 ## Employer distribution
@@ -38,7 +38,6 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | description: 3 – 4 years \| description: Minimum 2 years |
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
-| ambiguous | Discovery | Business Analyst | description: 2 – 3 years |
 | ambiguous | Discovery | Business Analyst | description: 2 – 3 years |
 | ambiguous | Discovery | Business Analyst (Talent Pool) | No explicit evidence |
 | ambiguous | Discovery | Data Scientist | description: 3+ years \| description: 2+ years \| description: 5+ years |
@@ -79,6 +78,7 @@ do not overwrite the production classification.
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
 | likely_mid_level | Discovery | AI Developer | description: 3+ years |
 | likely_mid_level | Discovery | Business Analyst | description: 3 – 5 years |
+| likely_mid_level | Discovery | Business Analyst | description: 3+ years |
 | likely_mid_level | Discovery | Calypso Technical Developer | description: At least 6 years \| description: At least 4 years \| description: 6+ years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
