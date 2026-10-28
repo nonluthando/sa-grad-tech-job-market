@@ -4,7 +4,7 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 121
+**Roles audited:** 122
 
 ## Likely level distribution
 
@@ -12,13 +12,13 @@ do not overwrite the production classification.
 |---|---|
 | ambiguous | 41 |
 | likely_mid_level | 52 |
-| likely_senior | 28 |
+| likely_senior | 29 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 49 |
+| Nedbank | 50 |
 | Discovery | 31 |
 | Takealot Group | 18 |
 | Impact.com | 11 |
@@ -142,6 +142,7 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: Data Engineer | description: 5+ years |
 | likely_senior | Nedbank | Title: Design System: Front-End Developer | description: 5+ years |
 | likely_senior | Nedbank | Title: Front Arena Developer | description: Min 5 years |
+| likely_senior | Nedbank | Title: Java Software Developer | description: Min 5 years |
 | likely_senior | Nedbank | Title: Platform Owner | description: 12+ years |
 | likely_senior | Nedbank | Title: Platform Owner | description: 5 - 10 years |
 | likely_senior | Nedbank | Title: Platform Owner - Postilion | description: 10+ years \| description: 8+ years |
