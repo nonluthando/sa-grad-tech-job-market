@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-10-29T23:58:04.849106+00:00",
-  "dashboard_job_count": 3310,
-  "dashboard_skill_row_count": 8273,
+  "source_window_end": "2026-10-30T10:53:26.102460+00:00",
+  "dashboard_job_count": 3317,
+  "dashboard_skill_row_count": 8275,
   "target_market_job_count": 285,
   "non_talent_pool_target_market_job_count": 279,
   "early_career_target_job_count": 41,
   "talent_pool_job_count": 62,
-  "jobs_with_skills_count": 1837,
-  "jobs_without_skills_count": 1473,
+  "jobs_with_skills_count": 1838,
+  "jobs_without_skills_count": 1479,
   "target_jobs_with_skills_count": 241,
   "target_skill_coverage_rate": 0.8456140350877193,
   "unique_technology_count": 91,
@@ -20,14 +20,14 @@
     "internship": 137,
     "junior": 491,
     "mid_level": 233,
-    "senior": 1709,
+    "senior": 1716,
     "unspecified": 712
   },
   "workplace_type_counts": {
     "hybrid": 418,
     "on_site": 274,
     "remote": 1093,
-    "unspecified": 1525
+    "unspecified": 1532
   },
   "employer_counts": {
     "Binance": 498,
@@ -39,7 +39,7 @@
     "Mama Money": 19,
     "Nedbank": 641,
     "Ozow": 15,
-    "Standard Bank": 458,
+    "Standard Bank": 465,
     "TFG": 32,
     "Takealot Group": 73,
     "Theodo": 169,
@@ -47,7 +47,7 @@
     "impact.com": 155
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 1400,
+    "Banks, insurance and financial services": 1407,
     "Fintech and payments": 547,
     "Foreign and remote-first": 673,
     "Product, software and e-commerce": 521,
@@ -56,10 +56,10 @@
   "province_counts": {
     "Eastern Cape": 13,
     "Free State": 8,
-    "Gauteng": 732,
+    "Gauteng": 736,
     "KwaZulu-Natal": 37,
     "Western Cape": 306,
-    "unspecified": 2214
+    "unspecified": 2217
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 1702,
@@ -68,10 +68,10 @@
     "Backend and Architecture": 368,
     "Cloud": 595,
     "Data Engineering": 218,
-    "Data Storage": 666,
+    "Data Storage": 667,
     "Data and Analytics": 382,
     "DevOps and Platform Engineering": 1006,
-    "Enterprise Technology": 174,
+    "Enterprise Technology": 175,
     "Frontend Development": 249,
     "Mobile Development": 117,
     "Programming": 1165,
@@ -148,9 +148,9 @@
     "Redis": 110,
     "Ruby": 87,
     "Ruby on Rails": 61,
-    "SAP": 43,
+    "SAP": 44,
     "SAS": 45,
-    "SQL": 322,
+    "SQL": 323,
     "Salesforce": 120,
     "Scala": 41,
     "Selenium": 18,
@@ -172,13 +172,13 @@
     "scikit-learn": 10
   },
   "missing_value_counts": {
-    "province": 2214,
-    "workplace_type": 1525,
+    "province": 2217,
+    "workplace_type": 1532,
     "effective_role_level": 712,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 396,
-  "jobs_with_extraction_warnings_count": 1473,
+  "jobs_with_extraction_warnings_count": 1479,
   "warnings": [
     "high_unknown_workplace_share"
   ]
