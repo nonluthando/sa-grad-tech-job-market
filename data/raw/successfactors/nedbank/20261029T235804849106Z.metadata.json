@@ -1,0 +1,16 @@
+{
+  "source": "successfactors",
+  "source_name": "Nedbank",
+  "source_token": "nedbank",
+  "endpoint": "https://jobs.nedbank.co.za/go/All/2886801/",
+  "collected_at": "2026-10-29T23:58:04.849106+00:00",
+  "http_status": 200,
+  "content_type": "application/vnd.sa-tech-job-market.successfactors+json",
+  "content_sha256": "f6d310efcc8c7140a5c0344b93fface492650c1fb5a99fdfa0a4d13f2ca15c77",
+  "byte_count": 7965064,
+  "source_job_count": 66,
+  "raw_file": "20261029T235804849106Z.json",
+  "employer_id": "nedbank",
+  "listing_page_count": 3,
+  "detail_page_count": 66
+}
