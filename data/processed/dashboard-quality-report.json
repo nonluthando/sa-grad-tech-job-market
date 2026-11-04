@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-11-03T19:36:50.382774+00:00",
-  "dashboard_job_count": 3414,
-  "dashboard_skill_row_count": 8427,
+  "source_window_end": "2026-11-04T00:37:06.557303+00:00",
+  "dashboard_job_count": 3417,
+  "dashboard_skill_row_count": 8438,
   "target_market_job_count": 287,
   "non_talent_pool_target_market_job_count": 281,
   "early_career_target_job_count": 41,
   "talent_pool_job_count": 63,
-  "jobs_with_skills_count": 1879,
+  "jobs_with_skills_count": 1882,
   "jobs_without_skills_count": 1535,
   "target_jobs_with_skills_count": 243,
   "target_skill_coverage_rate": 0.8466898954703833,
@@ -20,20 +20,20 @@
     "internship": 137,
     "junior": 515,
     "mid_level": 238,
-    "senior": 1762,
-    "unspecified": 734
+    "senior": 1764,
+    "unspecified": 735
   },
   "workplace_type_counts": {
     "hybrid": 421,
     "on_site": 279,
-    "remote": 1113,
-    "unspecified": 1601
+    "remote": 1115,
+    "unspecified": 1602
   },
   "employer_counts": {
     "Binance": 498,
     "Canonical": 320,
     "Discovery": 312,
-    "GitLab": 370,
+    "GitLab": 372,
     "Luno": 16,
     "MOO": 45,
     "Mama Money": 19,
@@ -44,13 +44,13 @@
     "Takealot Group": 80,
     "Theodo": 170,
     "Yassir": 221,
-    "impact.com": 157
+    "impact.com": 158
   },
   "industry_counts": {
     "Banks, insurance and financial services": 1469,
     "Fintech and payments": 548,
-    "Foreign and remote-first": 690,
-    "Product, software and e-commerce": 537,
+    "Foreign and remote-first": 692,
+    "Product, software and e-commerce": 538,
     "Software consultancies and engineering firms": 170
   },
   "province_counts": {
@@ -59,10 +59,10 @@
     "Gauteng": 761,
     "KwaZulu-Natal": 41,
     "Western Cape": 318,
-    "unspecified": 2272
+    "unspecified": 2275
   },
   "capability_mention_counts": {
-    "AI and Machine Learning": 1731,
+    "AI and Machine Learning": 1734,
     "Analytics and BI": 491,
     "Application Development": 231,
     "Backend and Architecture": 373,
@@ -70,13 +70,13 @@
     "Data Engineering": 230,
     "Data Storage": 678,
     "Data and Analytics": 388,
-    "DevOps and Platform Engineering": 1013,
+    "DevOps and Platform Engineering": 1014,
     "Enterprise Technology": 181,
     "Frontend Development": 250,
     "Mobile Development": 117,
-    "Programming": 1181,
+    "Programming": 1184,
     "Quality Engineering": 179,
-    "Software Delivery": 780
+    "Software Delivery": 784
   },
   "technology_mention_counts": {
     ".NET": 9,
@@ -84,14 +84,14 @@
     "AWS": 200,
     "Angular": 41,
     "Apache Spark": 9,
-    "Artificial Intelligence": 1155,
+    "Artificial Intelligence": 1158,
     "Azure": 128,
     "Bash": 88,
     "BigQuery": 39,
     "C": 6,
     "C#": 21,
     "C++": 77,
-    "CI/CD": 248,
+    "CI/CD": 249,
     "Cassandra": 5,
     "Cloud Computing": 74,
     "Computer Vision": 8,
@@ -110,13 +110,13 @@
     "FastAPI": 4,
     "Flask": 3,
     "Generative AI": 68,
-    "Git": 532,
-    "GitHub Actions": 20,
+    "Git": 535,
+    "GitHub Actions": 21,
     "Go": 66,
     "Google Cloud": 202,
     "GraphQL": 26,
     "JUnit": 5,
-    "Java": 211,
+    "Java": 212,
     "JavaScript": 104,
     "Jenkins": 30,
     "Kafka": 111,
@@ -135,7 +135,7 @@
     "Next.js": 8,
     "Node.js": 56,
     "NumPy": 6,
-    "PHP": 13,
+    "PHP": 14,
     "Pandas": 11,
     "Playwright": 13,
     "PostgreSQL": 94,
@@ -164,7 +164,7 @@
     "TensorFlow": 19,
     "Terraform": 82,
     "Test Automation": 55,
-    "TypeScript": 85,
+    "TypeScript": 86,
     "Unit Testing": 58,
     "Vue.js": 54,
     "dbt": 18,
@@ -172,9 +172,9 @@
     "scikit-learn": 11
   },
   "missing_value_counts": {
-    "province": 2272,
-    "workplace_type": 1601,
-    "effective_role_level": 734,
+    "province": 2275,
+    "workplace_type": 1602,
+    "effective_role_level": 735,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 396,
