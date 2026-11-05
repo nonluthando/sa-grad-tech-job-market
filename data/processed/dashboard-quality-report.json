@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-11-04T19:46:32.830046+00:00",
-  "dashboard_job_count": 3436,
-  "dashboard_skill_row_count": 8486,
+  "source_window_end": "2026-11-05T00:55:37.162144+00:00",
+  "dashboard_job_count": 3437,
+  "dashboard_skill_row_count": 8489,
   "target_market_job_count": 287,
   "non_talent_pool_target_market_job_count": 281,
   "early_career_target_job_count": 41,
   "talent_pool_job_count": 63,
-  "jobs_with_skills_count": 1894,
+  "jobs_with_skills_count": 1895,
   "jobs_without_skills_count": 1542,
   "target_jobs_with_skills_count": 243,
   "target_skill_coverage_rate": 0.8466898954703833,
@@ -21,19 +21,19 @@
     "junior": 516,
     "mid_level": 241,
     "senior": 1777,
-    "unspecified": 737
+    "unspecified": 738
   },
   "workplace_type_counts": {
     "hybrid": 422,
     "on_site": 282,
-    "remote": 1126,
+    "remote": 1127,
     "unspecified": 1606
   },
   "employer_counts": {
     "Binance": 498,
     "Canonical": 322,
     "Discovery": 312,
-    "GitLab": 381,
+    "GitLab": 382,
     "Luno": 16,
     "MOO": 45,
     "Mama Money": 19,
@@ -49,7 +49,7 @@
   "industry_counts": {
     "Banks, insurance and financial services": 1472,
     "Fintech and payments": 548,
-    "Foreign and remote-first": 703,
+    "Foreign and remote-first": 704,
     "Product, software and e-commerce": 543,
     "Software consultancies and engineering firms": 170
   },
@@ -59,10 +59,10 @@
     "Gauteng": 761,
     "KwaZulu-Natal": 41,
     "Western Cape": 318,
-    "unspecified": 2294
+    "unspecified": 2295
   },
   "capability_mention_counts": {
-    "AI and Machine Learning": 1746,
+    "AI and Machine Learning": 1747,
     "Analytics and BI": 492,
     "Application Development": 232,
     "Backend and Architecture": 374,
@@ -76,7 +76,7 @@
     "Mobile Development": 117,
     "Programming": 1189,
     "Quality Engineering": 179,
-    "Software Delivery": 796
+    "Software Delivery": 798
   },
   "technology_mention_counts": {
     ".NET": 9,
@@ -84,14 +84,14 @@
     "AWS": 201,
     "Angular": 41,
     "Apache Spark": 9,
-    "Artificial Intelligence": 1169,
+    "Artificial Intelligence": 1170,
     "Azure": 129,
     "Bash": 88,
     "BigQuery": 40,
     "C": 6,
     "C#": 21,
     "C++": 77,
-    "CI/CD": 252,
+    "CI/CD": 253,
     "Cassandra": 5,
     "Cloud Computing": 74,
     "Computer Vision": 8,
@@ -110,7 +110,7 @@
     "FastAPI": 4,
     "Flask": 3,
     "Generative AI": 68,
-    "Git": 544,
+    "Git": 545,
     "GitHub Actions": 21,
     "Go": 66,
     "Google Cloud": 204,
@@ -172,9 +172,9 @@
     "scikit-learn": 11
   },
   "missing_value_counts": {
-    "province": 2294,
+    "province": 2295,
     "workplace_type": 1606,
-    "effective_role_level": 737,
+    "effective_role_level": 738,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 396,
