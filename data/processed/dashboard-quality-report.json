@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-11-07T11:04:51.935543+00:00",
-  "dashboard_job_count": 3511,
+  "source_window_end": "2026-11-07T17:46:15.974676+00:00",
+  "dashboard_job_count": 3512,
   "dashboard_skill_row_count": 8577,
   "target_market_job_count": 288,
   "non_talent_pool_target_market_job_count": 282,
   "early_career_target_job_count": 41,
   "talent_pool_job_count": 68,
   "jobs_with_skills_count": 1931,
-  "jobs_without_skills_count": 1580,
+  "jobs_without_skills_count": 1581,
   "target_jobs_with_skills_count": 243,
   "target_skill_coverage_rate": 0.84375,
   "unique_technology_count": 91,
@@ -18,14 +18,14 @@
   "role_level_counts": {
     "graduate": 29,
     "internship": 137,
-    "junior": 535,
+    "junior": 536,
     "mid_level": 241,
     "senior": 1822,
     "unspecified": 747
   },
   "workplace_type_counts": {
     "hybrid": 425,
-    "on_site": 282,
+    "on_site": 283,
     "remote": 1142,
     "unspecified": 1662
   },
@@ -39,7 +39,7 @@
     "Mama Money": 19,
     "Nedbank": 680,
     "Ozow": 15,
-    "Standard Bank": 527,
+    "Standard Bank": 528,
     "TFG": 34,
     "Takealot Group": 81,
     "Theodo": 170,
@@ -47,7 +47,7 @@
     "impact.com": 160
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 1528,
+    "Banks, insurance and financial services": 1529,
     "Fintech and payments": 548,
     "Foreign and remote-first": 719,
     "Product, software and e-commerce": 546,
@@ -56,7 +56,7 @@
   "province_counts": {
     "Eastern Cape": 15,
     "Free State": 8,
-    "Gauteng": 787,
+    "Gauteng": 788,
     "KwaZulu-Natal": 45,
     "Western Cape": 323,
     "unspecified": 2333
@@ -178,7 +178,7 @@
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 396,
-  "jobs_with_extraction_warnings_count": 1580,
+  "jobs_with_extraction_warnings_count": 1581,
   "warnings": [
     "high_unknown_workplace_share"
   ]
