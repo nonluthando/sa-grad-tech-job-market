@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-11-07T17:46:15.974676+00:00",
-  "dashboard_job_count": 3512,
+  "source_window_end": "2026-11-07T23:39:43.843237+00:00",
+  "dashboard_job_count": 3514,
   "dashboard_skill_row_count": 8577,
   "target_market_job_count": 288,
   "non_talent_pool_target_market_job_count": 282,
   "early_career_target_job_count": 41,
   "talent_pool_job_count": 68,
   "jobs_with_skills_count": 1931,
-  "jobs_without_skills_count": 1581,
+  "jobs_without_skills_count": 1583,
   "target_jobs_with_skills_count": 243,
   "target_skill_coverage_rate": 0.84375,
   "unique_technology_count": 91,
@@ -18,16 +18,16 @@
   "role_level_counts": {
     "graduate": 29,
     "internship": 137,
-    "junior": 536,
+    "junior": 538,
     "mid_level": 241,
     "senior": 1822,
     "unspecified": 747
   },
   "workplace_type_counts": {
     "hybrid": 425,
-    "on_site": 283,
+    "on_site": 284,
     "remote": 1142,
-    "unspecified": 1662
+    "unspecified": 1663
   },
   "employer_counts": {
     "Binance": 498,
@@ -39,7 +39,7 @@
     "Mama Money": 19,
     "Nedbank": 680,
     "Ozow": 15,
-    "Standard Bank": 528,
+    "Standard Bank": 530,
     "TFG": 34,
     "Takealot Group": 81,
     "Theodo": 170,
@@ -47,16 +47,16 @@
     "impact.com": 160
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 1529,
+    "Banks, insurance and financial services": 1531,
     "Fintech and payments": 548,
     "Foreign and remote-first": 719,
     "Product, software and e-commerce": 546,
     "Software consultancies and engineering firms": 170
   },
   "province_counts": {
-    "Eastern Cape": 15,
+    "Eastern Cape": 16,
     "Free State": 8,
-    "Gauteng": 788,
+    "Gauteng": 789,
     "KwaZulu-Natal": 45,
     "Western Cape": 323,
     "unspecified": 2333
@@ -173,12 +173,12 @@
   },
   "missing_value_counts": {
     "province": 2333,
-    "workplace_type": 1662,
+    "workplace_type": 1663,
     "effective_role_level": 747,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 396,
-  "jobs_with_extraction_warnings_count": 1581,
+  "jobs_with_extraction_warnings_count": 1583,
   "warnings": [
     "high_unknown_workplace_share"
   ]
