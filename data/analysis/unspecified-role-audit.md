@@ -4,13 +4,13 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 126
+**Roles audited:** 127
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 44 |
+| ambiguous | 45 |
 | likely_mid_level | 52 |
 | likely_senior | 30 |
 
@@ -21,7 +21,7 @@ do not overwrite the production classification.
 | Nedbank | 53 |
 | Discovery | 31 |
 | Takealot Group | 18 |
-| Impact.com | 12 |
+| Impact.com | 13 |
 | Ozow | 3 |
 | Yassir | 3 |
 | Theodo | 2 |
@@ -48,6 +48,7 @@ do not overwrite the production classification.
 | ambiguous | Discovery | Machine Learning Engineer | description: 1-3 years |
 | ambiguous | Discovery | iOS Developer - Talent Pool | description: 2+ years |
 | ambiguous | Impact.com | GenAI Engineer - Product Marketing & Adoption | description: At least 1 year |
+| ambiguous | Impact.com | GenAI Engineer - Sales Enablement | description: At least 1 year |
 | ambiguous | Impact.com | GenAI Engineer, Marketing | No explicit evidence |
 | ambiguous | Impact.com | Machine Learning Ops Engineer | description: 3+ years \| description: 1+ year of experience |
 | ambiguous | Impact.com | Platform Engineer | description: 2+ years \| description: 1+ year |
