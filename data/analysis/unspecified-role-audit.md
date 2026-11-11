@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 127
+**Roles audited:** 128
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 45 |
-| likely_mid_level | 52 |
+| likely_mid_level | 53 |
 | likely_senior | 30 |
 
 ## Employer distribution
@@ -19,7 +19,7 @@ do not overwrite the production classification.
 | Company | Count |
 |---|---|
 | Nedbank | 53 |
-| Discovery | 31 |
+| Discovery | 32 |
 | Takealot Group | 18 |
 | Impact.com | 13 |
 | Ozow | 3 |
@@ -81,6 +81,7 @@ do not overwrite the production classification.
 | likely_mid_level | Bash | Flutter Engineer | description: 3-5 years |
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
 | likely_mid_level | Discovery | AI Developer | description: 3+ years |
+| likely_mid_level | Discovery | Automation Test Analyst - Talent Pool | description: 3-5 years |
 | likely_mid_level | Discovery | Business Analyst | description: 3 – 5 years |
 | likely_mid_level | Discovery | Business Analyst | description: 3+ years |
 | likely_mid_level | Discovery | Calypso Technical Developer | description: At least 6 years \| description: At least 4 years \| description: 6+ years |
