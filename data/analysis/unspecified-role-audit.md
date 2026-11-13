@@ -10,8 +10,8 @@ do not overwrite the production classification.
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 45 |
-| likely_mid_level | 53 |
+| ambiguous | 46 |
+| likely_mid_level | 52 |
 | likely_senior | 31 |
 
 ## Employer distribution
@@ -34,6 +34,7 @@ do not overwrite the production classification.
 | Likely level | Company | Title | Experience evidence |
 |---|---|---|---|
 | ambiguous | Discovery | Android Developer - Talent Pool | No explicit evidence |
+| ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | No explicit evidence |
 | ambiguous | Discovery | Business Analyst | description: 3 – 4 years \| description: Minimum 2 years |
@@ -82,7 +83,6 @@ do not overwrite the production classification.
 | likely_mid_level | Bash | Intermediate Software Engineer - GoLang (Supply Chain) | description: 3+ years |
 | likely_mid_level | Discovery | AI Developer | description: 3+ years |
 | likely_mid_level | Discovery | Automation Test Analyst - Talent Pool | description: 3-5 years |
-| likely_mid_level | Discovery | Business Analyst | description: 3 – 5 years |
 | likely_mid_level | Discovery | Business Analyst | description: 3+ years |
 | likely_mid_level | Discovery | Calypso Technical Developer | description: At least 6 years \| description: At least 4 years \| description: 6+ years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
