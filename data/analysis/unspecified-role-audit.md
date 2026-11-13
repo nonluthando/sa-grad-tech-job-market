@@ -4,7 +4,7 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 129
+**Roles audited:** 130
 
 ## Likely level distribution
 
@@ -12,13 +12,13 @@ do not overwrite the production classification.
 |---|---|
 | ambiguous | 46 |
 | likely_mid_level | 52 |
-| likely_senior | 31 |
+| likely_senior | 32 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 54 |
+| Nedbank | 55 |
 | Discovery | 32 |
 | Takealot Group | 18 |
 | Impact.com | 13 |
@@ -158,6 +158,7 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: SAP Consultant-Functional | title: Consultant \| description: 5-8 years |
 | likely_senior | Nedbank | Title: Software Quality Engineer II | title: Engineer II \| description: 7 - 10 years |
 | likely_senior | Nedbank | Title: TPO: T24 Core Banking, Credit, Card & Payments, ATM & POS | description: 6-7 Years |
+| likely_senior | Nedbank | Title: Technical Product Owner | description: 6-7 Years |
 | likely_senior | Takealot Group | Python Software Engineer | description: 5+ years |
 | likely_senior | Takealot Group | Search Software Engineer | description: 5 to 10 years |
 | likely_senior | Takealot Group | Search Software Engineer | description: 5 to 10 years |

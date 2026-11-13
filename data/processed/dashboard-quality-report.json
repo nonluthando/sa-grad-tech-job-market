@@ -1,45 +1,45 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-11-13T01:06:25.835583+00:00",
-  "dashboard_job_count": 3657,
+  "source_window_end": "2026-11-13T12:13:49.922196+00:00",
+  "dashboard_job_count": 3671,
   "dashboard_skill_row_count": 8827,
-  "target_market_job_count": 301,
-  "non_talent_pool_target_market_job_count": 294,
+  "target_market_job_count": 302,
+  "non_talent_pool_target_market_job_count": 295,
   "early_career_target_job_count": 46,
   "talent_pool_job_count": 70,
   "jobs_with_skills_count": 1988,
-  "jobs_without_skills_count": 1669,
+  "jobs_without_skills_count": 1683,
   "target_jobs_with_skills_count": 253,
-  "target_skill_coverage_rate": 0.840531561461794,
+  "target_skill_coverage_rate": 0.8377483443708609,
   "unique_technology_count": 91,
   "employer_count": 15,
   "industry_count": 5,
   "role_level_counts": {
     "graduate": 29,
-    "internship": 141,
-    "junior": 586,
-    "mid_level": 245,
-    "senior": 1891,
-    "unspecified": 765
+    "internship": 142,
+    "junior": 592,
+    "mid_level": 246,
+    "senior": 1895,
+    "unspecified": 767
   },
   "workplace_type_counts": {
     "hybrid": 430,
     "on_site": 288,
     "remote": 1166,
-    "unspecified": 1773
+    "unspecified": 1787
   },
   "employer_counts": {
     "Binance": 498,
     "Canonical": 322,
-    "Discovery": 338,
+    "Discovery": 339,
     "GitLab": 417,
     "Luno": 18,
     "MOO": 45,
     "Mama Money": 20,
-    "Nedbank": 704,
+    "Nedbank": 712,
     "Ozow": 16,
-    "Standard Bank": 597,
+    "Standard Bank": 602,
     "TFG": 34,
     "Takealot Group": 83,
     "Theodo": 172,
@@ -47,7 +47,7 @@
     "impact.com": 165
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 1639,
+    "Banks, insurance and financial services": 1653,
     "Fintech and payments": 552,
     "Foreign and remote-first": 739,
     "Product, software and e-commerce": 555,
@@ -56,10 +56,10 @@
   "province_counts": {
     "Eastern Cape": 16,
     "Free State": 8,
-    "Gauteng": 832,
-    "KwaZulu-Natal": 47,
-    "Western Cape": 334,
-    "unspecified": 2420
+    "Gauteng": 837,
+    "KwaZulu-Natal": 48,
+    "Western Cape": 338,
+    "unspecified": 2424
   },
   "capability_mention_counts": {
     "AI and Machine Learning": 1832,
@@ -172,13 +172,13 @@
     "scikit-learn": 12
   },
   "missing_value_counts": {
-    "province": 2420,
-    "workplace_type": 1773,
-    "effective_role_level": 765,
+    "province": 2424,
+    "workplace_type": 1787,
+    "effective_role_level": 767,
     "industry": 0
   },
   "jobs_with_data_quality_issues_count": 397,
-  "jobs_with_extraction_warnings_count": 1669,
+  "jobs_with_extraction_warnings_count": 1683,
   "warnings": [
     "high_unknown_workplace_share"
   ]
