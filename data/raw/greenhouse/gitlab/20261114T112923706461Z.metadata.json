@@ -1,0 +1,14 @@
+{
+  "source": "greenhouse",
+  "source_name": "GitLab",
+  "source_token": "gitlab",
+  "endpoint": "https://boards-api.greenhouse.io/v1/boards/gitlab/jobs?content=true",
+  "collected_at": "2026-11-14T11:29:23.706461+00:00",
+  "http_status": 200,
+  "content_type": "application/json",
+  "content_sha256": "684ca127627cb3ec7e8f891a1d4c31356f6bfd596d6d4277c1067eecb190272c",
+  "byte_count": 3904961,
+  "source_job_count": 251,
+  "raw_file": "20261114T005505284032Z.json",
+  "employer_id": "gitlab"
+}
