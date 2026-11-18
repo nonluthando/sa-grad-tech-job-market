@@ -4,21 +4,21 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 130
+**Roles audited:** 132
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 46 |
-| likely_mid_level | 52 |
-| likely_senior | 32 |
+| likely_mid_level | 53 |
+| likely_senior | 33 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 54 |
+| Nedbank | 56 |
 | Discovery | 32 |
 | Takealot Group | 18 |
 | Impact.com | 14 |
@@ -106,6 +106,7 @@ do not overwrite the production classification.
 | likely_mid_level | Nedbank | Title: Cloud Engineer: Database Services | description: 8-10 Years \| description: 6+ Years \| description: 3+ Years |
 | likely_mid_level | Nedbank | Title: Cloud Engineer: Database Services | description: 8-10 Years \| description: 6+ Years \| description: 3+ Years |
 | likely_mid_level | Nedbank | Title: Data Engineer | description: 3 - 6 years |
+| likely_mid_level | Nedbank | Title: Data Engineer | description: 4+ years |
 | likely_mid_level | Nedbank | Title: Database Administrator II (DBA II) | description: 4- 6 years |
 | likely_mid_level | Nedbank | Title: ML Engineer | description: 3-7 years |
 | likely_mid_level | Nedbank | Title: ServiceNow Developer | description: Minimum 4 years |
@@ -157,6 +158,7 @@ do not overwrite the production classification.
 | likely_senior | Nedbank | Title: Product Owner - Insurance | description: Minimum 5 years |
 | likely_senior | Nedbank | Title: SAP Consultant-Functional | title: Consultant \| description: 5-8 years |
 | likely_senior | Nedbank | Title: Software Quality Engineer II | title: Engineer II \| description: 7 - 10 years |
+| likely_senior | Nedbank | Title: Systems Engineer II | title: Engineer II \| description: 5+ years |
 | likely_senior | Nedbank | Title: TPO: T24 Core Banking, Credit, Card & Payments, ATM & POS | description: 6-7 Years |
 | likely_senior | Nedbank | Title: Technical Product Owner | description: 6-7 Years |
 | likely_senior | Takealot Group | Python Software Engineer | description: 5+ years |
