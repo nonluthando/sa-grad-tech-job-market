@@ -4,13 +4,13 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 133
+**Roles audited:** 134
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
-| ambiguous | 47 |
+| ambiguous | 48 |
 | likely_mid_level | 53 |
 | likely_senior | 33 |
 
@@ -18,7 +18,7 @@ do not overwrite the production classification.
 
 | Company | Count |
 |---|---|
-| Nedbank | 57 |
+| Nedbank | 58 |
 | Discovery | 32 |
 | Takealot Group | 18 |
 | Impact.com | 14 |
@@ -70,6 +70,7 @@ do not overwrite the production classification.
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
 | ambiguous | Nedbank | Title: Quantitative Analyst | No explicit evidence |
+| ambiguous | Nedbank | Title: Quantitative Analyst | description: 1 - 3 years |
 | ambiguous | Nedbank | Title: Quantitative Data Analyst | description: 2–5 years of experience |
 | ambiguous | Nedbank | Title: Software Developer: ServiceNow | description: 5+ years \| description: 2+ years |
 | ambiguous | Ozow | Agentic AI Engineer | No explicit evidence |
