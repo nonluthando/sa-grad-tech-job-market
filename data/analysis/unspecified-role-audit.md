@@ -4,21 +4,21 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 134
+**Roles audited:** 135
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 48 |
-| likely_mid_level | 53 |
+| likely_mid_level | 54 |
 | likely_senior | 33 |
 
 ## Employer distribution
 
 | Company | Count |
 |---|---|
-| Nedbank | 58 |
+| Nedbank | 59 |
 | Discovery | 32 |
 | Takealot Group | 18 |
 | Impact.com | 14 |
@@ -111,6 +111,7 @@ do not overwrite the production classification.
 | likely_mid_level | Nedbank | Title: Data Engineer | description: 4+ years |
 | likely_mid_level | Nedbank | Title: Database Administrator II (DBA II) | description: 4- 6 years |
 | likely_mid_level | Nedbank | Title: ML Engineer | description: 3-7 years |
+| likely_mid_level | Nedbank | Title: Platform Engineering - Marketplace Product Owner | description: Minimum 8 years \| description: at least 4 years |
 | likely_mid_level | Nedbank | Title: ServiceNow Developer | description: Minimum 4 years |
 | likely_mid_level | Nedbank | Title: Software Developer | description: Min 3 years |
 | likely_mid_level | Nedbank | Title: Software Developer | description: Min 3 years |
