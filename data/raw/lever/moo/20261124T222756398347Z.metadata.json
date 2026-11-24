@@ -1,0 +1,14 @@
+{
+  "source": "lever",
+  "source_name": "MOO",
+  "source_token": "moo",
+  "endpoint": "https://api.lever.co/v0/postings/moo?mode=json&limit=500",
+  "collected_at": "2026-11-24T22:27:56.398347+00:00",
+  "http_status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "content_sha256": "5e7b7d4ac1ac568d4f3126579beb4c788fc51b7d69261a16e663edd1e8197a9a",
+  "byte_count": 79355,
+  "source_job_count": 4,
+  "raw_file": "20261121T013251529353Z.json",
+  "employer_id": "moo"
+}
