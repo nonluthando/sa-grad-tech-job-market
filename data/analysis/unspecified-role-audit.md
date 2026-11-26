@@ -4,14 +4,14 @@ This report reviews South African technology roles whose canonical
 `role_level` remains `unspecified`. Audit buckets are exploratory and
 do not overwrite the production classification.
 
-**Roles audited:** 138
+**Roles audited:** 139
 
 ## Likely level distribution
 
 | Likely level | Count |
 |---|---|
 | ambiguous | 50 |
-| likely_mid_level | 55 |
+| likely_mid_level | 56 |
 | likely_senior | 33 |
 
 ## Employer distribution
@@ -19,7 +19,7 @@ do not overwrite the production classification.
 | Company | Count |
 |---|---|
 | Nedbank | 61 |
-| Discovery | 33 |
+| Discovery | 34 |
 | Takealot Group | 18 |
 | Impact.com | 14 |
 | Ozow | 3 |
@@ -90,6 +90,7 @@ do not overwrite the production classification.
 | likely_mid_level | Discovery | Business Analyst | description: 3+ years |
 | likely_mid_level | Discovery | Calypso Technical Developer | description: At least 6 years \| description: At least 4 years \| description: 6+ years |
 | likely_mid_level | Discovery | Data Scientist | description: 3+ years |
+| likely_mid_level | Discovery | Data Scientist: AI Risk Evaluation and Governance | description: 3 - 5 years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
 | likely_mid_level | Discovery | Developer | description: minimum 5 years \| description: Minimum 5 years \| description: Minimum 3 years |
 | likely_mid_level | Discovery | Information Security Analyst | description: 3-5 years |

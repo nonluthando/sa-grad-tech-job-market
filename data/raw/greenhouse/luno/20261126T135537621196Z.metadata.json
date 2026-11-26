@@ -1,0 +1,14 @@
+{
+  "source": "greenhouse",
+  "source_name": "Luno",
+  "source_token": "luno",
+  "endpoint": "https://boards-api.greenhouse.io/v1/boards/luno/jobs?content=true",
+  "collected_at": "2026-11-26T13:55:37.621196+00:00",
+  "http_status": 200,
+  "content_type": "application/json",
+  "content_sha256": "2b8d22a053642ebb7ddf2c860e786e25a50000204b5b6ae35fb16ce4a8807024",
+  "byte_count": 75293,
+  "source_job_count": 6,
+  "raw_file": "20261125T142326711846Z.json",
+  "employer_id": "luno"
+}
