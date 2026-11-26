@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "source_window_start": "2026-08-08T19:57:22.760851+00:00",
-  "source_window_end": "2026-11-25T14:23:26.711846+00:00",
-  "dashboard_job_count": 3945,
-  "dashboard_skill_row_count": 9334,
+  "source_window_end": "2026-11-26T02:52:59.612006+00:00",
+  "dashboard_job_count": 3946,
+  "dashboard_skill_row_count": 9335,
   "target_market_job_count": 325,
   "non_talent_pool_target_market_job_count": 318,
   "early_career_target_job_count": 52,
   "talent_pool_job_count": 72,
-  "jobs_with_skills_count": 2122,
+  "jobs_with_skills_count": 2123,
   "jobs_without_skills_count": 1823,
   "target_jobs_with_skills_count": 273,
   "target_skill_coverage_rate": 0.84,
@@ -20,14 +20,14 @@
     "internship": 145,
     "junior": 646,
     "mid_level": 254,
-    "senior": 2044,
+    "senior": 2045,
     "unspecified": 825
   },
   "workplace_type_counts": {
     "hybrid": 464,
     "on_site": 306,
     "remote": 1228,
-    "unspecified": 1947
+    "unspecified": 1948
   },
   "employer_counts": {
     "Binance": 498,
@@ -37,7 +37,7 @@
     "Luno": 22,
     "MOO": 47,
     "Mama Money": 22,
-    "Nedbank": 772,
+    "Nedbank": 773,
     "Ozow": 16,
     "Standard Bank": 697,
     "TFG": 35,
@@ -47,7 +47,7 @@
     "impact.com": 169
   },
   "industry_counts": {
-    "Banks, insurance and financial services": 1824,
+    "Banks, insurance and financial services": 1825,
     "Fintech and payments": 558,
     "Foreign and remote-first": 800,
     "Product, software and e-commerce": 576,
@@ -56,7 +56,7 @@
   "province_counts": {
     "Eastern Cape": 17,
     "Free State": 8,
-    "Gauteng": 931,
+    "Gauteng": 932,
     "KwaZulu-Natal": 49,
     "Western Cape": 347,
     "unspecified": 2593
@@ -67,7 +67,7 @@
     "Application Development": 244,
     "Backend and Architecture": 401,
     "Cloud": 667,
-    "Data Engineering": 262,
+    "Data Engineering": 263,
     "Data Storage": 723,
     "Data and Analytics": 408,
     "DevOps and Platform Engineering": 1085,
@@ -101,8 +101,8 @@
     "Databricks": 35,
     "Django": 4,
     "Docker": 195,
-    "DynamoDB": 3,
-    "ETL": 50,
+    "DynamoDB": 2,
+    "ETL": 51,
     "Elasticsearch": 19,
     "Event-driven Architecture": 43,
     "Excel": 336,
@@ -150,7 +150,7 @@
     "Ruby on Rails": 72,
     "SAP": 51,
     "SAS": 55,
-    "SQL": 367,
+    "SQL": 368,
     "Salesforce": 148,
     "Scala": 51,
     "Selenium": 21,
@@ -173,7 +173,7 @@
   },
   "missing_value_counts": {
     "province": 2593,
-    "workplace_type": 1947,
+    "workplace_type": 1948,
     "effective_role_level": 825,
     "industry": 0
   },
